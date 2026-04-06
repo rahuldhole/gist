@@ -39,6 +39,16 @@ jobs:
         with:
           go-version: '1.21'
           
+      # ── Update Metadata ──────────────────────────────────────────────────
+      - name: Update Metadata
+        run: go run gist.go update-metadata
+
+      - name: Commit metadata
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update app metadata [skip ci]"
+          file_pattern: 'src/**/index.html'
+
       - name: Run build
         run: go run gist.go build
 

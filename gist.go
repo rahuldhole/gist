@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -137,9 +138,23 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 
 	// Parse custom "Updated" field from meta block
 	updatedStr := extractMeta("Updated", cStr)
-	updatedAt, err := time.Parse("2006-01-02", updatedStr)
-	if err != nil {
-		// Fallback to file timestamp if meta is missing/broken
+	var updatedAt time.Time
+	// Try parsing as Unix timestamp first
+	if ts, err := strconv.ParseInt(updatedStr, 10, 64); err == nil && ts > 0 {
+		updatedAt = time.Unix(ts, 0)
+	} else {
+		// Fallback to RFC3339 or ISO date
+		var err error
+		updatedAt, err = time.Parse(time.RFC3339, updatedStr)
+		if err != nil {
+			updatedAt, err = time.Parse("2006-01-02", updatedStr)
+			if err == nil {
+				updatedAt = time.Date(updatedAt.Year(), updatedAt.Month(), updatedAt.Day(), 23, 59, 59, 0, time.UTC)
+			}
+		}
+	}
+	
+	if updatedAt.IsZero() {
 		if info, err := os.Stat(srcIdx); err == nil {
 			updatedAt = info.ModTime()
 		} else {
@@ -236,7 +251,8 @@ func cmdUpdateMetadata() {
 		return
 	}
 
-	today := time.Now().Format("2006-01-02")
+	// Use Unix Timestamp for better machine precision and easy parsing
+	today := fmt.Sprintf("%d", time.Now().Unix())
 	changedApps := make(map[string]bool)
 	lines := strings.Split(string(out), "\n")
 	
