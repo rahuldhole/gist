@@ -25,9 +25,12 @@
                         const response = await fetch('apps.json');
                         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         this.apps = await response.json();
-                        this.apps = this.apps.map(app => ({
+                        
+                        const spans = ['bento-span-4', 'bento-span-8', 'bento-span-4', 'bento-span-4', 'bento-span-6', 'bento-span-6'];
+                        this.apps = this.apps.map((app, idx) => ({
                             ...app,
-                            category: app.category && app.category.trim() !== '' ? app.category.trim() : 'Uncategorized'
+                            category: app.category && app.category.trim() !== '' ? app.category.trim() : 'Uncategorized',
+                            _span: spans[Math.floor(Math.random() * spans.length)]
                         }));
                     } catch (e) {
                         this.error = 'Unable to load application directory. Run ./gist build first.';
@@ -292,14 +295,7 @@
                         duration: 0.8, 
                         ease: 'back.out(1.2)' 
                     })"
-                    :class="{
-                        'bento-span-8': index === 0,
-                        'bento-span-4': index === 1,
-                        'bento-span-4': index === 2,
-                        'bento-span-4': index === 3,
-                        'bento-span-4': index === 4,
-                        'bento-span-6': index > 4
-                    }"
+                    :class="app._span"
                     class="h-full"
                 >
                     <a :href="app.path"
@@ -307,7 +303,7 @@
                         
                         <!-- Media Area -->
                         <div class="relative overflow-hidden flex items-center justify-center gist-icon-placeholder border-b border-white/5"
-                             :class="index === 0 ? 'aspect-[2.5/1]' : 'aspect-video'">
+                             :class="app._span === 'bento-span-8' ? 'aspect-[2.5/1]' : 'aspect-video'">
                             
                             <!-- Image Support -->
                             <template x-if="app.image && !imageBroken">
@@ -342,7 +338,7 @@
                         <div class="p-8 flex flex-col flex-grow relative z-10 transition-colors group-hover:bg-white/5">
                             <h3 class="font-black mb-3 group-hover:text-primary transition-colors tracking-tighter"
                                 :style="{ color: 'var(--text-color)' }"
-                                :class="index === 0 ? 'text-4xl' : 'text-2xl'"
+                                :class="app._span === 'bento-span-8' ? 'text-4xl' : 'text-2xl'"
                                 x-text="app.title"></h3>
                             
                             <!-- Resilient Description handling to avoid whitespace -->
