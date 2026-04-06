@@ -263,12 +263,13 @@ cmd_build() {
         ensure_status_field "$src_file"
 
         # ── Extract metadata ──────────────────────────────────────────────
-        local title description category status image
+        local title description category status image icon
         title="$(extract_meta "Title" "$src_file")"
         description="$(extract_meta "Description" "$src_file")"
         category="$(extract_meta "Category" "$src_file")"
         status="$(extract_meta "Status" "$src_file")"
         image="$(extract_meta "Image" "$src_file")"
+        icon="$(extract_meta "Icon" "$src_file")"
 
         # Default status to published
         if [[ -z "$status" ]]; then
@@ -294,11 +295,12 @@ cmd_build() {
             title="$app_slug"
         fi
 
-        local json_title json_desc json_cat json_img json_path
+        local json_title json_desc json_cat json_img json_icon json_path
         json_title="$(escape_json "$title")"
         json_desc="$(escape_json "$description")"
         json_cat="$(escape_json "$category")"
         json_img="$(escape_json "$image")"
+        json_icon="$(escape_json "$icon")"
         json_path="$(escape_json "${app_slug}/")"
 
         if [[ -n "$json_entries" ]]; then
@@ -311,6 +313,7 @@ cmd_build() {
       \"description\": \"${json_desc}\",
       \"category\": \"${json_cat}\",
       \"image\": \"${json_img}\",
+      \"icon\": \"${json_icon}\",
       \"path\": \"${json_path}\"
     }"
 
