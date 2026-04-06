@@ -294,15 +294,31 @@ func cmdBuild() {
 	)
 
 	for _, d := range dirs {
-		if !d.IsDir() || d.Name() == distDir {
+		name := d.Name()
+		if name == distDir || name == ".DS_Store" {
 			continue
 		}
 
+		if !d.IsDir() {
+			// Process Root Files (e.g., src/index.html)
+			srcPath := filepath.Join(srcDir, name)
+			distPath := filepath.Join(distDir, name)
+			wg.Add(1)
+			go func(s, ds, n string) {
+				defer wg.Done()
+				if err := copyFile(s, ds); err == nil && n == "index.html" {
+					_ = injectIntoFile(ds, bCtx.Header, bCtx.Footer)
+				}
+			}(srcPath, distPath, name)
+			continue
+		}
+
+		// Process App Folders
 		wg.Add(1)
 		go func(entry os.DirEntry) {
 			defer wg.Done()
-			tokens <- struct{}{} // Acquire worker
-			defer func() { <-tokens }() // Release worker
+			tokens <- struct{}{}
+			defer func() { <-tokens }()
 
 			app, err := processApp(context.Background(), bCtx, entry)
 			if err != nil {
