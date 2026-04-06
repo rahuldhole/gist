@@ -290,6 +290,12 @@ func cmdBuild() {
 	os.RemoveAll(distDir)
 	_ = os.MkdirAll(distDir, 0755)
 
+	// Phase 1: Global Assets (Root index.html)
+	if data, err := os.ReadFile("index.html"); err == nil {
+		_ = os.WriteFile(filepath.Join(distDir, "index.html"), data, 0644)
+	}
+	
+	// Phase 2: App Scanning
 	dirs, _ := os.ReadDir(srcDir)
 	var (
 		wg      sync.WaitGroup
@@ -299,25 +305,7 @@ func cmdBuild() {
 	)
 
 	for _, d := range dirs {
-		name := d.Name()
-		if name == distDir || name == ".DS_Store" {
-			continue
-		}
-
-		if !d.IsDir() {
-			srcPath := filepath.Join(srcDir, name)
-			distPath := filepath.Join(distDir, name)
-			wg.Add(1)
-			go func(s, ds string) {
-				defer wg.Done()
-				data, err := os.ReadFile(s)
-				if err == nil {
-					if name == "index.html" {
-						data = injectBytePartials(data, bCtx.Header, bCtx.Footer)
-					}
-					_ = os.WriteFile(ds, data, 0644)
-				}
-			}(srcPath, distPath)
+		if !d.IsDir() || d.Name() == distDir || d.Name() == ".DS_Store" {
 			continue
 		}
 
