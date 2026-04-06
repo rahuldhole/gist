@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -71,8 +70,6 @@ type AppMeta struct {
 type BuildCtx struct {
 	Header []byte
 	Footer []byte
-	Repo   string
-	Token  string
 }
 
 // ── Metadata Extraction ──────────────────────────────────────────────────────
@@ -103,7 +100,7 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 	srcIdx := filepath.Join(srcDir, name, "index.html")
 	distIdx := filepath.Join(distDir, name, "index.html")
 
-	// Ensure source meta (Synchronous at source level, but fine for local)
+	// Ensure source meta shell is present
 	ensureMetaBlock(srcIdx, name)
 
 	content, err := os.ReadFile(srcIdx)
@@ -138,8 +135,17 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 		title = name
 	}
 
-	// Sort Metadata
-	modTime := getGitUpdateTime(srcIdx, bCtx)
+	// Parse custom "Updated" field from meta block
+	updatedStr := extractMeta("Updated", cStr)
+	updatedAt, err := time.Parse("2006-01-02", updatedStr)
+	if err != nil {
+		// Fallback to file timestamp if meta is missing/broken
+		if info, err := os.Stat(srcIdx); err == nil {
+			updatedAt = info.ModTime()
+		} else {
+			updatedAt = time.Now()
+		}
+	}
 
 	return &AppMeta{
 		Title:       title,
@@ -149,7 +155,7 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 		Icon:        extractMeta("Icon", cStr),
 		Status:      status,
 		Path:        name + "/",
-		UpdatedAt:   modTime,
+		UpdatedAt:   updatedAt,
 	}, nil
 }
 
@@ -202,47 +208,6 @@ func injectIntoFile(target string, header, footer []byte) error {
 	return os.WriteFile(target, []byte(html), 0644)
 }
 
-func getGitUpdateTime(path string, bCtx *BuildCtx) time.Time {
-	dir := filepath.Dir(path)
-
-	// 1. Local Git Check
-	cmd := exec.Command("git", "log", "-1", "--format=%ct", "--", dir)
-	if out, err := cmd.Output(); err == nil && len(out) > 0 {
-		if ts, err := strconv.ParseInt(strings.TrimSpace(string(out)), 10, 64); err == nil && ts > 0 {
-			return time.Unix(ts, 0)
-		}
-	}
-
-	// 2. GitHub API Fallback (CI Optimization)
-	if bCtx.Repo != "" && bCtx.Token != "" {
-		url := fmt.Sprintf("https://api.github.com/repos/%s/commits?path=%s&per_page=1", bCtx.Repo, dir)
-		req, _ := http.NewRequest("GET", url, nil)
-		req.Header.Set("Authorization", "token "+bCtx.Token)
-		client := &http.Client{Timeout: 3 * time.Second}
-		if resp, err := client.Do(req); err == nil {
-			defer resp.Body.Close()
-			if resp.StatusCode == 200 {
-				var res []struct {
-					Commit struct {
-						Committer struct {
-							Date time.Time `json:"date"`
-						} `json:"committer"`
-					} `json:"commit"`
-				}
-				if err := json.NewDecoder(resp.Body).Decode(&res); err == nil && len(res) > 0 {
-					return res[0].Commit.Committer.Date
-				}
-			}
-		}
-	}
-
-	// 3. Fallback
-	if info, err := os.Stat(path); err == nil {
-		return info.ModTime()
-	}
-	return time.Now()
-}
-
 func ensureMetaBlock(path, slug string) {
 	bytes, _ := os.ReadFile(path)
 	if strings.Contains(string(bytes), "<!-- APP-META") {
@@ -254,27 +219,89 @@ func ensureMetaBlock(path, slug string) {
 		title = strings.TrimSpace(match[1])
 	}
 
-	meta := fmt.Sprintf("<!-- APP-META\nTitle: %s\nDescription:\nCategory:\nStatus: published\n-->\n", title)
+	meta := fmt.Sprintf("<!-- APP-META\nTitle: %s\nDescription:\nCategory:\nStatus: published\nUpdated: %s\n-->\n", 
+		title, time.Now().Format("2006-01-02"))
 	_ = os.WriteFile(path, append([]byte(meta), bytes...), 0644)
+}
+
+func cmdUpdateMetadata() {
+	logInfo("Scanning for changes to update metadata...")
+	
+	// Get changed folders in src/ relative to previous commit
+	// In GitHub Actions, we can check files in the current commit
+	cmd := exec.Command("git", "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD")
+	out, err := cmd.Output()
+	if err != nil {
+		logError("Failed to get git diff: %v", err)
+		return
+	}
+
+	today := time.Now().Format("2006-01-02")
+	changedApps := make(map[string]bool)
+	lines := strings.Split(string(out), "\n")
+	
+	for _, line := range lines {
+		if strings.HasPrefix(line, "src/") {
+			parts := strings.Split(line, "/")
+			if len(parts) >= 2 {
+				appName := parts[1]
+				if appName != "index.html" {
+					changedApps[appName] = true
+				}
+			}
+		}
+	}
+
+	if len(changedApps) == 0 {
+		logInfo("No app changes detected in src/.")
+		return
+	}
+
+	for appName := range changedApps {
+		path := filepath.Join(srcDir, appName, "index.html")
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			continue
+		}
+
+		content, _ := os.ReadFile(path)
+		cStr := string(content)
+		
+		if !strings.Contains(cStr, "<!-- APP-META") {
+			ensureMetaBlock(path, appName)
+			continue
+		}
+
+		// Update or Add "Updated: YYYY-MM-DD"
+		re := regexp.MustCompile(`(?s)(<!-- APP-META.*?-->)`)
+		match := re.FindStringSubmatch(cStr)
+		if len(match) > 0 {
+			block := match[1]
+			var newBlock string
+			if strings.Contains(strings.ToLower(block), "updated:") {
+				// Replace existing
+				reUp := regexp.MustCompile(`(?i)Updated:\s*[^\n]+`)
+				newBlock = reUp.ReplaceAllString(block, "Updated: "+today)
+			} else {
+				// Add new before the end
+				newBlock = strings.Replace(block, "-->", "Updated: "+today+"\n-->", 1)
+			}
+			newContent := strings.Replace(cStr, block, newBlock, 1)
+			os.WriteFile(path, []byte(newContent), 0644)
+			logSuccess("  Updated timestamp for %s", appName)
+		}
+	}
 }
 
 // ── Command Implementation ───────────────────────────────────────────────────
 
 func cmdBuild() {
 	start := time.Now()
-	logInfo("🚀 Initializing high-performance build...")
+	logInfo("🚀 Initializing metadata-driven build...")
 
-	// Pre-load assets into memory
 	header, _ := os.ReadFile(headerFile)
 	footer, _ := os.ReadFile(footerFile)
-	bCtx := &BuildCtx{
-		Header: header,
-		Footer: footer,
-		Repo:   os.Getenv("GITHUB_REPOSITORY"),
-		Token:  os.Getenv("GITHUB_TOKEN"),
-	}
+	bCtx := &BuildCtx{Header: header, Footer: footer}
 
-	// Workspace preparation
 	os.RemoveAll(distDir)
 	_ = os.MkdirAll(distDir, 0755)
 
@@ -284,13 +311,11 @@ func cmdBuild() {
 		os.Exit(1)
 	}
 
-	// Concurrent Processing
 	var (
 		wg      sync.WaitGroup
 		mu      sync.Mutex
 		apps    []AppMeta
 		tokens  = make(chan struct{}, maxWorkers)
-		results = make(chan *AppMeta, len(dirs))
 	)
 
 	for _, d := range dirs {
@@ -300,7 +325,6 @@ func cmdBuild() {
 		}
 
 		if !d.IsDir() {
-			// Process Root Files (e.g., src/index.html)
 			srcPath := filepath.Join(srcDir, name)
 			distPath := filepath.Join(distDir, name)
 			wg.Add(1)
@@ -311,7 +335,6 @@ func cmdBuild() {
 			continue
 		}
 
-		// Process App Folders
 		wg.Add(1)
 		go func(entry os.DirEntry) {
 			defer wg.Done()
@@ -333,9 +356,7 @@ func cmdBuild() {
 	}
 
 	wg.Wait()
-	close(results)
 
-	// Finalize Collection
 	sort.Slice(apps, func(i, j int) bool {
 		return apps[i].UpdatedAt.After(apps[j].UpdatedAt)
 	})
@@ -356,6 +377,8 @@ func main() {
 	switch os.Args[1] {
 	case "build":
 		cmdBuild()
+	case "update-metadata":
+		cmdUpdateMetadata()
 	case "preview":
 		port := "8080"
 		if len(os.Args) > 2 {
