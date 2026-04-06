@@ -63,26 +63,79 @@
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        [x-cloak] {
-            display: none !important;
+        [x-cloak] { display: none !important; }
+
+        :root {
+            --brand-glow: rgba(99, 102, 241, 0.4);
         }
 
-        /* Smooth, hardware-accelerated transitions */
-        .app-card {
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
-        }
-
-        .app-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.3);
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
         }
 
         .glass-header {
-            background: rgba(3, 7, 18, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .app-card {
+            background: rgba(17, 24, 39, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .app-card:hover {
+            background: rgba(17, 24, 39, 0.6);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 40px -15px var(--brand-glow);
+            transform: translateY(-6px) scale(1.01);
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(99, 102, 241, 0.05) 50%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .app-card:hover::before {
+            opacity: 1;
+        }
+
+        .search-input {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            background: rgba(17, 24, 39, 0.8);
+            border-color: #6366f1;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .category-badge {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .gist-icon-placeholder {
+            background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
         }
     </style>
 </head>
@@ -118,12 +171,12 @@
                             </svg>
                         </div>
                         <input type="text" x-model="search" placeholder="Search apps..."
-                            class="block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-xl leading-5 bg-gray-900/50 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 sm:text-sm transition-colors">
+                            class="search-input block w-full pl-10 pr-3 py-2 rounded-xl leading-5 text-gray-300 placeholder-gray-500 focus:outline-none sm:text-sm transition-colors">
                     </div>
 
                     <!-- Category Filter -->
                     <select x-model="category"
-                        class="block w-full sm:w-40 pl-3 pr-10 py-2 text-base border-gray-700 bg-gray-900/50 text-gray-300 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm rounded-xl transition-colors cursor-pointer appearance-none border">
+                        class="search-input block w-full sm:w-40 pl-3 pr-10 py-2 text-base text-gray-300 focus:outline-none sm:text-sm rounded-xl transition-colors cursor-pointer appearance-none">
                         <option value="">All Categories</option>
                         <template x-for="cat in uniqueCategories" :key="cat">
                             <option :value="cat" x-text="cat"></option>
@@ -167,57 +220,72 @@
         </div>
 
         <!-- Apps Grid -->
-        <div x-show="!loading && !error" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            x-cloak>
-            <template x-for="app in filteredApps" :key="app.title">
-                <a :href="app.path"
-                    class="app-card group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex flex-col focus:outline-none focus:ring-2 focus:ring-brand-500">
-
-                    <!-- App Image/Icon Area -->
-                    <div class="aspect-video w-full bg-gray-800 relative overflow-hidden border-b border-gray-800 flex items-center justify-center">
-                        <template x-if="app.image">
-                            <img :src="app.image" :alt="app.title" loading="lazy"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                        </template>
-                        <template x-if="!app.image && app.icon">
-                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 group-hover:scale-110 transition-transform duration-500">
-                                <i :class="app.icon + ' text-5xl text-brand-400 opacity-80'"></i>
-                            </div>
-                        </template>
-                        <template x-if="!app.image && !app.icon">
-                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 group-hover:scale-105 transition-transform duration-500">
-                                <svg class="w-12 h-12 text-gray-700" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                </svg>
-                            </div>
-                        </template>
-
-                        <!-- Category Badge -->
-                        <div class="absolute top-3 right-3 px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-900/80 backdrop-blur-sm text-brand-300 border border-gray-700/50"
-                            x-text="app.category"></div>
-                    </div>
-
-                    <!-- App Content -->
-                    <div class="p-5 flex flex-col flex-grow">
-                        <h3 class="text-lg font-bold text-white mb-2 group-hover:text-brand-400 transition-colors"
-                            x-text="app.title"></h3>
-                        <p class="text-sm text-gray-400 line-clamp-3 mb-4 flex-grow leading-relaxed"
-                            x-text="app.description"></p>
-
-                        <!-- Open Button -->
-                        <div
-                            class="mt-auto pt-4 border-t border-gray-800 flex items-center justify-between text-brand-500 font-medium text-sm group-hover:text-brand-400 transition-colors">
-                            <span>Launch Application</span>
-                            <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
+        <div x-show="!loading && !error" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" x-cloak>
+            <template x-for="(app, index) in filteredApps" :key="app.path">
+                <div 
+                    x-data="{ imageBroken: false }"
+                    x-init="gsap.from($el, { opacity: 0, scale: 0.9, y: 20, delay: index * 0.08, duration: 0.5, ease: 'circ.out' })"
+                    class="h-full"
+                >
+                    <a :href="app.path"
+                        class="app-card group relative h-full flex flex-col rounded-3xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        
+                        <!-- Media Area -->
+                        <div class="aspect-video w-full relative overflow-hidden flex items-center justify-center gist-icon-placeholder border-b border-white/5">
+                            <!-- Case 1: Image exists and is working -->
+                            <template x-if="app.image && !imageBroken">
+                                <img :src="app.image" :alt="app.title" loading="lazy"
+                                    @error="imageBroken = true"
+                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out">
+                            </template>
+                            
+                            <!-- Case 2: Image missing or broken, but Icon exists -->
+                            <template x-if="(!app.image || imageBroken) && app.icon">
+                                <div class="w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                                    <i :class="app.icon + ' text-6xl text-brand-400 opacity-90 drop-shadow-[0_0_15px_rgba(99,102,241,0.4)]'"></i>
+                                </div>
+                            </template>
+                            
+                            <!-- Case 3: Both missing - Default Gist Icon -->
+                            <template x-if="(!app.image || imageBroken) && !app.icon">
+                                <div class="w-full h-full flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity">
+                                    <svg class="w-16 h-16 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                    </svg>
+                                </div>
+                            </template>
+    
+                            <!-- Category Badge -->
+                            <div class="absolute top-4 right-4 px-3 py-1.5 rounded-full category-badge bg-black/60 backdrop-blur-md text-brand-300 border border-white/10 shadow-lg"
+                                x-text="app.category"></div>
                         </div>
-                    </div>
-                </a>
+    
+                        <!-- Content -->
+                        <div class="p-6 flex flex-col flex-grow relative z-10">
+                            <h3 class="text-xl font-extrabold text-white mb-2 group-hover:text-brand-400 transition-colors tracking-tight"
+                                x-text="app.title"></h3>
+                            
+                            <template x-if="app.description">
+                                <p class="text-sm text-gray-400 line-clamp-3 mb-6 flex-grow leading-relaxed"
+                                    x-text="app.description"></p>
+                            </template>
+                            <template x-if="!app.description">
+                                <div class="flex-grow mb-6 italic text-gray-600 text-sm">No description provided.</div>
+                            </template>
+    
+                            <!-- Action Link -->
+                            <div class="mt-auto pt-5 border-t border-white/5 flex items-center justify-between text-brand-400 font-bold text-sm tracking-wide">
+                                <span class="group-hover:translate-x-1 transition-transform inline-flex items-center gap-2">
+                                    LAUNCH APP
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
             </template>
         </div>
 
