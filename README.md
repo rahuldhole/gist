@@ -18,13 +18,14 @@ A bespoke, zero-dependency environment for a collection of single-page HTML/JS m
  ├── helpers/
  │   ├── header.html               # Shared header partial
  │   └── footer.html               # Shared footer partial
- ├── gist                          # The pure Bash build & preview tool
- └── .github/workflows/cd.yml  # GitHub Actions config
+ ├── gist.go                       # The Go-based build & preview tool
+ ├── Taskfile.yaml                 # Project task runner
+ └── .github/workflows/cd.yml      # GitHub Actions config
 ```
 
 ## How It Works
 
-This project uses a custom, pure Bash CLI (`./gist`) instead of a bloated static site generator.
+This project uses a custom, robust **Go tool** and **go-task** instead of a bloated static site generator.
 
 1.  **Source is Sacred**: The build process **never** modifies the files in `src/` for injection. It only copies them to `dist/`. The only modification it might make to `src/` is prepending a missing `<!-- APP-META -->` block.
 2.  **Idempotent Injection**: The `header.html` and `footer.html` from the `helpers/` folder are injected into the *copied* files in `dist/`.
@@ -49,23 +50,23 @@ Status: published
 ...
 ```
 
-If you forget the block, `./gist build` will auto-generate a skeleton one for you in your source file so you know what fields are available.
+If you forget the block, `task build` will auto-generate a skeleton one for you in your source file so you know what fields are available.
 
-## CLI Usage
+## Task Usage
 
-The `./gist` CLI tool requires **no** external dependencies like Node, Ruby, or Go. It just needs standard Unix utilities (Bash 4+, awk, sed, grep) and `python3` for the local server.
+The project requires **Go 1.21+** and **go-task**. We've traded Bash strings for a strongly typed Go engine.
 
 ```bash
-# Copy src/ to dist/, generate apps.json, and inject headers/footers
-./gist build
+# Build dist/, inject headers/footers, and generate apps.json
+task build
 
-# Start a local HTTP server serving the dist/ directory on port 8080
-./gist preview
+# Start a local preview server on port 8080
+task preview
 
 # Remove the generated dist/ folder
-./gist clean
+task clean
 ```
 
 ## Deployment
 
-The project includes a GitHub Actions workflow (`.github/workflows/cd.yml`) that automatically runs `./gist build` and deploys the resulting `dist/` directory to GitHub Pages whenever changes are pushed to `main`.
+The project includes a GitHub Actions workflow (`.github/workflows/cd.yml`) that automatically runs `task build` and deploys the resulting `dist/` directory to GitHub Pages whenever changes are pushed to `main`.

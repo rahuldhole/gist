@@ -1,0 +1,22 @@
+version: '3'
+
+tasks:
+  build:
+    desc: Build the app directory (Copy src to dist, inject header/footer)
+    cmds:
+      - go run gist.go build
+
+  preview:
+    desc: Start a local preview server on port 8080
+    cmds:
+      - go run gist.go preview {{.CLI_ARGS}}
+
+  clean:
+    desc: Remove the generated dist/ directory
+    cmds:
+      - go run gist.go clean
+
+  setup:
+    desc: Initial setup (ensure dependencies)
+    cmds:
+      - go version
