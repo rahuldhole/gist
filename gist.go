@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -25,6 +26,7 @@ const (
 	headerFile = "helpers/header.html"
 	footerFile = "helpers/footer.html"
 	maxWorkers = 10
+	baseURL    = "https://rahuldhole.github.io/gist/"
 )
 
 // Pre-compiled regexes for performance
@@ -115,8 +117,19 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 		return nil, err
 	}
 
-	// Process and Write in one pass
+	// Extract metadata for OG tags (before status check so tags are injected into all pages)
+	title := extractMeta("Title", content)
+	if title == "" {
+		title = name
+	}
+	description := extractMeta("Description", content)
+	image := extractMeta("Image", content)
+	category := extractMeta("Category", content)
+	icon := extractMeta("Icon", content)
+
+	// Process content: inject header/footer, then OG meta tags
 	processedContent := injectBytePartials(content, bCtx.Header, bCtx.Footer)
+	processedContent = injectOGTags(processedContent, title, description, category, icon, name+"/")
 	if err := os.WriteFile(distIdx, processedContent, 0644); err != nil {
 		return nil, err
 	}
@@ -124,11 +137,6 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 	if status != "published" {
 		logSkip("  Skipped: %s (%s)", name, status)
 		return nil, nil
-	}
-
-	title := extractMeta("Title", content)
-	if title == "" {
-		title = name
 	}
 
 	// Parse custom "Updated" field from meta block
@@ -157,10 +165,10 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 
 	return &AppMeta{
 		Title:       title,
-		Description: extractMeta("Description", content),
+		Description: description,
 		Category:    extractMeta("Category", content),
-		Image:       extractMeta("Image", content),
-		Icon:        extractMeta("Icon", content),
+		Image:       image,
+		Icon:        icon,
 		Status:      status,
 		Path:        name + "/",
 		UpdatedAt:   updatedAt,
@@ -194,6 +202,117 @@ func injectBytePartials(content []byte, header, footer []byte) []byte {
 		}
 	}
 	return out
+}
+
+// ── Social Meta / OG Tag Injection ──────────────────────────────────────────
+
+func ogEmoji(category, icon string) string {
+	cat := strings.ToLower(category)
+	switch {
+	case strings.Contains(cat, "ai") || strings.Contains(cat, "ml"):
+		return "🤖"
+	case strings.Contains(cat, "tool"):
+		return "🛠️"
+	case strings.Contains(cat, "game"):
+		return "🎮"
+	case strings.Contains(cat, "algo"):
+		return "🧠"
+	case strings.Contains(cat, "dev"):
+		return "💻"
+	case strings.Contains(cat, "test"):
+		return "🧪"
+	case strings.Contains(cat, "calc"):
+		return "🔢"
+	default:
+		return "📦"
+	}
+}
+
+func ogImageURL(title, description, category, icon string) string {
+	params := url.Values{}
+	params.Set("template", "gradient")
+	params.Set("title", truncate(title, 80))
+	params.Set("icon", ogEmoji(category, icon))
+	if description != "" {
+		params.Set("description", truncate(description, 200))
+	}
+	params.Set("bg", "1e3a5f")
+	params.Set("text", "ffffff")
+	return "https://og-image.org/api/og?" + params.Encode()
+}
+
+func truncate(s string, max int) string {
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[:max])
+}
+
+func generateOGTags(title, description, category, icon, path string) []byte {
+	var b bytes.Buffer
+	pageURL := baseURL + path
+
+	b.WriteString("\n    <!-- Open Graph / Social Meta Tags -->\n")
+	b.WriteString("    <meta property=\"og:type\" content=\"website\" />\n")
+	fmt.Fprintf(&b, "    <meta property=\"og:url\" content=\"%s\" />\n", pageURL)
+	fmt.Fprintf(&b, "    <meta property=\"og:title\" content=\"%s\" />\n", title)
+	if description != "" {
+		fmt.Fprintf(&b, "    <meta property=\"og:description\" content=\"%s\" />\n", description)
+	}
+	ogImg := ogImageURL(title, description, category, icon)
+	fmt.Fprintf(&b, "    <meta property=\"og:image\" content=\"%s\" />\n", ogImg)
+	fmt.Fprintf(&b, "    <meta property=\"og:image:width\" content=\"1200\" />\n")
+	fmt.Fprintf(&b, "    <meta property=\"og:image:height\" content=\"630\" />\n")
+	fmt.Fprintf(&b, "    <meta name=\"twitter:card\" content=\"summary_large_image\" />\n")
+	fmt.Fprintf(&b, "    <meta name=\"twitter:url\" content=\"%s\" />\n", pageURL)
+	fmt.Fprintf(&b, "    <meta name=\"twitter:title\" content=\"%s\" />\n", title)
+	if description != "" {
+		fmt.Fprintf(&b, "    <meta name=\"twitter:description\" content=\"%s\" />\n", description)
+	}
+	fmt.Fprintf(&b, "    <meta name=\"twitter:image\" content=\"%s\" />\n", ogImg)
+
+	return b.Bytes()
+}
+
+func injectOGTags(content []byte, title, description, category, icon, path string) []byte {
+	ogTags := generateOGTags(title, description, category, icon, path)
+	if len(ogTags) == 0 {
+		return content
+	}
+	if bytes.Contains(content, []byte("</head>")) {
+		return bytes.Replace(content, []byte("</head>"), append(ogTags, []byte("\n</head>")...), 1)
+	}
+	return content
+}
+
+// ── Sitemap & Robots Generation ─────────────────────────────────────────────
+
+func generateSitemap(apps []AppMeta) []byte {
+	var b bytes.Buffer
+	b.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+	b.WriteString("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n")
+
+	fmt.Fprintf(&b, "  <url>\n    <loc>%s</loc>\n    <priority>1.0</priority>\n  </url>\n", baseURL)
+
+	for _, app := range apps {
+		fmt.Fprintf(&b, "  <url>\n    <loc>%s%s</loc>\n", baseURL, app.Path)
+		if !app.UpdatedAt.IsZero() {
+			fmt.Fprintf(&b, "    <lastmod>%s</lastmod>\n", app.UpdatedAt.Format("2006-01-02"))
+		}
+		fmt.Fprintf(&b, "    <priority>0.8</priority>\n  </url>\n")
+	}
+
+	b.WriteString("</urlset>\n")
+	return b.Bytes()
+}
+
+func generateRobotsTxt() []byte {
+	var b bytes.Buffer
+	b.WriteString("User-agent: *\n")
+	b.WriteString("Allow: /\n\n")
+	fmt.Fprintf(&b, "Sitemap: %ssitemap.xml\n", baseURL)
+	return b.Bytes()
 }
 
 // ── Command Implementation ───────────────────────────────────────────────────
@@ -254,6 +373,15 @@ func cmdBuild() {
 
 	jsonData, _ := json.MarshalIndent(apps, "", "  ")
 	_ = os.WriteFile(filepath.Join(distDir, "apps.json"), jsonData, 0644)
+
+	// Phase 3: SEO Assets
+	sitemapData := generateSitemap(apps)
+	_ = os.WriteFile(filepath.Join(distDir, "sitemap.xml"), sitemapData, 0644)
+	logSuccess("  Generated: sitemap.xml (%d URLs)", len(apps)+1)
+
+	robotsData := generateRobotsTxt()
+	_ = os.WriteFile(filepath.Join(distDir, "robots.txt"), robotsData, 0644)
+	logSuccess("  Generated: robots.txt")
 
 	logSuccess("\n✨ Build complete in %v", time.Since(start))
 }
