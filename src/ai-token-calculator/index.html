@@ -1,0 +1,396 @@
+<!-- APP-META
+Title: Token Calculator
+Description: A universal and agnostic tool to calculate text tokens, character counts, and heuristics for documents.
+Category: Tools
+Icon: fa-solid fa-calculator
+Image: https://images.unsplash.com/photo-1718241905916-1f9786324de9?q=80&w=2128&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D
+Status: published
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Calculator</title>
+  <link rel="icon" href="https://playonweb.org/favicon.ico" type="image/x-icon">
+
+  <meta name="keywords" content="token calculator, text tokens, tokenization, tokenizer, BPE, token counting, heuristic, character count, web tool">
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Token Calculator">
+  <meta property="og:description" content="A universal and agnostic tool to calculate text tokens, character counts, and heuristics for documents.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Token Calculator">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Parsers for PDF and DOCX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at top right, #1f2937 0%, #0f172a 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Glassmorphism utilities */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .glass-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+      transition: all 0.3s ease;
+    }
+    
+    .glass-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+
+  <!-- Import Map for Vue and Tiktoken -->
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+        "js-tiktoken": "https://esm.sh/js-tiktoken",
+        "js-tiktoken/lite": "https://esm.sh/js-tiktoken/lite"
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen">
+
+  <div id="app" class="w-full max-w-6xl mx-auto py-8 px-4 md:py-12 md:px-8"></div>
+
+  <script type="module">
+    import { createApp, ref, computed, onMounted, watch } from 'vue'
+    import { Tiktoken } from 'js-tiktoken/lite'
+    import { getEncoding } from 'js-tiktoken'
+
+    const app = createApp({
+      setup() {
+        const tokenText = ref('')
+        const exactTokens = ref(null)
+        const loadingExact = ref(true)
+        const clientExactCount = ref(0)
+        
+        const fileInput = ref(null)
+        const isParsingFile = ref(false)
+
+        let tokenizer = null
+
+        // Heuristic proxy
+        const heuristicStats = computed(() => {
+          const text = tokenText.value || ''
+          const charCount = text.length
+          const isCode = /[{}[\]()]/.test(text)
+          const ratio = isCode ? 2.5 : 4.0
+          return {
+            charCount,
+            ratio,
+            type: isCode ? 'Code' : 'Text',
+            heuristic: Math.ceil(charCount / ratio)
+          }
+        })
+
+        // Deviation calculation
+        const deviation = computed(() => {
+          if (exactTokens.value === null || exactTokens.value === 0) return null
+          const diff = heuristicStats.value.heuristic - exactTokens.value
+          const percent = (diff / exactTokens.value) * 100
+          return {
+            diff,
+            percent: percent.toFixed(1),
+            isOverestimating: diff > 0,
+            color: Math.abs(percent) < 5 ? 'text-emerald-500' : Math.abs(percent) < 15 ? 'text-amber-500' : 'text-rose-500'
+          }
+        })
+
+        const loadTokenPreset = (presetType) => {
+          if (presetType === 'general') {
+            tokenText.value = `In natural language processing, a token is a fundamental unit of text, which could be a word, a part of a word, or a single character. Tokenization is the process of breaking down text into these smaller units, allowing models to process and analyze the structure of the language.\n\nDifferent tokenizers use various rules and dictionaries to split text. For instance, Byte-Pair Encoding (BPE) merges frequently occurring character pairs into single tokens, balancing the vocabulary size and the sequence length, which is crucial for efficient data processing.`
+          } else if (presetType === 'code') {
+            tokenText.value = `// Robust token calculator engine class\nexport class TokenEstimator {\n  private ratio = 4.0;\n\n  constructor(private rawText: string) {}\n\n  public calculate(): number {\n    if (!this.rawText) return 0;\n    const isCode = /[{}[\\(\\)]]/.test(this.rawText);\n    this.ratio = isCode ? 2.5 : 4.0;\n    return Math.ceil(this.rawText.length / this.ratio);\n  }\n}`
+          } else if (presetType === 'data') {
+            tokenText.value = `{\n  "status": "success",\n  "metadata": {\n    "timestamp": "2023-10-21T09:30Z",\n    "page": 1,\n    "limit": 50\n  },\n  "data": [\n    { "id": 101, "role": "admin", "active": true },\n    { "id": 102, "role": "user", "active": false }\n  ]\n}`
+          }
+        }
+
+        // Initialize tiktoken engine
+        onMounted(async () => {
+          try {
+            const res = await fetch('./public/vendor/js-tiktoken/cl100k_base.1.0.21.json')
+            if (res.ok) {
+              const dict = await res.json()
+              tokenizer = new Tiktoken(dict)
+            } else {
+              throw new Error('Local dictionary not found')
+            }
+          } catch (e) {
+            console.log('Falling back to standard CDN js-tiktoken cl100k_base')
+            tokenizer = getEncoding('cl100k_base')
+          }
+          
+          loadingExact.value = false
+          loadTokenPreset('general')
+        })
+
+        // Debounce calculation
+        let debounceTimer = null
+        const triggerExactCalc = (val) => {
+          if (debounceTimer) clearTimeout(debounceTimer)
+          
+          if (!val.trim()) {
+            clientExactCount.value = 0
+            exactTokens.value = 0
+            loadingExact.value = false
+            return
+          }
+
+          // Immediate client-side calculation
+          if (tokenizer) {
+            clientExactCount.value = tokenizer.encode(val).length
+          }
+
+          // Simulated exact server calculation
+          loadingExact.value = true
+          debounceTimer = setTimeout(() => {
+            if (tokenizer) {
+              // In this prototype, server exact is mirrored by the client engine
+              exactTokens.value = tokenizer.encode(val).length
+            }
+            loadingExact.value = false
+          }, 400)
+        }
+
+        watch(tokenText, (newVal) => {
+          triggerExactCalc(newVal)
+        })
+
+        // File Parsing Logic
+        const triggerFileInput = () => {
+          if (fileInput.value) fileInput.value.click()
+        }
+
+        const handleFileUpload = async (event) => {
+          const file = event.target.files[0]
+          if (!file) return
+
+          isParsingFile.value = true
+          try {
+            const ext = file.name.split('.').pop().toLowerCase()
+            
+            if (['txt', 'md', 'json', 'csv', 'html', 'xml', 'log'].includes(ext)) {
+              tokenText.value = await file.text()
+            } else if (ext === 'docx') {
+              const arrayBuffer = await file.arrayBuffer()
+              const result = await mammoth.extractRawText({ arrayBuffer })
+              tokenText.value = result.value
+            } else if (ext === 'pdf') {
+              const arrayBuffer = await file.arrayBuffer()
+              const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+              let fullText = ''
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i)
+                const textContent = await page.getTextContent()
+                const pageText = textContent.items.map(item => item.str).join(' ')
+                fullText += pageText + '\\n'
+              }
+              tokenText.value = fullText
+            } else {
+              alert('Unsupported file type. Please upload text, md, docx, or pdf files.')
+            }
+          } catch (e) {
+            alert('Error parsing file: ' + e.message)
+          } finally {
+            isParsingFile.value = false
+            event.target.value = ''
+          }
+        }
+
+        return {
+          tokenText,
+          exactTokens,
+          loadingExact,
+          clientExactCount,
+          heuristicStats,
+          deviation,
+          loadTokenPreset,
+          fileInput,
+          triggerFileInput,
+          handleFileUpload,
+          isParsingFile
+        }
+      },
+      template: `
+        <div class="animate-fade-in flex flex-col gap-8 w-full">
+          <div class="flex flex-col items-center justify-center text-center space-y-3 mb-2">
+            <h1 class="text-4xl md:text-5xl font-bold gradient-text tracking-tight">Token Calculator</h1>
+            <p class="text-slate-400 font-medium max-w-xl">Measure exact and heuristic tokens, and analyze deviation telemetry.</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Input Area -->
+            <div class="lg:col-span-7 flex flex-col gap-3">
+              <div class="glass-panel rounded-3xl p-2 md:p-4 flex flex-col h-[600px] shadow-2xl">
+                <div class="flex flex-wrap items-center justify-between gap-3 p-2">
+                  <div class="flex gap-2">
+                    <button @click="loadTokenPreset('general')" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 transition-colors border border-white/5">Text</button>
+                    <button @click="loadTokenPreset('code')" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 transition-colors border border-white/5">Code</button>
+                    <button @click="loadTokenPreset('data')" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 transition-colors border border-white/5">Data</button>
+                  </div>
+                  <div class="flex gap-2">
+                    <button @click="tokenText = ''" class="px-4 py-1.5 rounded-full text-xs font-semibold hover:bg-red-500/10 text-red-400 transition-colors border border-transparent hover:border-red-500/20">Clear</button>
+                    <button @click="triggerFileInput" :disabled="isParsingFile" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-colors border border-blue-500/20 flex items-center gap-2">
+                      <span v-if="isParsingFile" class="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                      {{ isParsingFile ? 'Uploading...' : 'Upload File' }}
+                    </button>
+                    <input type="file" ref="fileInput" @change="handleFileUpload" class="hidden" accept=".txt,.md,.json,.csv,.log,.pdf,.docx" />
+                  </div>
+                </div>
+                <textarea
+                  v-model="tokenText"
+                  placeholder="Paste your prompt, code, or data here..."
+                  class="glass-input flex-1 w-full rounded-2xl p-5 font-mono text-[14px] leading-relaxed resize-none scrollbar-none shadow-inner"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Diagnostics Display -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block pl-2">Diagnostic Telemetry</span>
+
+              <div class="glass-panel rounded-3xl p-6 flex flex-col gap-5 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full pointer-events-none"></div>
+
+                <!-- Raw Info -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="stat-card glass-panel rounded-2xl p-4 flex flex-col items-start justify-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Character Count</span>
+                    <span class="text-3xl font-black font-mono text-white">{{ heuristicStats.charCount.toLocaleString() }}</span>
+                  </div>
+                  <div class="stat-card glass-panel rounded-2xl p-4 flex flex-col items-start justify-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Character Ratio</span>
+                    <span class="text-3xl font-black font-mono text-white">1 : {{ heuristicStats.ratio }}</span>
+                  </div>
+                </div>
+
+                <!-- Heuristic vs Exact -->
+                <div class="space-y-5 pt-2">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="text-sm font-bold text-slate-200">Client Tiktoken Count</h4>
+                      <p class="text-[10px] text-slate-400 font-medium">Exact cl100k_base client engine</p>
+                    </div>
+                    <span class="text-3xl font-black font-mono text-blue-400">{{ clientExactCount.toLocaleString() }} <span class="text-xs font-bold opacity-60">tk</span></span>
+                  </div>
+
+                  <div class="border-t border-slate-700/50 pt-5 flex items-center justify-between">
+                    <div>
+                      <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        Server Tiktoken Count
+                        <span v-if="loadingExact" class="w-3.5 h-3.5 inline-block animate-spin border-2 border-blue-400 border-t-transparent rounded-full"></span>
+                      </h4>
+                      <p class="text-[10px] text-slate-400 font-medium">Exact cl100k_base server engine (mocked)</p>
+                    </div>
+                    <span class="text-3xl font-black font-mono text-white">
+                      {{ exactTokens !== null ? exactTokens.toLocaleString() : '---' }} <span class="text-xs font-bold opacity-60">tk</span>
+                    </span>
+                  </div>
+
+                  <div class="border-t border-slate-700/50 pt-5 flex items-center justify-between">
+                    <div>
+                      <h4 class="text-sm font-bold text-slate-200">Client Heuristic Count</h4>
+                      <p class="text-[10px] text-slate-400 font-medium">Heuristic proxy model ({{ heuristicStats.type }})</p>
+                    </div>
+                    <span class="text-2xl font-bold font-mono text-slate-400">{{ heuristicStats.heuristic.toLocaleString() }} <span class="text-[11px] font-bold opacity-60">tk</span></span>
+                  </div>
+                </div>
+
+                <!-- Deviation Report -->
+                <div v-if="deviation" class="border-t border-slate-700/50 pt-5 space-y-3">
+                  <h4 class="text-[11px] font-black uppercase text-slate-500 tracking-wider">Deviation Analysis</h4>
+                  <div class="flex items-center justify-between text-sm font-bold">
+                    <span class="text-slate-300">Heuristic Model Error</span>
+                    <span :class="deviation.color" class="font-mono">
+                      {{ deviation.diff > 0 ? '+' : '' }}{{ deviation.diff.toLocaleString() }} tokens ({{ deviation.percent }}%)
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 leading-relaxed p-4 bg-black/20 rounded-xl border border-white/5">
+                    <span class="font-bold text-slate-200">Rule of Thumb:</span> Heuristics are designed to overshoot limits slightly to provide a fallback safety ceiling. A variance under 10% is fully optimal.
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    })
+
+    app.mount('#app')
+  </script>
+</body>
+</html>
