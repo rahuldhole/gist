@@ -20,3 +20,4 @@ Desktop.ini
 # Misc
 *.log
 *.test
+.unlighthouse
