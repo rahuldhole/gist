@@ -16,6 +16,7 @@ Description: Description...
 Category: Tools
 Status: published
 Updated: 1712444281
+Disable-Footer: true // if you don't want to add footer
 -->
 ```
 
