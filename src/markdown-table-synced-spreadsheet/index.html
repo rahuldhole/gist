@@ -88,104 +88,106 @@ Status: published
 </head>
 <body class="bg-slate-100 flex flex-col h-screen overflow-hidden">
 
-  <!-- Top Navigation Header -->
-  <header class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-800 shadow-sm shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="bg-blue-600 p-2 rounded-lg text-white font-bold flex items-center justify-center shadow">
-        <i class="fa-solid fa-arrows-rotate text-lg"></i>
+  <div id="app-wrapper" class="flex-1 flex flex-col min-h-0 w-full relative">
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-800 shadow-sm shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-600 p-2 rounded-lg text-white font-bold flex items-center justify-center shadow">
+          <i class="fa-solid fa-arrows-rotate text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-semibold text-base tracking-wide flex items-center gap-2">
+            Markdown Table <i class="fa-solid fa-arrows-left-right text-xs text-blue-400"></i> Spreadsheet Sync
+          </h1>
+          <p class="text-xs text-slate-400">Two-way live editing between Markdown & Univer Sheets</p>
+        </div>
       </div>
-      <div>
-        <h1 class="font-semibold text-base tracking-wide flex items-center gap-2">
-          Markdown Table <i class="fa-solid fa-arrows-left-right text-xs text-blue-400"></i> Spreadsheet Sync
-        </h1>
-        <p class="text-xs text-slate-400">Two-way live editing between Markdown & Univer Sheets</p>
+      <div class="flex items-center gap-2">
+        <button id="btn-sample-sales" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i> Sales Sample
+        </button>
+        <button id="btn-sample-project" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
+          <i class="fa-solid fa-list-check text-indigo-400"></i> Tasks Sample
+        </button>
+        <button id="btn-clear" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-200 rounded text-xs transition flex items-center gap-1.5 border border-rose-800">
+          <i class="fa-solid fa-trash-can"></i> Clear
+        </button>
       </div>
-    </div>
-    <div class="flex items-center gap-2">
-      <button id="btn-sample-sales" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
-        <i class="fa-solid fa-chart-line text-emerald-400"></i> Sales Sample
-      </button>
-      <button id="btn-sample-project" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
-        <i class="fa-solid fa-list-check text-indigo-400"></i> Tasks Sample
-      </button>
-      <button id="btn-clear" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-200 rounded text-xs transition flex items-center gap-1.5 border border-rose-800">
-        <i class="fa-solid fa-trash-can"></i> Clear
-      </button>
-    </div>
-  </header>
+    </header>
 
-  <!-- Main Split-Screen Resizable Layout -->
-  <main id="split-container" class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-    
-    <!-- Left Side: Markdown Input Panel -->
-    <section id="left-panel" class="w-full md:w-1/2 flex flex-col bg-white shadow-inner h-1/2 md:h-full min-w-[150px] min-h-[100px]">
-      <!-- Panel Bar -->
-      <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-2">
-          <i class="fa-brands fa-markdown text-slate-700 text-lg"></i>
-          <span class="text-xs font-bold text-slate-700 tracking-wider uppercase">Markdown Input</span>
-          <span id="sync-status" class="px-2.5 py-0.5 text-[10px] bg-emerald-100 text-emerald-800 rounded-full font-medium flex items-center gap-1.5 transition-all">
-            <span id="sync-dot" class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-            <span id="sync-text">2-Way Sync Active</span>
+    <!-- Main Split-Screen Resizable Layout -->
+    <main id="split-container" class="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden relative">
+      
+      <!-- Left Side: Markdown Input Panel -->
+      <section id="left-panel" class="w-full md:w-1/2 flex flex-col bg-white shadow-inner h-1/2 md:h-full min-w-[150px] min-h-[100px]">
+        <!-- Panel Bar -->
+        <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="fa-brands fa-markdown text-slate-700 text-lg"></i>
+            <span class="text-xs font-bold text-slate-700 tracking-wider uppercase">Markdown Input</span>
+            <span id="sync-status" class="px-2.5 py-0.5 text-[10px] bg-emerald-100 text-emerald-800 rounded-full font-medium flex items-center gap-1.5 transition-all">
+              <span id="sync-dot" class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+              <span id="sync-text">2-Way Sync Active</span>
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-format" title="Format Markdown Table" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded text-xs transition flex items-center gap-1">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Clean Format
+            </button>
+            <button id="btn-copy" title="Copy Raw Markdown" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded text-xs transition flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i> Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Textarea Input Area -->
+        <div class="flex-1 relative p-3 bg-slate-50 min-h-0">
+          <textarea 
+            id="markdown-input" 
+            spellcheck="false"
+            placeholder="Paste or write your Markdown table here..." 
+            class="w-full h-full p-4 font-mono text-sm bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none leading-relaxed text-slate-800"
+          ></textarea>
+        </div>
+
+        <!-- Footer Info Bar -->
+        <div class="bg-white border-t border-slate-200 px-4 py-1.5 text-[11px] text-slate-500 flex justify-between items-center shrink-0">
+          <span id="stat-rows">0 rows detected</span>
+          <span id="stat-cols">0 columns detected</span>
+        </div>
+      </section>
+
+      <!-- Draggable Divider Resizer Line -->
+      <div id="resizer" class="resizer h-2 md:h-full w-full md:w-2 shrink-0 flex items-center justify-center cursor-row-resize md:cursor-col-resize border-y md:border-y-0 md:border-x border-slate-300 group hover:border-blue-500 transition-colors">
+        <div class="hidden md:flex flex-col gap-1 items-center justify-center text-slate-400 group-hover:text-white pointer-events-none">
+          <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
+        </div>
+        <div class="flex md:hidden gap-1 items-center justify-center text-slate-400 group-hover:text-white pointer-events-none">
+          <i class="fa-solid fa-ellipsis text-[10px]"></i>
+        </div>
+      </div>
+
+      <!-- Right Side: Univer Sheet View Panel -->
+      <section id="right-panel" class="w-full md:w-1/2 flex flex-col bg-white h-1/2 md:h-full min-w-[150px] min-h-[100px]">
+        <!-- Panel Bar -->
+        <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-table text-emerald-700 text-base"></i>
+            <span class="text-xs font-bold text-slate-700 tracking-wider uppercase">Live Interactive Sheet</span>
+          </div>
+          <span class="text-[11px] text-slate-500 bg-slate-200 px-2 py-0.5 rounded">
+            <i class="fa-solid fa-pen-to-square text-xs mr-1 text-slate-600"></i> Edit cells to update Markdown
           </span>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="btn-format" title="Format Markdown Table" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded text-xs transition flex items-center gap-1">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Clean Format
-          </button>
-          <button id="btn-copy" title="Copy Raw Markdown" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded text-xs transition flex items-center gap-1">
-            <i class="fa-regular fa-copy"></i> Copy
-          </button>
+
+        <!-- Sheet Container -->
+        <div class="flex-1 relative bg-slate-100 overflow-hidden min-h-0">
+          <div id="univer-container" class="absolute inset-0"></div>
         </div>
-      </div>
+      </section>
 
-      <!-- Textarea Input Area -->
-      <div class="flex-1 relative p-3 bg-slate-50">
-        <textarea 
-          id="markdown-input" 
-          spellcheck="false"
-          placeholder="Paste or write your Markdown table here..." 
-          class="w-full h-full p-4 font-mono text-sm bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none leading-relaxed text-slate-800"
-        ></textarea>
-      </div>
-
-      <!-- Footer Info Bar -->
-      <div class="bg-white border-t border-slate-200 px-4 py-1.5 text-[11px] text-slate-500 flex justify-between items-center shrink-0">
-        <span id="stat-rows">0 rows detected</span>
-        <span id="stat-cols">0 columns detected</span>
-      </div>
-    </section>
-
-    <!-- Draggable Divider Resizer Line -->
-    <div id="resizer" class="resizer h-2 md:h-full w-full md:w-2 shrink-0 flex items-center justify-center cursor-row-resize md:cursor-col-resize border-y md:border-y-0 md:border-x border-slate-300 group hover:border-blue-500 transition-colors">
-      <div class="hidden md:flex flex-col gap-1 items-center justify-center text-slate-400 group-hover:text-white pointer-events-none">
-        <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
-      </div>
-      <div class="flex md:hidden gap-1 items-center justify-center text-slate-400 group-hover:text-white pointer-events-none">
-        <i class="fa-solid fa-ellipsis text-[10px]"></i>
-      </div>
-    </div>
-
-    <!-- Right Side: Univer Sheet View Panel -->
-    <section id="right-panel" class="w-full md:w-1/2 flex flex-col bg-white h-1/2 md:h-full min-w-[150px] min-h-[100px]">
-      <!-- Panel Bar -->
-      <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-table text-emerald-700 text-base"></i>
-          <span class="text-xs font-bold text-slate-700 tracking-wider uppercase">Live Interactive Sheet</span>
-        </div>
-        <span class="text-[11px] text-slate-500 bg-slate-200 px-2 py-0.5 rounded">
-          <i class="fa-solid fa-pen-to-square text-xs mr-1 text-slate-600"></i> Edit cells to update Markdown
-        </span>
-      </div>
-
-      <!-- Sheet Container -->
-      <div class="flex-1 relative bg-slate-100 overflow-hidden">
-        <div id="univer-container"></div>
-      </div>
-    </section>
-
-  </main>
+    </main>
+  </div>
 
   <script>
     // Sample Markdown Datasets
