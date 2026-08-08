@@ -26,7 +26,7 @@ const (
 	headerFile = "helpers/header.html"
 	footerFile = "helpers/footer.html"
 	maxWorkers = 10
-	baseURL    = "https://rahuldhole.github.io/gist/"
+	baseURL    = "https://gist.rahuldhole.com/"
 )
 
 // Pre-compiled regexes for performance
