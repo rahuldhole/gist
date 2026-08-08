@@ -12,22 +12,6 @@
     <meta name="title" content="Gist Apps | App Directory" />
     <meta name="description" content="A curated directory of interactive web applications and tools built with modern web technologies." />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://rahuldhole.github.io/gist/" />
-    <meta property="og:title" content="Gist Apps | App Directory" />
-    <meta property="og:description" content="A curated directory of interactive web applications and tools built with modern web technologies." />
-    <meta property="og:image" content="https://og-image.org/api/og?template=gradient&title=Gist+Apps&description=App+Directory&icon=🎮&bg=1e3a5f&text=ffffff" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://rahuldhole.github.io/gist/" />
-    <meta name="twitter:title" content="Gist Apps | App Directory" />
-    <meta name="twitter:description" content="A curated directory of interactive web applications and tools built with modern web technologies." />
-    <meta name="twitter:image" content="https://og-image.org/api/og?template=gradient&title=Gist+Apps&description=App+Directory&icon=🎮&bg=1e3a5f&text=ffffff" />
-
     <!-- Application Logic -->
     <script>
         document.addEventListener('alpine:init', () => {
@@ -42,15 +26,26 @@
                 async init() {
                     this.applyTheme();
                     try {
-                        const response = await fetch('apps.json');
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        this.apps = await response.json();
+                        let appData = /*__APPS_JSON__*/ [];
+                        if (appData.length === 0) {
+                            const response = await fetch('apps.json');
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            appData = await response.json();
+                        }
+                        this.apps = appData;
                         
-                        const spans = ['bento-span-4', 'bento-span-8', 'bento-span-4', 'bento-span-4', 'bento-span-6', 'bento-span-6'];
+                        // New grid spans for a dynamic masonry-like bento
+                        const spans = [
+                            'md:col-span-2 md:row-span-2',
+                            'md:col-span-1 md:row-span-1',
+                            'md:col-span-1 md:row-span-2',
+                            'md:col-span-2 md:row-span-1'
+                        ];
+                        
                         this.apps = this.apps.map((app, idx) => ({
                             ...app,
                             category: app.category && app.category.trim() !== '' ? app.category.trim() : 'Uncategorized',
-                            _span: spans[Math.floor(Math.random() * spans.length)]
+                            _span: spans[idx % spans.length]
                         }));
                     } catch (e) {
                         this.error = 'Unable to load application directory. Run ./gist build first.';
@@ -74,7 +69,9 @@
                     
                     if (isDark) {
                         document.body.classList.remove('light-mode');
+                        document.body.classList.add('dark-mode');
                     } else {
+                        document.body.classList.remove('dark-mode');
                         document.body.classList.add('light-mode');
                     }
                 },
@@ -85,9 +82,10 @@
                 },
 
                 get filteredApps() {
+                    const searchStr = (this.search || '').toLowerCase();
                     return this.apps.filter(app => {
-                        const matchesSearch = app.title.toLowerCase().includes(this.search.toLowerCase()) ||
-                            app.description.toLowerCase().includes(this.search.toLowerCase());
+                        const matchesSearch = (app.title || '').toLowerCase().includes(searchStr) ||
+                            (app.description || '').toLowerCase().includes(searchStr);
                         const matchesCategory = this.category === '' || app.category === this.category;
                         return matchesSearch && matchesCategory;
                     });
@@ -100,296 +98,316 @@
     <script defer src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
       @theme {
-        --color-primary: #6366f1;
-        --color-secondary: #a855f7;
-        --color-accent: #f43f5e;
-        --color-surface-950: #030712;
-        --color-surface-900: #111827;
-        --color-surface-800: #1f2937;
-        --color-surface-700: #374151;
+        --color-primary: #8b5cf6;
+        --color-secondary: #ec4899;
+        --color-accent: #06b6d4;
       }
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 
     <style>
         [x-cloak] { display: none !important; }
-
+        
         :root {
-            --brand-glow: rgba(99, 102, 241, 0.15);
-            --bg-color: #020617;
-            --text-color: #f1f5f9;
-            --card-bg: rgba(15, 23, 42, 0.6);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --logo-secondary: #94a3b8;
-            --accent-glow: rgba(168, 85, 247, 0.1);
+            --bg-base: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --bg-surface: rgba(30, 41, 59, 0.7);
+            --card-bg-gradient: linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+            --border-light: rgba(255, 255, 255, 0.1);
+            --search-bg: rgba(15, 23, 42, 0.6);
+            --img-fallback-bg: #0f172a;
+            --orb-1: rgba(139, 92, 246, 0.2);
+            --orb-2: rgba(6, 182, 212, 0.2);
+            --hover-border: rgba(139, 92, 246, 0.5);
+            --select-bg: #1e293b;
         }
 
         .light-mode {
-            --brand-glow: rgba(99, 102, 241, 0.08);
-            --bg-color: #f8fafc;
-            --text-color: #0f172a;
-            --card-bg: rgba(255, 255, 255, 0.8);
-            --border-color: rgba(0, 0, 0, 0.08);
-            --logo-secondary: #64748b;
-            --accent-glow: rgba(168, 85, 247, 0.05);
+            --bg-base: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --bg-surface: rgba(255, 255, 255, 0.7);
+            --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+            --border-light: rgba(0, 0, 0, 0.1);
+            --search-bg: rgba(255, 255, 255, 0.8);
+            --img-fallback-bg: #e2e8f0;
+            --orb-1: rgba(139, 92, 246, 0.1);
+            --orb-2: rgba(6, 182, 212, 0.1);
+            --hover-border: rgba(139, 92, 246, 0.7);
+            --select-bg: #ffffff;
         }
-
+        
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            background-image: 
-                radial-gradient(circle at 0% 0%, var(--brand-glow) 0%, transparent 40%),
-                radial-gradient(circle at 100% 100%, var(--accent-glow) 0%, transparent 40%);
-            transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        .glass-header {
-            background: rgba(var(--bg-rgb, 2, 6, 23), 0.7);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-bottom: 1px solid var(--border-color);
+        /* Abstract ambient background elements */
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: float 20s infinite ease-in-out alternate;
+            transition: background 0.3s ease;
+        }
+        .orb-1 {
+            width: 40vw;
+            height: 40vw;
+            background: var(--orb-1);
+            top: -10%;
+            left: -10%;
+        }
+        .orb-2 {
+            width: 30vw;
+            height: 30vw;
+            background: var(--orb-2);
+            bottom: -10%;
+            right: -5%;
+            animation-delay: -5s;
         }
 
-        .bento-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10%, 15%) scale(1.1); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+
+        .glass-panel {
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        .premium-card {
+            position: relative;
+            background: var(--card-bg-gradient);
+            border: 1px solid var(--border-light);
+            border-radius: 1.5rem;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .bento-card:hover {
-            border-color: var(--color-primary);
-            box-shadow: 
-                0 0 0 1px var(--color-primary),
-                0 20px 50px -10px var(--brand-glow);
-            transform: translateY(-8px) scale(1.005);
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .premium-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--hover-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 0 20px rgba(139, 92, 246, 0.2);
             z-index: 10;
         }
-
-        .bento-card-large { grid-column: span 12; }
-        @media (min-width: 640px) { .bento-card-large { grid-column: span 6; } }
-        @media (min-width: 1024px) { 
-            .bento-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
-            .bento-span-4 { grid-column: span 4; }
-            .bento-span-8 { grid-column: span 8; }
-            .bento-span-6 { grid-column: span 6; }
-            .bento-span-3 { grid-column: span 3; }
+        
+        .premium-card:hover::before {
+            transform: translateX(100%);
         }
 
-        .search-input {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .search-glass {
+            background: var(--search-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-light);
+            transition: all 0.3s;
         }
-
-        .search-input:focus {
+        .search-glass:focus-within {
             border-color: var(--color-primary);
-            box-shadow: 0 0 20px var(--brand-glow);
-            transform: scale(1.02);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
         }
 
-        .gist-icon-placeholder {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(2, 6, 23, 0.5) 100%);
+        .text-gradient {
+            background: linear-gradient(to right, #c4b5fd, #f9a8d4, #67e8f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .logo-play {
-            color: var(--logo-secondary);
+        .light-mode .text-gradient {
+            background: linear-gradient(to right, #8b5cf6, #ec4899, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-
-        /* Float Animation */
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--hover-border); }
+        
+        select option {
+            background: var(--select-bg);
+            color: var(--text-main);
         }
-        .float-anim { animation: float 6s ease-in-out infinite; }
     </style>
 </head>
 
-<body x-data="appDirectory" class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+<body x-data="appDirectory" class="min-h-screen flex flex-col relative selection:bg-primary selection:text-white">
 
-    <!-- Sticky Glass Header -->
-    <header class="sticky top-0 z-50 glass-header border-b border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Ambient Background -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
 
-                <!-- Logo/Title -->
-                <div class="flex items-center gap-3 group cursor-pointer" @click="window.location.reload()">
-                    <img src="favicon.svg" alt="Gist Play" class="w-10 h-10 rounded-xl shadow-lg group-hover:rotate-6 transition-transform">
-                    <h1 class="text-2xl font-black tracking-tight">
-                        <span class="text-primary">Gist</span>
-                        <span class="logo-play opacity-80">Play</span>
-                    </h1>
+    <!-- Header -->
+    <header class="sticky top-0 z-50 glass-panel py-4 px-6 lg:px-12 mt-4 mx-4 lg:mx-8 rounded-2xl mb-12">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-4 group cursor-pointer" @click="window.location.reload()">
+                <img src="favicon.svg" alt="Gist Apps Logo" class="w-12 h-12 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.3)] transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-500">
+                <h1 class="text-3xl font-extrabold tracking-tight">
+                    Gist<span class="text-gradient">Apps</span>
+                </h1>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                
+                <!-- Theme Toggle -->
+                <button @click="toggleTheme" 
+                        class="p-3 rounded-xl border search-glass hover:border-primary transition-all flex items-center justify-center gap-2 group w-full sm:w-auto">
+                    <i :class="theme === 'system' ? 'fa-solid fa-circle-half-stroke' : (theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun')" 
+                       class="text-primary text-lg group-hover:rotate-12 transition-transform"></i>
+                    <span class="text-[10px] uppercase font-bold tracking-widest sm:hidden" x-text="theme"></span>
+                </button>
+
+                <!-- Search Input -->
+                <div class="search-glass flex items-center w-full sm:w-80 rounded-xl px-4 py-2.5">
+                    <i class="fa-solid fa-magnifying-glass mr-3" style="color: var(--text-muted)"></i>
+                    <input type="text" x-model="search" placeholder="Discover applications..."
+                        class="bg-transparent border-none outline-none w-full font-medium text-sm" style="color: var(--text-main)">
                 </div>
 
-                <!-- Theme Toggle & Search -->
-                <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                    <button @click="toggleTheme" 
-                            class="p-2.5 rounded-xl border border-white/5 bg-surface-900/40 hover:bg-surface-800 transition-all flex items-center gap-2 group">
-                        <i :class="theme === 'system' ? 'fa-solid fa-circle-half-stroke' : (theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun')" 
-                           class="text-primary text-sm group-hover:rotate-12 transition-transform"></i>
-                        <span class="text-[10px] uppercase font-bold tracking-widest text-gray-500 group-hover:text-gray-300" x-text="theme"></span>
-                    </button>
-                    <!-- Search Input -->
-                    <div class="relative w-full sm:w-64 md:w-80">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <input type="text" x-model="search" placeholder="Search apps..."
-                            class="search-input block w-full pl-10 pr-3 py-2 rounded-xl leading-5 text-gray-300 placeholder-gray-500 focus:outline-none sm:text-sm transition-colors">
-                    </div>
-
-                    <!-- Category Filter -->
+                <!-- Category Filter -->
+                <div class="search-glass relative rounded-xl flex items-center w-full sm:w-48">
+                    <i class="fa-solid fa-filter absolute left-4" style="color: var(--text-muted)"></i>
                     <select x-model="category"
-                        class="search-input block w-full sm:w-40 pl-3 pr-10 py-2 text-base text-gray-300 focus:outline-none sm:text-sm rounded-xl transition-colors cursor-pointer appearance-none">
+                        class="bg-transparent border-none outline-none w-full py-2.5 pl-10 pr-4 appearance-none cursor-pointer font-medium text-sm" style="color: var(--text-main)">
                         <option value="">All Categories</option>
                         <template x-for="cat in uniqueCategories" :key="cat">
                             <option :value="cat" x-text="cat"></option>
                         </template>
                     </select>
+                    <i class="fa-solid fa-chevron-down absolute right-4 pointer-events-none text-xs" style="color: var(--text-muted)"></i>
                 </div>
-
+                
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+    <main class="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 pb-20">
 
-        <!-- Loading State -->
-        <div x-show="loading" class="flex flex-col justify-center items-center py-20" x-cloak>
-            <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-brand-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-            </svg>
-            <p class="mt-4 text-gray-500 text-sm font-medium">Loading app directory...</p>
+        <!-- Header Intro -->
+        <div class="mb-16 text-center max-w-2xl mx-auto" x-init="gsap.from($el, { opacity: 0, y: 30, duration: 1, ease: 'power3.out' })">
+            <h2 class="text-5xl font-extrabold mb-6">Explore the <span class="text-gradient">Universe</span> of Apps</h2>
+            <p class="text-lg leading-relaxed" style="color: var(--text-muted)">A curated collection of modern, interactive web experiences built for the future. Discover, run, and get inspired.</p>
         </div>
 
-        <!-- Error State -->
-        <div x-show="error" class="flex flex-col items-center justify-center py-20 px-4 text-center" x-cloak>
-            <div class="bg-red-500/10 p-5 rounded-full mb-5 border border-red-500/20">
-                <svg class="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        <!-- Loading -->
+        <div x-show="loading" class="flex flex-col items-center justify-center py-32" x-cloak>
+            <div class="relative w-20 h-20">
+                <div class="absolute inset-0 rounded-full border-t-2 border-primary animate-spin"></div>
+                <div class="absolute inset-2 rounded-full border-r-2 border-secondary animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
             </div>
-            <h3 class="text-xl font-bold text-white mb-2">Failed to load apps</h3>
-            <p class="text-gray-400 max-w-md mx-auto mb-6" x-text="error"></p>
+            <p class="mt-6 font-medium tracking-widest uppercase text-sm" style="color: var(--text-muted)">Initializing...</p>
+        </div>
+
+        <!-- Error -->
+        <div x-show="error" class="glass-panel p-8 rounded-2xl max-w-lg mx-auto text-center" x-cloak>
+            <i class="fa-solid fa-triangle-exclamation text-4xl text-red-400 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2">Connection Failed</h3>
+            <p class="mb-6" style="color: var(--text-muted)" x-text="error"></p>
             <button @click="loading = true; error = null; init()"
-                class="px-6 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors font-medium border border-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500">
-                Try Again
+                class="px-6 py-3 search-glass hover:border-primary rounded-xl transition-colors font-semibold">
+                Retry Connection
             </button>
         </div>
 
-        <!-- Apps Grid (Bento Style) -->
-        <div x-show="!loading && !error" class="bento-grid grid grid-cols-1 sm:grid-cols-2 gap-6" x-cloak>
+        <!-- App Grid -->
+        <!-- Added grid-flow-dense to prevent gaps from variable spans -->
+        <div x-show="!loading && !error" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 grid-flow-row-dense auto-rows-[250px] gap-6" x-cloak>
             <template x-for="(app, index) in filteredApps" :key="app.path">
-                <div 
-                    x-data="{ imageBroken: false }"
-                    x-init="gsap.from($el, { 
-                        opacity: 0, 
-                        y: 40, 
-                        scale: 0.95, 
-                        delay: index * 0.05, 
-                        duration: 0.8, 
-                        ease: 'back.out(1.2)' 
-                    })"
-                    :class="app._span"
-                    class="h-full"
-                >
-                    <a :href="app.path"
-                        class="bento-card group relative h-full rounded-[2rem] overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        
-                        <!-- Media Area -->
-                        <div class="relative overflow-hidden flex items-center justify-center gist-icon-placeholder border-b border-white/5"
-                             :class="app._span === 'bento-span-8' ? 'aspect-[2.5/1]' : 'aspect-video'">
-                            
-                            <!-- Image Support -->
+                <a :href="app.path" 
+                   :class="app._span"
+                   class="premium-card group block h-full flex flex-col animate-fade-in-up">
+                   
+                    <!-- Media Area -->
+                    <div class="relative h-1/2 flex-shrink-0 overflow-hidden flex items-center justify-center" style="background: var(--img-fallback-bg)">
+                        <!-- We use Alpine to check if the image fails loading -->
+                        <div x-data="{ imageBroken: false }" class="w-full h-full">
                             <template x-if="app.image && !imageBroken">
-                                <img :src="app.image" :alt="app.title" loading="lazy"
-                                    @error="imageBroken = true"
-                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out">
+                                <img :src="app.image" :alt="app.title" @error="imageBroken = true"
+                                     class="w-full h-full object-cover group-hover:scale-110 group-hover:rotate-2 transition-all duration-700">
                             </template>
                             
-                            <!-- Icon Fallback -->
                             <template x-if="(!app.image || imageBroken) && app.icon">
-                                <div class="w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                                    <i :class="app.icon + ' text-6xl text-brand-400 opacity-90 drop-shadow-[0_0_25px_rgba(99,102,241,0.5)]'"></i>
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <i :class="app.icon + ' text-6xl group-hover:text-primary transition-colors duration-500 drop-shadow-2xl'" style="color: var(--text-muted)"></i>
                                 </div>
                             </template>
                             
-                            <!-- System Fallback -->
                             <template x-if="(!app.image || imageBroken) && !app.icon">
-                                <div class="w-full h-full flex items-center justify-center opacity-20 group-hover:opacity-40 transition-opacity">
-                                    <svg class="w-20 h-20 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                    </svg>
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <div class="w-24 h-24 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-500" style="background: var(--border-light)">
+                                        <i class="fa-solid fa-rocket text-3xl group-hover:text-primary" style="color: var(--text-muted)"></i>
+                                    </div>
                                 </div>
                             </template>
-    
-                            <!-- Category Badge -->
-                            <div class="absolute top-6 right-6 px-4 py-2 rounded-full category-badge bg-black/40 backdrop-blur-xl text-brand-300 border border-white/10 shadow-lg"
-                                x-text="app.category"></div>
                         </div>
-    
-                        <!-- Content Area -->
-                        <div class="p-8 flex flex-col flex-grow relative z-10 transition-colors group-hover:bg-white/5">
-                            <h3 class="font-black mb-3 group-hover:text-primary transition-colors tracking-tighter"
-                                :style="{ color: 'var(--text-color)' }"
-                                :class="app._span === 'bento-span-8' ? 'text-4xl' : 'text-2xl'"
-                                x-text="app.title"></h3>
-                            
-                            <!-- Resilient Description handling to avoid whitespace -->
-                            <div class="flex-grow">
-                                <template x-if="app.description">
-                                    <p class="text-sm text-slate-400 line-clamp-3 leading-relaxed mb-6"
-                                        x-text="app.description"></p>
-                                </template>
-                            </div>
-    
-                            <!-- Action Link -->
-                            <div class="mt-auto flex items-center justify-between text-brand-400 font-black text-xs tracking-tighter">
-                                <span class="group-hover:tracking-widest transition-all inline-flex items-center gap-3 uppercase">
-                                    BOOT APP
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                    </svg>
-                                </span>
-                            </div>
+
+                        <!-- Category Tag -->
+                        <div class="absolute top-4 right-4 px-3 py-1 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider" 
+                             style="background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.2);" 
+                             x-text="app.category"></div>
+                    </div>
+
+                    <!-- Details Area -->
+                    <!-- Removed solid background to let card-bg-gradient show through -->
+                    <div class="p-6 flex flex-col flex-grow relative z-10">
+                        <h3 class="text-2xl font-bold mb-2 group-hover:text-primary transition-colors" x-text="app.title"></h3>
+                        <p class="text-sm line-clamp-3 mb-4 flex-grow leading-relaxed" style="color: var(--text-muted)" x-text="app.description"></p>
+                        
+                        <div class="mt-auto flex items-center gap-2 text-sm font-bold transition-colors" style="color: var(--text-muted)">
+                            <span class="group-hover:text-primary transition-colors">Launch App</span>
+                            <i class="fa-solid fa-arrow-right transform group-hover:translate-x-2 group-hover:text-primary transition-all"></i>
                         </div>
-                    </a>
-                </div>
+                    </div>
+                </a>
             </template>
         </div>
 
-        <!-- Empty Results State -->
-        <div x-show="!loading && !error && filteredApps.length === 0" class="text-center py-20" x-cloak>
-            <svg class="mx-auto h-12 w-12 text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 class="text-lg font-medium text-gray-300">No applications found</h3>
-            <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
+        <!-- Empty State -->
+        <div x-show="!loading && !error && filteredApps.length === 0" class="text-center py-32" x-cloak>
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full mb-6" style="background: var(--border-light)">
+                <i class="fa-solid fa-ghost text-4xl" style="color: var(--text-muted)"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-2">No apps found</h3>
+            <p style="color: var(--text-muted)">Expand your search to discover more applications.</p>
         </div>
 
     </main>
 
 </body>
-
 </html>

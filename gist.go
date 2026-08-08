@@ -334,7 +334,7 @@ func cmdBuild() {
 	_ = os.MkdirAll(distDir, 0755)
 
 	// Phase 1: Global Assets
-	for _, asset := range []string{"index.html", "favicon.svg"} {
+	for _, asset := range []string{"favicon.svg"} {
 		if data, err := os.ReadFile(asset); err == nil {
 			_ = os.WriteFile(filepath.Join(distDir, asset), data, 0644)
 		}
@@ -376,8 +376,17 @@ func cmdBuild() {
 		return apps[i].UpdatedAt.After(apps[j].UpdatedAt)
 	})
 
-	jsonData, _ := json.MarshalIndent(apps, "", "  ")
+	jsonData, _ := json.Marshal(apps)
 	_ = os.WriteFile(filepath.Join(distDir, "apps.json"), jsonData, 0644)
+
+	// Build-time hydration of index.html
+	if indexData, err := os.ReadFile("index.html"); err == nil {
+		injectedIndex := bytes.Replace(indexData, []byte("/*__APPS_JSON__*/ []"), jsonData, 1)
+		_ = os.WriteFile(filepath.Join(distDir, "index.html"), injectedIndex, 0644)
+		logSuccess("  Hydrated index.html at build-time")
+	} else {
+		logError("  Failed to read index.html for hydration")
+	}
 
 	// Phase 3: SEO Assets
 	sitemapData := generateSitemap(apps)
