@@ -5,6 +5,7 @@ Category: Utility
 Icon: fa-solid fa-table-columns
 Image: https://images.unsplash.com/photo-1783113938335-ba83ccde7f5f?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D
 Status: published
+Disable-Footer: true
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -102,16 +103,26 @@ Status: published
           <p class="text-xs text-slate-400">Two-way live editing between Markdown & Univer Sheets</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="btn-sample-sales" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
-          <i class="fa-solid fa-chart-line text-emerald-400"></i> Sales Sample
-        </button>
-        <button id="btn-sample-project" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
-          <i class="fa-solid fa-list-check text-indigo-400"></i> Tasks Sample
-        </button>
-        <button id="btn-clear" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-200 rounded text-xs transition flex items-center gap-1.5 border border-rose-800">
-          <i class="fa-solid fa-trash-can"></i> Clear
-        </button>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 text-xs text-slate-400 border-r border-slate-700 pr-4">
+          <a href="../" class="hover:text-slate-200 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-arrow-left"></i> Apps
+          </a>
+          <a href="https://github.com/rahuldhole/gist" target="_blank" class="hover:text-slate-200 transition flex items-center gap-1.5">
+            <i class="fa-brands fa-github"></i> GitHub
+          </a>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-sample-sales" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
+            <i class="fa-solid fa-chart-line text-emerald-400"></i> Sales Sample
+          </button>
+          <button id="btn-sample-project" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
+            <i class="fa-solid fa-list-check text-indigo-400"></i> Tasks Sample
+          </button>
+          <button id="btn-clear" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-200 rounded text-xs transition flex items-center gap-1.5 border border-rose-800">
+            <i class="fa-solid fa-trash-can"></i> Clear
+          </button>
+        </div>
       </div>
     </header>
 

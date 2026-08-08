@@ -128,7 +128,12 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 	icon := extractMeta("Icon", content)
 
 	// Process content: inject header/footer, then OG meta tags
-	processedContent := injectBytePartials(content, bCtx.Header, bCtx.Footer)
+	footerToInject := bCtx.Footer
+	if strings.ToLower(extractMeta("Disable-Footer", content)) == "true" {
+		footerToInject = nil
+	}
+	
+	processedContent := injectBytePartials(content, bCtx.Header, footerToInject)
 	processedContent = injectOGTags(processedContent, title, description, category, icon, name+"/")
 	if err := os.WriteFile(distIdx, processedContent, 0644); err != nil {
 		return nil, err
