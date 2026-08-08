@@ -1,0 +1,707 @@
+<!-- APP-META
+Title: Markdown Spreadsheet Live Sync
+Description: A real-time, bi-directional Markdown table editor and Univer spreadsheet interface with a draggable side-by-side split view.
+Category: Utility
+Icon: fa-solid fa-table-columns
+Image: https://images.unsplash.com/photo-1783113938335-ba83ccde7f5f?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D
+Status: published
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Table & Univer Spreadsheet Two-Way Sync</title>
+  
+  <!-- Tailwind CSS for UI styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Univer Dependencies -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/rxjs/dist/bundles/rxjs.umd.min.js"></script>
+  <script src="https://unpkg.com/echarts@5.6.0/dist/echarts.min.js"></script>
+
+  <script src="https://unpkg.com/@univerjs/presets/lib/umd/index.js"></script>
+
+  <!-- Univer Sheets Core Preset & Locales -->
+  <script src="https://unpkg.com/@univerjs/preset-sheets-core/lib/umd/index.js"></script>
+  <script src="https://unpkg.com/@univerjs/preset-sheets-core/lib/umd/locales/en-US.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@univerjs/preset-sheets-core/lib/index.css" />
+
+  <style>
+    html, body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* Ensure Univer Sheet container stretches smoothly */
+    #univer-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Resizer bar styling */
+    .resizer {
+      background-color: #e2e8f0;
+      z-index: 30;
+      transition: background-color 0.15s ease;
+      user-select: none;
+      touch-action: none;
+    }
+    .resizer:hover, .resizer.is-dragging {
+      background-color: #3b82f6 !important;
+    }
+
+    /* Temporary full-screen drag overlay to prevent canvas event hijacking */
+    .drag-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      user-select: none;
+    }
+
+    /* Custom scrollbar for markdown editor */
+    textarea::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    textarea::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    textarea::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    textarea::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 flex flex-col h-screen overflow-hidden">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-800 shadow-sm shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="bg-blue-600 p-2 rounded-lg text-white font-bold flex items-center justify-center shadow">
+        <i class="fa-solid fa-arrows-rotate text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-semibold text-base tracking-wide flex items-center gap-2">
+          Markdown Table <i class="fa-solid fa-arrows-left-right text-xs text-blue-400"></i> Spreadsheet Sync
+        </h1>
+        <p class="text-xs text-slate-400">Two-way live editing between Markdown & Univer Sheets</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="btn-sample-sales" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
+        <i class="fa-solid fa-chart-line text-emerald-400"></i> Sales Sample
+      </button>
+      <button id="btn-sample-project" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs transition flex items-center gap-1.5 border border-slate-700">
+        <i class="fa-solid fa-list-check text-indigo-400"></i> Tasks Sample
+      </button>
+      <button id="btn-clear" class="px-3 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-200 rounded text-xs transition flex items-center gap-1.5 border border-rose-800">
+        <i class="fa-solid fa-trash-can"></i> Clear
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Split-Screen Resizable Layout -->
+  <main id="split-container" class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+    
+    <!-- Left Side: Markdown Input Panel -->
+    <section id="left-panel" class="w-full md:w-1/2 flex flex-col bg-white shadow-inner h-1/2 md:h-full min-w-[150px] min-h-[100px]">
+      <!-- Panel Bar -->
+      <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <i class="fa-brands fa-markdown text-slate-700 text-lg"></i>
+          <span class="text-xs font-bold text-slate-700 tracking-wider uppercase">Markdown Input</span>
+          <span id="sync-status" class="px-2.5 py-0.5 text-[10px] bg-emerald-100 text-emerald-800 rounded-full font-medium flex items-center gap-1.5 transition-all">
+            <span id="sync-dot" class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span id="sync-text">2-Way Sync Active</span>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-format" title="Format Markdown Table" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded text-xs transition flex items-center gap-1">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Clean Format
+          </button>
+          <button id="btn-copy" title="Copy Raw Markdown" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded text-xs transition flex items-center gap-1">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Textarea Input Area -->
+      <div class="flex-1 relative p-3 bg-slate-50">
+        <textarea 
+          id="markdown-input" 
+          spellcheck="false"
+          placeholder="Paste or write your Markdown table here..." 
+          class="w-full h-full p-4 font-mono text-sm bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none leading-relaxed text-slate-800"
+        ></textarea>
+      </div>
+
+      <!-- Footer Info Bar -->
+      <div class="bg-white border-t border-slate-200 px-4 py-1.5 text-[11px] text-slate-500 flex justify-between items-center shrink-0">
+        <span id="stat-rows">0 rows detected</span>
+        <span id="stat-cols">0 columns detected</span>
+      </div>
+    </section>
+
+    <!-- Draggable Divider Resizer Line -->
+    <div id="resizer" class="resizer h-2 md:h-full w-full md:w-2 shrink-0 flex items-center justify-center cursor-row-resize md:cursor-col-resize border-y md:border-y-0 md:border-x border-slate-300 group hover:border-blue-500 transition-colors">
+      <div class="hidden md:flex flex-col gap-1 items-center justify-center text-slate-400 group-hover:text-white pointer-events-none">
+        <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
+      </div>
+      <div class="flex md:hidden gap-1 items-center justify-center text-slate-400 group-hover:text-white pointer-events-none">
+        <i class="fa-solid fa-ellipsis text-[10px]"></i>
+      </div>
+    </div>
+
+    <!-- Right Side: Univer Sheet View Panel -->
+    <section id="right-panel" class="w-full md:w-1/2 flex flex-col bg-white h-1/2 md:h-full min-w-[150px] min-h-[100px]">
+      <!-- Panel Bar -->
+      <div class="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-table text-emerald-700 text-base"></i>
+          <span class="text-xs font-bold text-slate-700 tracking-wider uppercase">Live Interactive Sheet</span>
+        </div>
+        <span class="text-[11px] text-slate-500 bg-slate-200 px-2 py-0.5 rounded">
+          <i class="fa-solid fa-pen-to-square text-xs mr-1 text-slate-600"></i> Edit cells to update Markdown
+        </span>
+      </div>
+
+      <!-- Sheet Container -->
+      <div class="flex-1 relative bg-slate-100 overflow-hidden">
+        <div id="univer-container"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Sample Markdown Datasets
+    const SAMPLES = {
+      sales: `| ID | Product Name | Category | Stock | Price ($) | Rating |
+|---|---|---|---|---|---|
+| 101 | Wireless Headphones | Electronics | 120 | 89.99 | 4.8 |
+| 102 | Ergonomic Chair | Furniture | 45 | 249.50 | 4.6 |
+| 103 | Mechanical Keyboard | Electronics | 85 | 119.00 | 4.9 |
+| 104 | Stainless Steel Water Bottle | Home & Kitchen | 300 | 19.95 | 4.5 |
+| 105 | Noise Cancelling Earbuds | Electronics | 60 | 159.99 | 4.7 |
+| 106 | Standing Desk | Furniture | 20 | 499.00 | 4.8 |`,
+      
+      project: `| Task ID | Description | Assignee | Priority | Status | Due Date |
+|:---|:---|:---|:---:|:---:|:---:|
+| T-1001 | Design Landing Page Wireframes | Sarah M. | High | In Progress | 2026-08-15 |
+| T-1002 | Setup Authentication API | Alex K. | Urgent | Completed | 2026-08-10 |
+| T-1003 | Perform Security Audit | Dev Team | Medium | Pending | 2026-08-22 |
+| T-1004 | Write User Documentation | Elena R. | Low | Draft | 2026-08-28 |
+| T-1005 | Optimize Database Queries | Alex K. | High | In Review | 2026-08-18 |`
+    };
+
+    // State & Flags to prevent recursive feedback loops
+    let univerAPI = null;
+    let currentWorkbook = null;
+    let isSyncingFromMarkdown = false;
+    let isSyncingFromSheet = false;
+    let syncDebounceTimer = null;
+    let statusResetTimer = null;
+
+    // UI Elements
+    const mdInput = document.getElementById('markdown-input');
+    const statRows = document.getElementById('stat-rows');
+    const statCols = document.getElementById('stat-cols');
+    const syncStatus = document.getElementById('sync-status');
+    const syncText = document.getElementById('sync-text');
+
+    /**
+     * Parse raw Markdown text into a 2D Array matrix
+     */
+    function parseMarkdownTable(text) {
+      if (!text || typeof text !== 'string') return [];
+      
+      const lines = text.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const matrix = [];
+
+      for (let line of lines) {
+        // Skip delimiter line e.g., |---|:---|---:| or |---|
+        if (/^\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?$/.test(line)) {
+          continue;
+        }
+
+        // Strip leading and trailing pipe if present
+        let cleanLine = line;
+        if (cleanLine.startsWith('|')) cleanLine = cleanLine.substring(1);
+        if (cleanLine.endsWith('|')) cleanLine = cleanLine.substring(0, cleanLine.length - 1);
+
+        // Split by column divider pipe
+        const cells = cleanLine.split('|').map(cell => cell.trim().replace(/\\\|/g, '|'));
+
+        if (cells.length > 0) {
+          matrix.push(cells);
+        }
+      }
+
+      return matrix;
+    }
+
+    /**
+     * Converts 2D matrix into Univer CellData format object
+     */
+    function matrixToCellData(matrix) {
+      const cellData = {};
+      matrix.forEach((row, rIdx) => {
+        cellData[rIdx] = {};
+        row.forEach((cellVal, cIdx) => {
+          let formattedValue = cellVal;
+          // Auto-convert numeric strings to numbers
+          if (cellVal !== '' && !isNaN(cellVal)) {
+            formattedValue = Number(cellVal);
+          }
+          cellData[rIdx][cIdx] = {
+            v: formattedValue
+          };
+        });
+      });
+      return cellData;
+    }
+
+    /**
+     * Extracts active sheet matrix and converts to formatted Markdown Table string
+     */
+    function getSheetMatrix() {
+      if (!univerAPI) return [];
+      try {
+        const workbook = univerAPI.getActiveWorkbook();
+        if (!workbook) return [];
+        const sheet = workbook.getActiveSheet();
+        if (!sheet) return [];
+
+        let cellData = null;
+        if (typeof sheet.getSheet === 'function') {
+          cellData = sheet.getSheet().getSnapshot()?.cellData;
+        } else if (typeof sheet.getSnapshot === 'function') {
+          cellData = sheet.getSnapshot()?.cellData;
+        }
+
+        if (cellData) {
+          const rowIndices = Object.keys(cellData).map(Number).sort((a, b) => a - b);
+          if (rowIndices.length === 0) return [];
+
+          const matrix = [];
+          rowIndices.forEach(r => {
+            matrix[r] = [];
+            const colObj = cellData[r] || {};
+            Object.keys(colObj).forEach(c => {
+              const cIdx = Number(c);
+              const cellObj = colObj[cIdx];
+              let val = '';
+              if (cellObj) {
+                val = cellObj.v !== undefined && cellObj.v !== null ? cellObj.v : (cellObj.m || cellObj.p || '');
+              }
+              matrix[r][cIdx] = val;
+            });
+          });
+          return matrix;
+        }
+
+        // Fallback: Use Range values
+        const maxRows = Math.min(sheet.getMaxRows() || 30, 30);
+        const maxCols = Math.min(sheet.getMaxColumns() || 15, 15);
+        const range = sheet.getRange(0, 0, maxRows, maxCols);
+        if (range && typeof range.getValues === 'function') {
+          return range.getValues();
+        }
+      } catch (err) {
+        console.error("Error reading sheet matrix:", err);
+      }
+      return [];
+    }
+
+    /**
+     * Convert 2D matrix into clean, formatted Markdown table
+     */
+    function matrixToMarkdown(matrix) {
+      if (!matrix || matrix.length === 0) return '';
+
+      // Find non-empty bounds
+      let maxR = -1;
+      let maxC = -1;
+
+      for (let r = 0; r < matrix.length; r++) {
+        const row = matrix[r];
+        if (!row) continue;
+        for (let c = 0; c < row.length; c++) {
+          const val = row[c];
+          if (val !== null && val !== undefined && String(val).trim() !== '') {
+            if (r > maxR) maxR = r;
+            if (c > maxC) maxC = c;
+          }
+        }
+      }
+
+      if (maxR === -1 || maxC === -1) return '';
+
+      const cleanRows = [];
+      for (let r = 0; r <= maxR; r++) {
+        const rowCells = [];
+        for (let c = 0; c <= maxC; c++) {
+          const cellVal = (matrix[r] && matrix[r][c] !== undefined && matrix[r][c] !== null) ? String(matrix[r][c]) : '';
+          rowCells.push(cellVal.replace(/\|/g, '\\|'));
+        }
+        cleanRows.push(rowCells);
+      }
+
+      if (cleanRows.length === 0) return '';
+
+      const numCols = maxC + 1;
+      const colWidths = new Array(numCols).fill(0);
+
+      cleanRows.forEach(row => {
+        for (let c = 0; c < numCols; c++) {
+          const val = row[c] || '';
+          colWidths[c] = Math.max(colWidths[c], val.length);
+        }
+      });
+
+      const lines = [];
+      
+      // Header row
+      const header = cleanRows[0];
+      const formattedHeader = '| ' + header.map((val, idx) => (val || '').padEnd(colWidths[idx])).join(' | ') + ' |';
+      lines.push(formattedHeader);
+
+      // Separator row
+      const separator = '| ' + colWidths.map(w => '-'.repeat(Math.max(w, 3))).join(' | ') + ' |';
+      lines.push(separator);
+
+      // Data rows
+      for (let r = 1; r < cleanRows.length; r++) {
+        const row = cleanRows[r];
+        const formattedRow = '| ' + colWidths.map((w, cIdx) => (row[cIdx] || '').padEnd(w)).join(' | ') + ' |';
+        lines.push(formattedRow);
+      }
+
+      return lines.join('\n');
+    }
+
+    /**
+     * Reads sheet cell edits and updates Markdown input box
+     */
+    function syncSheetToMarkdown() {
+      if (isSyncingFromMarkdown) return;
+      isSyncingFromSheet = true;
+
+      try {
+        const matrix = getSheetMatrix();
+        const markdown = matrixToMarkdown(matrix);
+
+        if (markdown && mdInput.value.trim() !== markdown.trim()) {
+          mdInput.value = markdown;
+
+          // Update statistics
+          const parsedMatrix = parseMarkdownTable(markdown);
+          const numRows = parsedMatrix.length;
+          const numCols = parsedMatrix.reduce((max, r) => Math.max(max, r.length), 0);
+          statRows.textContent = `${numRows} row${numRows !== 1 ? 's' : ''} detected`;
+          statCols.textContent = `${numCols} column${numCols !== 1 ? 's' : ''} detected`;
+
+          showSyncIndicator('Sheet → Markdown');
+        }
+      } catch (err) {
+        console.error('Error syncing sheet to markdown:', err);
+      } finally {
+        setTimeout(() => {
+          isSyncingFromSheet = false;
+        }, 150);
+      }
+    }
+
+    /**
+     * Updates or re-creates the Univer Sheet with new parsed matrix data from Markdown
+     */
+    function updateSpreadsheet(matrix) {
+      if (isSyncingFromSheet) return;
+      isSyncingFromMarkdown = true;
+
+      // Update statistics
+      const numRows = matrix.length;
+      const numCols = matrix.reduce((max, r) => Math.max(max, r.length), 0);
+      statRows.textContent = `${numRows} row${numRows !== 1 ? 's' : ''} detected`;
+      statCols.textContent = `${numCols} column${numCols !== 1 ? 's' : ''} detected`;
+
+      if (!univerAPI) {
+        isSyncingFromMarkdown = false;
+        return;
+      }
+
+      try {
+        const cellData = matrixToCellData(matrix);
+
+        if (currentWorkbook) {
+          try {
+            const unitId = currentWorkbook.getId?.();
+            if (unitId && univerAPI.disposeUnit) {
+              univerAPI.disposeUnit(unitId);
+            }
+          } catch (e) {
+            // Ignore safe teardown warnings
+          }
+        }
+
+        currentWorkbook = univerAPI.createUniverSheet({
+          id: 'md-sheet-' + Date.now(),
+          name: 'Parsed Markdown',
+          sheets: {
+            'sheet-1': {
+              id: 'sheet-1',
+              name: 'Markdown Table',
+              rowCount: Math.max(numRows + 10, 30),
+              columnCount: Math.max(numCols + 5, 20),
+              cellData: cellData
+            }
+          }
+        });
+
+        showSyncIndicator('Markdown → Sheet');
+      } catch (err) {
+        console.error('Error updating Univer sheet:', err);
+      } finally {
+        setTimeout(() => {
+          isSyncingFromMarkdown = false;
+        }, 150);
+      }
+    }
+
+    /**
+     * Format/Align Markdown table nicely inside textarea
+     */
+    function formatMarkdownTable() {
+      const matrix = parseMarkdownTable(mdInput.value);
+      if (matrix.length === 0) return;
+
+      const formatted = matrixToMarkdown(matrix);
+      if (formatted) {
+        mdInput.value = formatted;
+      }
+    }
+
+    /**
+     * Displays a brief visual indicator when sync executes
+     */
+    function showSyncIndicator(direction) {
+      clearTimeout(statusResetTimer);
+      syncText.textContent = `Synced (${direction})`;
+      syncStatus.className = 'px-2.5 py-0.5 text-[10px] bg-blue-100 text-blue-800 rounded-full font-semibold flex items-center gap-1.5 transition-all shadow-sm';
+      
+      statusResetTimer = setTimeout(() => {
+        syncText.textContent = '2-Way Sync Active';
+        syncStatus.className = 'px-2.5 py-0.5 text-[10px] bg-emerald-100 text-emerald-800 rounded-full font-medium flex items-center gap-1.5 transition-all';
+      }, 1200);
+    }
+
+    /**
+     * Initialize Univer Sheets Preset and register listeners for bidirectional sync
+     */
+    function initUniver() {
+      const { createUniver } = UniverPresets;
+      const { LocaleType, mergeLocales } = UniverCore;
+      const { UniverSheetsCorePreset } = UniverPresetSheetsCore;
+
+      const result = createUniver({
+        locale: LocaleType.EN_US,
+        locales: {
+          [LocaleType.EN_US]: mergeLocales(UniverPresetSheetsCoreEnUS),
+        },
+        presets: [
+          UniverSheetsCorePreset({
+            container: 'univer-container',
+          }),
+        ],
+      });
+
+      univerAPI = result.univerAPI;
+
+      // Listen to commands executed inside Univer sheet (cell edits, range changes, pasting)
+      if (univerAPI && typeof univerAPI.onCommandExecuted === 'function') {
+        univerAPI.onCommandExecuted(() => {
+          if (isSyncingFromMarkdown) return;
+          clearTimeout(syncDebounceTimer);
+          syncDebounceTimer = setTimeout(() => {
+            syncSheetToMarkdown();
+          }, 300);
+        });
+      }
+
+      // Load initial sample data
+      mdInput.value = SAMPLES.sales;
+      updateSpreadsheet(parseMarkdownTable(mdInput.value));
+    }
+
+    // Input Event Listener (Markdown -> Spreadsheet)
+    let markdownInputTimer;
+    mdInput.addEventListener('input', () => {
+      clearTimeout(markdownInputTimer);
+      markdownInputTimer = setTimeout(() => {
+        const matrix = parseMarkdownTable(mdInput.value);
+        updateSpreadsheet(matrix);
+      }, 250);
+    });
+
+    // Sample Data Buttons
+    document.getElementById('btn-sample-sales').addEventListener('click', () => {
+      mdInput.value = SAMPLES.sales;
+      updateSpreadsheet(parseMarkdownTable(mdInput.value));
+    });
+
+    document.getElementById('btn-sample-project').addEventListener('click', () => {
+      mdInput.value = SAMPLES.project;
+      updateSpreadsheet(parseMarkdownTable(mdInput.value));
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      mdInput.value = '';
+      updateSpreadsheet([]);
+    });
+
+    document.getElementById('btn-format').addEventListener('click', () => {
+      formatMarkdownTable();
+    });
+
+    document.getElementById('btn-copy').addEventListener('click', () => {
+      if (!mdInput.value) return;
+      document.execCommand('copy');
+      const btn = document.getElementById('btn-copy');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-check text-emerald-600"></i> Copied!';
+      setTimeout(() => btn.innerHTML = originalHTML, 1500);
+    });
+
+    // Start application on window load
+    window.onload = function() {
+      initUniver();
+      initResizer();
+    };
+
+    /**
+     * Initialize Draggable Split View Resizer
+     */
+    function initResizer() {
+      const container = document.getElementById('split-container');
+      const leftPanel = document.getElementById('left-panel');
+      const rightPanel = document.getElementById('right-panel');
+      const resizer = document.getElementById('resizer');
+
+      let isDragging = false;
+      let overlay = null;
+
+      function isDesktop() {
+        return window.innerWidth >= 768;
+      }
+
+      function startDrag(e) {
+        isDragging = true;
+        resizer.classList.add('is-dragging');
+        
+        // Add transparent full-screen overlay to catch all drag moves safely
+        overlay = document.createElement('div');
+        overlay.className = 'drag-overlay';
+        overlay.style.cursor = isDesktop() ? 'col-resize' : 'row-resize';
+        document.body.appendChild(overlay);
+
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchmove', onDrag, { passive: false });
+        document.addEventListener('touchend', stopDrag);
+      }
+
+      function onDrag(e) {
+        if (!isDragging) return;
+        if (e.cancelable) e.preventDefault();
+
+        const rect = container.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        if (isDesktop()) {
+          // Horizontal Resizing for Desktop
+          const offsetX = clientX - rect.left;
+          const totalWidth = rect.width;
+          let leftPercent = (offsetX / totalWidth) * 100;
+
+          // Clamp resize bounds between 15% and 85%
+          leftPercent = Math.max(15, Math.min(85, leftPercent));
+
+          leftPanel.style.width = `${leftPercent}%`;
+          rightPanel.style.width = `${100 - leftPercent}%`;
+          leftPanel.style.height = '100%';
+          rightPanel.style.height = '100%';
+        } else {
+          // Vertical Resizing for Mobile
+          const offsetY = clientY - rect.top;
+          const totalHeight = rect.height;
+          let topPercent = (offsetY / totalHeight) * 100;
+
+          // Clamp resize bounds between 15% and 85%
+          topPercent = Math.max(15, Math.min(85, topPercent));
+
+          leftPanel.style.height = `${topPercent}%`;
+          rightPanel.style.height = `${100 - topPercent}%`;
+          leftPanel.style.width = '100%';
+          rightPanel.style.width = '100%';
+        }
+
+        // Trigger resize event so Univer spreadsheet redraws seamlessly
+        window.dispatchEvent(new Event('resize'));
+      }
+
+      function stopDrag() {
+        if (!isDragging) return;
+        isDragging = false;
+        resizer.classList.remove('is-dragging');
+
+        if (overlay && overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+          overlay = null;
+        }
+
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchmove', onDrag);
+        document.removeEventListener('touchend', stopDrag);
+
+        window.dispatchEvent(new Event('resize'));
+      }
+
+      resizer.addEventListener('mousedown', startDrag);
+      resizer.addEventListener('touchstart', startDrag, { passive: false });
+
+      // Handle viewport resize transitions gracefully
+      window.addEventListener('resize', () => {
+        if (!isDragging) {
+          if (window.innerWidth < 768) {
+            if (leftPanel.style.width && leftPanel.style.width.includes('%')) {
+              leftPanel.style.width = '';
+              rightPanel.style.width = '';
+            }
+          } else {
+            if (leftPanel.style.height && leftPanel.style.height.includes('%')) {
+              leftPanel.style.height = '';
+              rightPanel.style.height = '';
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
