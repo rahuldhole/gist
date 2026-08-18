@@ -1,0 +1,755 @@
+<!-- APP-META
+Title: Text To Handwriting Converter
+Description: Convert your typed text into realistic handwritten notes easily with our free online Text To Handwriting converter. Choose from cursive fonts, pen ink colors, paper styles, and instant PDF/PNG exports.
+Category: Text Tools
+Icon: fa-solid fa-pen-to-square
+Image: https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80
+Status: published
+Updated: 2026-08-19
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text To Handwriting Converter - Free Realistic Handwritten Notes Generator</title>
+    <meta name="description" content="Convert your typed text into realistic handwritten notes easily with our free online Text To Handwriting converter. Choose from cursive fonts, pen ink colors, paper styles, and instant PDF/PNG exports.">
+    <meta name="keywords" content="text to handwriting, handwriting generator, convert text to handwriting, realistic handwriting converter, online assignment generator, handwritten notes maker">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Text To Handwriting Converter - Free Realistic Notes Generator">
+    <meta property="og:description" content="Convert your text into realistic handwritten notes easily with our free online Text To Handwriting converter. Customize fonts, pen inks, and paper sheets.">
+    <meta property="og:site_name" content="Text To Handwriting Studio">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=1200&q=80">
+
+    <!-- Schema.org Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Text To Handwriting Converter",
+      "description": "Convert your digital text into realistic handwritten notes online.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Google Fonts for Web UI & Handwriting Options -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Cedarville+Cursive&family=Coming+Soon&family=Crafty+Girls&family=Gloria+Hallelujah&family=Handlee&family=Homemade+Apple&family=Indie+Flower&family=Inter:wght@300;400;500;600;700&family=Meddon&family=Permanent+Marker&family=Satisfy&family=Schoolbell&family=Swanky+and+Moo+Moo&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                            900: '#172554',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        gloria: ['"Gloria Hallelujah"', 'cursive'],
+                        homemade: ['"Homemade Apple"', 'cursive'],
+                        cedarville: ['"Cedarville Cursive"', 'cursive'],
+                        schoolbell: ['Schoolbell', 'cursive'],
+                        indie: ['"Indie Flower"', 'cursive'],
+                        satisfy: ['Satisfy', 'cursive'],
+                        crafty: ['"Crafty Girls"', 'cursive'],
+                        marker: ['"Permanent Marker"', 'cursive'],
+                        handlee: ['Handlee', 'cursive'],
+                        comingsoon: ['"Coming Soon"', 'cursive'],
+                        swanky: ['"Swanky and Moo Moo"', 'cursive'],
+                        meddon: ['Meddon', 'cursive'],
+                        caveat: ['Caveat', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Preact, Hooks & HTM via CDNs -->
+    <script src="https://unpkg.com/preact@10.19.2/dist/preact.min.js"></script>
+    <script src="https://unpkg.com/preact@10.19.2/hooks/dist/hooks.umd.js"></script>
+    <script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+
+    <!-- html2canvas & jsPDF for export capabilities -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        /* Custom Paper Background Simulations */
+        .paper-a4-line-page {
+            background-color: #fdfdfd;
+            background-image: 
+                linear-gradient(90deg, transparent 79px, #ef4444 79px, #ef4444 81px, transparent 81px),
+                linear-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 100% 100%, 100% 2rem;
+            line-height: 2rem;
+        }
+
+        .paper-black-line-paper {
+            background-color: #1f2937;
+            background-image: 
+                linear-gradient(90deg, transparent 79px, #f87171 79px, #f87171 81px, transparent 81px),
+                linear-gradient(#374151 1px, transparent 1px);
+            background-size: 100% 100%, 100% 2.2rem;
+            line-height: 2.2rem;
+            color: #f3f4f6;
+        }
+
+        .paper-gray-lined-paper {
+            background-color: #f3f4f6;
+            background-image: 
+                linear-gradient(90deg, transparent 65px, #9ca3af 65px, #9ca3af 66px, transparent 66px),
+                linear-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 100% 100%, 100% 1.8rem;
+            line-height: 1.8rem;
+        }
+
+        .paper-straw-paper-1 {
+            background-color: #fef3c7;
+            background-image: 
+                radial-gradient(#d97706 0.5px, transparent 0.5px),
+                linear-gradient(#fcd34d 1px, transparent 1px);
+            background-size: 12px 12px, 100% 2rem;
+            line-height: 2rem;
+        }
+
+        .paper-straw-paper-2 {
+            background-color: #f5f5f4;
+            background-image: 
+                radial-gradient(#a8a29e 0.75px, transparent 0.75px),
+                linear-gradient(90deg, transparent 70px, #f43f5e 70px, #f43f5e 71px, transparent 71px),
+                linear-gradient(#e7e5e4 1px, transparent 1px);
+            background-size: 20px 20px, 100% 100%, 100% 2.1rem;
+            line-height: 2.1rem;
+        }
+
+        .paper-grid-paper {
+            background-color: #ffffff;
+            background-image: 
+                linear-gradient(#e2e8f0 1px, transparent 1px),
+                linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px, 20px 20px;
+            line-height: 20px;
+        }
+
+        .paper-love-letter {
+            background-color: #fff1f2;
+            background-image: 
+                linear-gradient(90deg, transparent 75px, #fda4af 75px, #fda4af 77px, transparent 77px),
+                linear-gradient(#fecdd3 1px, transparent 1px);
+            background-size: 100% 100%, 100% 2rem;
+            line-height: 2rem;
+        }
+
+        .paper-blank-sheet {
+            background-color: #ffffff;
+            line-height: 2rem;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Realistic Page Shadow & Elevation */
+        .page-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Site Header & Navigation -->
+    <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Rebranded Logo -->
+                <a href="#" class="flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center font-bold text-xl text-white shadow-lg group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-pen-nib"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-lg tracking-tight leading-none text-white">Handwriting<span class="text-brand-500">Studio</span></span>
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Text To Handwriting Tool</span>
+                    </div>
+                </a>
+
+                <!-- Nav Links Internal to Tool -->
+                <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+                    <a href="#generator" class="text-brand-400 font-semibold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span> Generator
+                    </a>
+                    <a href="#features" class="text-slate-300 hover:text-white transition-colors">Features</a>
+                    <a href="#how-it-works" class="text-slate-300 hover:text-white transition-colors">How It Works</a>
+                    <a href="#faq" class="text-slate-300 hover:text-white transition-colors">FAQs</a>
+                </nav>
+
+                <!-- Mobile Menu Toggle Button -->
+                <div class="flex items-center gap-3 md:hidden">
+                    <button id="mobile-menu-btn" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Nav Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-800 border-t border-slate-700 px-4 pt-3 pb-4 space-y-2 text-sm">
+            <a href="#generator" class="block px-3 py-2 rounded-md bg-brand-600 text-white font-medium">Converter Tool</a>
+            <a href="#features" class="block px-3 py-2 rounded-md text-slate-300 hover:bg-slate-700 hover:text-white">Features</a>
+            <a href="#how-it-works" class="block px-3 py-2 rounded-md text-slate-300 hover:bg-slate-700 hover:text-white">How It Works</a>
+            <a href="#faq" class="block px-3 py-2 rounded-md text-slate-300 hover:bg-slate-700 hover:text-white">FAQs</a>
+        </div>
+    </header>
+
+    <!-- Application Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Hero Header -->
+        <div class="text-center max-w-3xl mx-auto mb-8">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+                Text To Handwriting Converter
+            </h1>
+            <p class="text-base sm:text-lg text-slate-600">
+                Convert digital text into realistic handwritten notes online for free. Customize fonts, pen inks, paper styles, and export as PNG, JPG, or PDF.
+            </p>
+        </div>
+
+        <!-- Preact SPA Mount Target -->
+        <div id="generator" class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-12 min-h-[600px] flex items-center justify-center">
+            <div class="p-12 text-center text-slate-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-brand-600 mb-3"></i>
+                <p class="text-sm font-medium">Initializing Interactive Handwriting Studio...</p>
+            </div>
+        </div>
+
+        <!-- Static Content Section for SEO Integrity -->
+        <article class="bg-white rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 text-slate-700 leading-relaxed space-y-8">
+            <section id="features">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-brand-600"></i> Realistic Text To Handwriting Studio
+                </h2>
+                <p class="mb-3">
+                    Looking for a fast and realistic way to turn your digital text into handwritten notes? Our <strong>Text to Handwriting Converter</strong> is a free, powerful web tool designed for students, educators, writers, and professionals. Whether you are submitting written notes, creating custom classroom worksheets, or preparing aesthetic personal notes, our tool delivers realistic human-like handwriting in seconds.
+                </p>
+                <p>
+                    Featuring real-time dynamic rendering, multiple handwriting fonts (cursive, script, print), custom pen ink choices (blue, black, red, green, purple), and authentic paper backgrounds (A4 blue lines, dark mode, vintage straw, grid paper), you get genuine handwritten aesthetic without writing a single line by hand.
+                </p>
+            </section>
+
+            <section id="how-it-works">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-500"></i> How To Use The Converter
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-6">
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold mb-3">1</div>
+                        <h3 class="font-bold text-slate-900 mb-1">Enter or Import Text</h3>
+                        <p class="text-sm text-slate-600">Type directly into the text box, paste content, or upload a .txt file from your computer.</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold mb-3">2</div>
+                        <h3 class="font-bold text-slate-900 mb-1">Select Handwriting Font</h3>
+                        <p class="text-sm text-slate-600">Choose from 13+ handwritten styles including cursive, casual, marker, and print styles.</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold mb-3">3</div>
+                        <h3 class="font-bold text-slate-900 mb-1">Pick Ink & Paper</h3>
+                        <p class="text-sm text-slate-600">Select pen ink color (blue, black, red, green) and paper background (A4 lined, dark mode, straw, grid).</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold mb-3">4</div>
+                        <h3 class="font-bold text-slate-900 mb-1">Adjust Font Sizes</h3>
+                        <p class="text-sm text-slate-600">Fine-tune the font size for both headings and paragraph content for ideal spacing.</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold mb-3">5</div>
+                        <h3 class="font-bold text-slate-900 mb-1">Live Preview & Pages</h3>
+                        <p class="text-sm text-slate-600">Review your generated document instantly in the interactive live paper preview box.</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold mb-3">6</div>
+                        <h3 class="font-bold text-slate-900 mb-1">Export PNG, JPG or PDF</h3>
+                        <p class="text-sm text-slate-600">Click generate to immediately download your handwritten document as an image or printable PDF.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">Who Uses Text To Handwriting?</h2>
+                <ul class="space-y-3 list-disc pl-5">
+                    <li><strong>Students:</strong> Quickly convert typed essays, notes, and study summaries into authentic handwritten sheets for submission.</li>
+                    <li><strong>Teachers & Educators:</strong> Generate natural handwritten quizzes, worksheets, and individual feedback cards.</li>
+                    <li><strong>Content Creators:</strong> Design handwritten quotes, journals, greeting notes, and social media imagery.</li>
+                    <li><strong>Professionals:</strong> Send personalized handwritten letters, invitations, and client thank-you notes.</li>
+                </ul>
+            </section>
+
+            <!-- FAQs Section -->
+            <section id="faq" class="border-t border-slate-100 pt-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6">Frequently Asked Questions</h2>
+                <div class="space-y-4">
+                    <div class="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-100">
+                        <h3 class="font-semibold text-slate-900 text-lg mb-1">Q. Is this Text To Handwriting converter completely free?</h3>
+                        <p class="text-sm text-slate-600">Yes! Our converter is 100% free with no sign-ups, no usage caps, and no hidden subscriptions.</p>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-100">
+                        <h3 class="font-semibold text-slate-900 text-lg mb-1">Q. Can I download multi-page PDF documents?</h3>
+                        <p class="text-sm text-slate-600">Yes, you can export your handwritten pages directly as PDF files or high-resolution PNG/JPG images.</p>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-100">
+                        <h3 class="font-semibold text-slate-900 text-lg mb-1">Q. Can I use custom pen colors and paper styles?</h3>
+                        <p class="text-sm text-slate-600">Absolutely. You can choose from standard blue, black, red, green, and purple inks, paired with notebook, dark mode, straw, or graph papers.</p>
+                    </div>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <!-- Main Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-sm mt-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <!-- Col 1: Brand Info -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 text-white font-bold text-lg">
+                        <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm">
+                            <i class="fa-solid fa-pen-nib"></i>
+                        </div>
+                        Text To Handwriting
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Convert digital text into realistic handwritten notes with customizable cursive fonts, pen inks, and paper backgrounds.
+                    </p>
+                </div>
+
+                <!-- Col 2: Studio Features -->
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Handwriting Features</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="#generator" class="hover:text-white transition-colors">Cursive & Print Fonts</a></li>
+                        <li><a href="#generator" class="hover:text-white transition-colors">Multiple Pen Ink Colors</a></li>
+                        <li><a href="#generator" class="hover:text-white transition-colors">A4 Lined & Vintage Papers</a></li>
+                        <li><a href="#generator" class="hover:text-white transition-colors">Export PNG / JPG / PDF</a></li>
+                        <li><a href="#generator" class="hover:text-white transition-colors">TXT File Import</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Quick Navigation -->
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Quick Navigation</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="#generator" class="hover:text-white transition-colors">Converter App</a></li>
+                        <li><a href="#features" class="hover:text-white transition-colors">Features Overview</a></li>
+                        <li><a href="#how-it-works" class="hover:text-white transition-colors">How To Use</a></li>
+                        <li><a href="#faq" class="hover:text-white transition-colors">Frequently Asked Questions</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Community / Social -->
+                <div>
+                    <h4 class="text-white font-semibold text-sm mb-3 uppercase tracking-wider">Share Tool</h4>
+                    <p class="text-xs text-slate-400 mb-3">Free online tool for realistic handwriting conversion.</p>
+                    <div class="flex items-center gap-3">
+                        <button onclick="navigator.clipboard.writeText(window.location.href); alert('Page link copied to clipboard!');" class="px-3 py-2 bg-slate-800 hover:bg-brand-600 text-xs text-white rounded-lg transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-share-nodes"></i> Share Studio
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-6 text-center text-xs text-slate-500">
+                © 2026 Text To Handwriting Studio — All rights reserved. Free Realistic Handwriting Generator.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Preact Application Script -->
+    <script>
+        const { render, h } = window.preact;
+        const { useState, useEffect, useRef } = window.preactHooks;
+        const html = htm.bind(h);
+
+        // Mobile Menu Toggle Logic
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            if (menu) menu.classList.toggle('hidden');
+        });
+
+        // Main Preact Handwriting App Component
+        function HandwritingApp() {
+            const [headingText, setHeadingText] = useState('Text to Handwriting');
+            const [paragraphText, setParagraphText] = useState(
+                'With our text to handwriting converter, you can change simple digital text into handwritten notes. ' +
+                'This tool works in real-time, and the handwritten text will appear on the right side of the screen as you type, ' +
+                'paste, or upload your content. Choose from different handwriting styles, pen colors, and realistic page backgrounds!'
+            );
+            const [headingSize, setHeadingSize] = useState(32);
+            const [bodySize, setBodySize] = useState(20);
+            const [selectedFont, setSelectedFont] = useState('font-gloria');
+            const [inkColor, setInkColor] = useState('#000f55');
+            const [paperStyle, setPaperStyle] = useState('paper-a4-line-page');
+            const [exportFormat, setExportFormat] = useState('PNG');
+            const [isExporting, setIsExporting] = useState(false);
+            const [currentPage, setCurrentPage] = useState(1);
+            const [totalPages, setTotalPages] = useState(1);
+
+            const paperRef = useRef(null);
+
+            // Handwriting Fonts List
+            const fontOptions = [
+                { name: 'Gloria Hallelujah', class: 'font-gloria' },
+                { name: 'Homemade Apple', class: 'font-homemade' },
+                { name: 'Cedarville Cursive', class: 'font-cedarville' },
+                { name: 'Schoolbell', class: 'font-schoolbell' },
+                { name: 'Indie Flower', class: 'font-indie' },
+                { name: 'Satisfy', class: 'font-satisfy' },
+                { name: 'Crafty Girls', class: 'font-crafty' },
+                { name: 'Permanent Marker', class: 'font-marker' },
+                { name: 'Handlee', class: 'font-handlee' },
+                { name: 'Coming Soon', class: 'font-comingsoon' },
+                { name: 'Swanky and Moo Moo', class: 'font-swanky' },
+                { name: 'Meddon', class: 'font-meddon' },
+                { name: 'Caveat', class: 'font-caveat' }
+            ];
+
+            // Pen Ink Colors
+            const inkOptions = [
+                { label: 'Blue Pen', value: '#000f55', colorBg: '#000f55' },
+                { label: 'Black Pen', value: '#111827', colorBg: '#111827' },
+                { label: 'Red Pen', value: '#ba3807', colorBg: '#ba3807' },
+                { label: 'Dark Red Pen', value: '#b20000', colorBg: '#b20000' },
+                { label: 'Sky Blue', value: '#03a9f4', colorBg: '#03a9f4' },
+                { label: 'Green Pen', value: '#15803d', colorBg: '#15803d' },
+                { label: 'Purple Ink', value: '#7e22ce', colorBg: '#7e22ce' }
+            ];
+
+            // Paper Background Options
+            const paperOptions = [
+                { label: 'A4 Blue Lined Page', value: 'paper-a4-line-page' },
+                { label: 'Black Lined Paper', value: 'paper-black-line-paper' },
+                { label: 'Gray Lined Sheet', value: 'paper-gray-lined-paper' },
+                { label: 'Vintage Straw Paper 1', value: 'paper-straw-paper-1' },
+                { label: 'Vintage Straw Paper 2', value: 'paper-straw-paper-2' },
+                { label: 'Grid / Graph Sheet', value: 'paper-grid-paper' },
+                { label: 'Romantic Pink Page', value: 'paper-love-letter' },
+                { label: 'Blank Plain Sheet', value: 'paper-blank-sheet' }
+            ];
+
+            // Handle TXT File Import
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        setParagraphText(event.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+            };
+
+            // Calculate estimated pages dynamically
+            useEffect(() => {
+                const totalChars = paragraphText.length;
+                const estimatedPages = Math.max(1, Math.ceil(totalChars / 850));
+                setTotalPages(estimatedPages);
+                if (currentPage > estimatedPages) setCurrentPage(1);
+            }, [paragraphText]);
+
+            // Export Function
+            const handleDownload = async () => {
+                if (!paperRef.current) return;
+                setIsExporting(true);
+
+                try {
+                    const canvas = await html2canvas(paperRef.current, {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: null
+                    });
+
+                    if (exportFormat === 'PNG') {
+                        const link = document.createElement('a');
+                        link.download = `Handwritten_Note_Page_${currentPage}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } else if (exportFormat === 'JPG') {
+                        const link = document.createElement('a');
+                        link.download = `Handwritten_Note_Page_${currentPage}.jpg`;
+                        link.href = canvas.toDataURL('image/jpeg', 0.95);
+                        link.click();
+                    } else if (exportFormat === 'PDF') {
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        const imgProps = pdf.getImageProperties(imgData);
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                        pdf.save(`Handwritten_Notes.pdf`);
+                    }
+                } catch (err) {
+                    console.error('Export error:', err);
+                } finally {
+                    setIsExporting(false);
+                }
+            };
+
+            return html`
+                <div class="w-full flex flex-col lg:flex-row bg-slate-100 min-h-[650px]">
+                    <!-- Left Sidebar Controls -->
+                    <div class="w-full lg:w-5/12 p-5 sm:p-6 bg-white border-r border-slate-200 space-y-5 overflow-y-auto max-h-[850px]">
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-brand-600"></i> Customization Options
+                            </h2>
+                            <label class="cursor-pointer text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg border border-brand-200 transition-colors">
+                                <i class="fa-solid fa-file-arrow-up mr-1"></i> Import .TXT
+                                <input type="file" accept=".txt" onChange=${handleFileUpload} class="hidden" />
+                            </label>
+                        </div>
+
+                        <!-- Heading Text Input -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-600">Heading Title</label>
+                                ${headingText && html`
+                                    <button onClick=${() => setHeadingText('')} class="text-xs text-slate-400 hover:text-red-500">
+                                        <i class="fa-solid fa-xmark"></i> Clear
+                                    </button>
+                                `}
+                            </div>
+                            <input 
+                                type="text" 
+                                value=${headingText} 
+                                onInput=${(e) => setHeadingText(e.target.value)}
+                                placeholder="Enter heading title..." 
+                                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
+                            />
+                        </div>
+
+                        <!-- Paragraph Content Textarea -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-600">Paragraph Content</label>
+                                ${paragraphText && html`
+                                    <button onClick=${() => setParagraphText('')} class="text-xs text-slate-400 hover:text-red-500">
+                                        <i class="fa-solid fa-xmark"></i> Clear
+                                    </button>
+                                `}
+                            </div>
+                            <textarea 
+                                rows="5" 
+                                value=${paragraphText} 
+                                onInput=${(e) => setParagraphText(e.target.value)}
+                                placeholder="Write or paste paragraph content here..." 
+                                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none resize-y"
+                            ></textarea>
+                        </div>
+
+                        <!-- Font Sizes -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Heading Size (${headingSize}px)</label>
+                                <input 
+                                    type="range" 
+                                    min="16" 
+                                    max="60" 
+                                    value=${headingSize} 
+                                    onInput=${(e) => setHeadingSize(Number(e.target.value))}
+                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Body Size (${bodySize}px)</label>
+                                <input 
+                                    type="range" 
+                                    min="12" 
+                                    max="36" 
+                                    value=${bodySize} 
+                                    onInput=${(e) => setBodySize(Number(e.target.value))}
+                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Handwriting Style Selector -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Handwriting Style</label>
+                            <select 
+                                value=${selectedFont} 
+                                onChange=${(e) => setSelectedFont(e.target.value)}
+                                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white"
+                            >
+                                ${fontOptions.map(font => html`
+                                    <option key=${font.class} value=${font.class}>${font.name}</option>
+                                `)}
+                            </select>
+                        </div>
+
+                        <!-- Pen Ink Selection -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Pen Ink Color</label>
+                            <div class="flex flex-wrap gap-2">
+                                ${inkOptions.map(ink => html`
+                                    <button 
+                                        key=${ink.value}
+                                        onClick=${() => setInkColor(ink.value)}
+                                        title=${ink.label}
+                                        class="w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${inkColor === ink.value ? 'border-brand-600 scale-110 shadow' : 'border-transparent hover:scale-105'}"
+                                        style="background-color: ${ink.colorBg}"
+                                    >
+                                        ${inkColor === ink.value && html`<i class="fa-solid fa-check text-white text-xs"></i>`}
+                                    </button>
+                                `)}
+                            </div>
+                        </div>
+
+                        <!-- Paper Background Style -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Paper Background</label>
+                            <select 
+                                value=${paperStyle} 
+                                onChange=${(e) => setPaperStyle(e.target.value)}
+                                class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white"
+                            >
+                                ${paperOptions.map(paper => html`
+                                    <option key=${paper.value} value=${paper.value}>${paper.label}</option>
+                                `)}
+                            </select>
+                        </div>
+
+                        <!-- Export Options & Download Button -->
+                        <div class="pt-4 border-t border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-600">Export Format</label>
+                                <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100">
+                                    ${['PNG', 'JPG', 'PDF'].map(fmt => html`
+                                        <button 
+                                            key=${fmt}
+                                            onClick=${() => setExportFormat(fmt)}
+                                            class="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${exportFormat === fmt ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}"
+                                        >
+                                            ${fmt}
+                                        </button>
+                                    `)}
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick=${handleDownload} 
+                                disabled=${isExporting}
+                                class="w-full py-3 bg-brand-600 hover:bg-brand-700 disabled:bg-slate-400 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
+                            >
+                                ${isExporting ? html`
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Generating ${exportFormat}...
+                                ` : html`
+                                    <i class="fa-solid fa-download"></i> Download File
+                                `}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Live Sheet Preview -->
+                    <div class="w-full lg:w-7/12 p-4 sm:p-8 flex flex-col items-center justify-between bg-slate-200/80 overflow-x-auto min-h-[600px]">
+                        
+                        <!-- Paper Container -->
+                        <div class="w-full max-w-[650px] my-auto">
+                            <div 
+                                ref=${paperRef}
+                                id="paper-element"
+                                class="w-full min-h-[780px] p-8 sm:p-12 rounded-sm page-shadow transition-all relative ${paperStyle} ${selectedFont}"
+                                style="color: ${inkColor};"
+                            >
+                                <!-- Heading Text -->
+                                ${headingText && html`
+                                    <div 
+                                        class="text-center font-bold mb-6 tracking-wide" 
+                                        style="font-size: ${headingSize}px; line-height: 1.3;"
+                                    >
+                                        ${headingText}
+                                    </div>
+                                `}
+
+                                <!-- Paragraph Content -->
+                                <div 
+                                    class="pl-12 sm:pl-16 pr-4 tracking-wide text-justify break-words" 
+                                    style="font-size: ${bodySize}px; line-height: ${Math.max(1.5, bodySize * 0.08)};"
+                                >
+                                    ${paragraphText || 'Your handwritten notes will appear here in real-time as you type...'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pagination Control Bar -->
+                        <div class="mt-6 flex items-center justify-between w-full max-w-[650px] bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200 text-xs font-semibold text-slate-600">
+                            <button 
+                                onClick=${() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled=${currentPage === 1}
+                                class="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                            >
+                                <i class="fa-solid fa-chevron-left mr-1"></i> Previous
+                            </button>
+
+                            <span>Page ${currentPage} of ${totalPages}</span>
+
+                            <button 
+                                onClick=${() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled=${currentPage === totalPages}
+                                class="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent"
+                            >
+                                Next <i class="fa-solid fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Mount Preact App
+        render(html`<${HandwritingApp} />`, document.getElementById('generator'));
+    </script>
+</body>
+</html>
