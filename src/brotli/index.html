@@ -35,8 +35,7 @@ Status: published
     // Initialize the WebAssembly module
     // The default export is a Promise that resolves to the brotli instance.
     const resolvedBrotli = await brotliPromise;
-    // Depending on the CDN's ESM wrapper, the actual methods might be on .default
-    const brotli = resolvedBrotli.default || resolvedBrotli;
+    const brotli = resolvedBrotli;
 
     // Composable for handling Brotli compression and decompression
     function useBrotli() {
