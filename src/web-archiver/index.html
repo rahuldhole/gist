@@ -4,10 +4,11 @@ Description: WebArchiver Studio - In-browser website downloader. Scrape, rewrite
 Category: Utility
 Icon: fa-solid fa-cloud-arrow-down
 Image: https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop
-Status: published
+Status: draft
 -->
 <!DOCTYPE html>
 <html lang="en" class="h-full">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -34,62 +35,104 @@ Status: published
   </script>
 
   <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
-    ::-webkit-scrollbar-thumb { background: rgba(45, 212, 191, 0.25); border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(45, 212, 191, 0.5); }
-    .code-editor { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .export-disabled { opacity: 0.4; pointer-events: none; filter: grayscale(0.4); }
-    .feat-badge { white-space: nowrap; }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(45, 212, 191, 0.25);
+      border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(45, 212, 191, 0.5);
+    }
+
+    .code-editor {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .export-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      filter: grayscale(0.4);
+    }
+
+    .feat-badge {
+      white-space: nowrap;
+    }
   </style>
 </head>
 
-<body class="bg-slate-950 text-slate-100 min-h-full flex flex-col antialiased selection:bg-teal-500 selection:text-slate-950">
+<body
+  class="bg-slate-950 text-slate-100 min-h-full flex flex-col antialiased selection:bg-teal-500 selection:text-slate-950">
 
-<header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-4 py-3">
-  <div class="flex items-center justify-between gap-4 w-full">
-    <div class="flex items-center gap-3 min-w-0">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-400 flex items-center justify-center text-slate-950 shadow-lg shadow-teal-500/20 font-bold text-xl shrink-0">
-        <i class="fa-solid fa-cloud-arrow-down"></i>
-      </div>
-      <div class="min-w-0 flex flex-col justify-center">
-        <div class="flex items-center gap-2">
-          <h1 class="font-bold text-base sm:text-lg leading-tight text-white tracking-tight truncate">WebArchiver Studio</h1>
-          <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 shrink-0 hidden sm:inline-block">Client-Side Engine</span>
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-4 py-3">
+    <div class="flex items-center justify-between gap-4 w-full">
+      <div class="flex items-center gap-3 min-w-0">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-400 flex items-center justify-center text-slate-950 shadow-lg shadow-teal-500/20 font-bold text-xl shrink-0">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
         </div>
-        <p class="text-xs text-slate-400 hidden sm:block truncate mt-0.5">Scrape, rewrite &amp; save websites directly to local disk or ZIP — one HTML file, zero backend</p>
+        <div class="min-w-0 flex flex-col justify-center">
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg leading-tight text-white tracking-tight truncate">WebArchiver
+              Studio</h1>
+            <span
+              class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 shrink-0 hidden sm:inline-block">Client-Side
+              Engine</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block truncate mt-0.5">Scrape, rewrite &amp; save websites directly
+            to local disk or ZIP — one HTML file, zero backend</p>
+        </div>
       </div>
-    </div>
 
-    <button 
-      type="button" 
-      onclick="showHelpModal()" 
-      title="How it works" 
-      aria-label="How it works"
-      class="flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-teal-500/20 transition active:scale-95 shrink-0">
-      <i class="fa-solid fa-circle-question text-base sm:text-sm"></i>
-      <span class="hidden sm:inline">How it works</span>
-    </button>
-  </div>
-</header>
+      <button type="button" onclick="showHelpModal()" title="How it works" aria-label="How it works"
+        class="flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-teal-500/20 transition active:scale-95 shrink-0">
+        <i class="fa-solid fa-circle-question text-base sm:text-sm"></i>
+        <span class="hidden sm:inline">How it works</span>
+      </button>
+    </div>
+  </header>
 
   <!-- FEATURE / INTRO BANNER -->
   <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5">
     <div class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5">
       <p class="text-sm text-slate-300 leading-relaxed max-w-3xl">
-        Point it at any page, and it fetches the HTML, rewrites every image/CSS/script link to a local relative path, and lets you save the result as a folder, a <code class="bg-slate-800 px-1 rounded text-teal-300">.zip</code>, or a single self-contained <code class="bg-slate-800 px-1 rounded text-teal-300">index.html</code> — no server, no install, no account. Everything below runs entirely in this browser tab.
+        Point it at any page, and it fetches the HTML, rewrites every image/CSS/script link to a local relative path,
+        and lets you save the result as a folder, a <code class="bg-slate-800 px-1 rounded text-teal-300">.zip</code>,
+        or a single self-contained <code class="bg-slate-800 px-1 rounded text-teal-300">index.html</code> — no server,
+        no install, no account. Everything below runs entirely in this browser tab.
       </p>
       <div class="flex flex-wrap gap-2 mt-3.5 items-center">
-        <button id="fsSupportedBadge" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-700/50 bg-emerald-900/30 text-emerald-300 text-[11px] hover:bg-emerald-900/50 transition">
+        <button id="fsSupportedBadge"
+          class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-700/50 bg-emerald-900/30 text-emerald-300 text-[11px] hover:bg-emerald-900/50 transition">
           <i class="fa-solid fa-hard-drive"></i>
           <span>FS API <strong id="fsApiStatus" class="font-bold">Checking...</strong></span>
         </button>
-        <span class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i class="fa-solid fa-shield-halved text-teal-400 mr-1.5"></i>100% client-side</span>
-        <span class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i class="fa-solid fa-folder-tree text-teal-400 mr-1.5"></i>Save straight to a local folder</span>
-        <span class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i class="fa-solid fa-file-zipper text-teal-400 mr-1.5"></i>.zip & single-file export</span>
-        <span class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i class="fa-solid fa-droplet text-teal-400 mr-1.5"></i>Low-RAM streaming mode for large sites</span>
-        <span class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i class="fa-solid fa-desktop text-teal-400 mr-1.5"></i>Offline sandbox preview</span>
-        <span class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i class="fa-solid fa-font text-teal-400 mr-1.5"></i>Fonts & CSS background images included</span>
+        <span
+          class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i
+            class="fa-solid fa-shield-halved text-teal-400 mr-1.5"></i>100% client-side</span>
+        <span
+          class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i
+            class="fa-solid fa-folder-tree text-teal-400 mr-1.5"></i>Save straight to a local folder</span>
+        <span
+          class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i
+            class="fa-solid fa-file-zipper text-teal-400 mr-1.5"></i>.zip & single-file export</span>
+        <span
+          class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i
+            class="fa-solid fa-droplet text-teal-400 mr-1.5"></i>Low-RAM streaming mode for large sites</span>
+        <span
+          class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i
+            class="fa-solid fa-desktop text-teal-400 mr-1.5"></i>Offline sandbox preview</span>
+        <span
+          class="feat-badge text-[11px] px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300"><i
+            class="fa-solid fa-font text-teal-400 mr-1.5"></i>Fonts & CSS background images included</span>
       </div>
     </div>
   </div>
@@ -102,7 +145,8 @@ Status: published
 
       <!-- TARGET URL CARD -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-        <h2 class="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-4 flex items-center justify-between">
+        <h2
+          class="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-4 flex items-center justify-between">
           <span><i class="fa-solid fa-link text-teal-400 mr-2"></i>Target Website</span>
           <span class="text-[11px] text-slate-500 normal-case">Step 1: Enter Address</span>
         </h2>
@@ -121,65 +165,86 @@ Status: published
 
           <div class="flex flex-wrap items-center gap-1.5 pt-1">
             <span class="text-[11px] text-slate-500">Samples:</span>
-            <button onclick="setSample('https://example.com')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Example.com</button>
-            <button onclick="setSample('https://news.ycombinator.com')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">HackerNews</button>
-            <button onclick="setSample('https://wikipedia.org')" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Wikipedia</button>
+            <button onclick="setSample('https://example.com')"
+              class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Example.com</button>
+            <button onclick="setSample('https://news.ycombinator.com')"
+              class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">HackerNews</button>
+            <button onclick="setSample('https://wikipedia.org')"
+              class="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition">Wikipedia</button>
           </div>
 
           <div class="pt-2 border-t border-slate-800/80">
             <div class="flex items-center justify-between mb-1">
               <label class="text-xs font-medium text-slate-400">CORS Fetch Strategy</label>
-              <button onclick="toggleProxyInfo()" class="text-[11px] text-teal-400 hover:underline">Why is this needed?</button>
+              <button onclick="toggleProxyInfo()" class="text-[11px] text-teal-400 hover:underline">Why is this
+                needed?</button>
             </div>
-            <select id="proxySelect" onchange="onProxySelectChange()" class="w-full py-2 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-teal-500">
+            <select id="proxySelect" onchange="onProxySelectChange()"
+              class="w-full py-2 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-teal-500">
               <option value="allorigins">AllOrigins Proxy (Public CORS Tunnel)</option>
               <option value="corsproxy">CorsProxy.io (Fast CDN Relay)</option>
               <option value="codetabs">CodeTabs Proxy</option>
               <option value="custom">Custom Proxy / Localhost Relay</option>
               <option value="direct">Direct Fetch (Disabled CORS / Extension / Same Origin)</option>
             </select>
-            <input type="text" id="customProxyInput" placeholder="https://my-custom-proxy.worker.dev/?url=" class="hidden mt-2 w-full py-2 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-teal-500" />
+            <input type="text" id="customProxyInput" placeholder="https://my-custom-proxy.worker.dev/?url="
+              class="hidden mt-2 w-full py-2 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-teal-500" />
           </div>
 
           <div class="space-y-2 pt-2 border-t border-slate-800/80">
             <label class="text-xs font-medium text-slate-400">Archival Options</label>
             <div class="grid grid-cols-2 gap-2 text-xs">
-              <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
+              <label
+                class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
                 <input type="checkbox" id="optImages" checked class="accent-teal-500 rounded" />
                 <span>Download Images</span>
               </label>
-              <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
+              <label
+                class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
                 <input type="checkbox" id="optStyles" checked class="accent-teal-500 rounded" />
-                <span title="Also fetches fonts & background images referenced inside CSS via url()">Fetch CSS, Fonts & BG Images</span>
+                <span title="Also fetches fonts & background images referenced inside CSS via url()">Fetch CSS, Fonts &
+                  BG Images</span>
               </label>
-              <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
+              <label
+                class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
                 <input type="checkbox" id="optScripts" checked class="accent-teal-500 rounded" />
-                <span title="Saves .js files as static assets — they will NOT execute in the sandbox preview">Download JS (static only)</span>
+                <span title="Saves .js files as static assets — they will NOT execute in the sandbox preview">Download
+                  JS (static only)</span>
               </label>
-              <label id="optInlineLabel" class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
+              <label id="optInlineLabel"
+                class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700">
                 <input type="checkbox" id="optInline" class="accent-teal-500 rounded" onchange="onInlineToggle()" />
-                <span title="Bakes images, fonts & CSS directly into the HTML as base64/data URIs">Self-Contained File</span>
+                <span title="Bakes images, fonts & CSS directly into the HTML as base64/data URIs">Self-Contained
+                  File</span>
               </label>
             </div>
           </div>
 
           <!-- LOW-RAM STREAMING MODE -->
           <div id="lowRamSection" class="space-y-2 pt-2 border-t border-slate-800/80">
-            <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700 text-xs">
+            <label
+              class="flex items-center gap-2 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 cursor-pointer hover:border-slate-700 text-xs">
               <input type="checkbox" id="optLowRam" class="accent-teal-500 rounded" onchange="onLowRamToggle()" />
-              <span><i class="fa-solid fa-droplet text-teal-400 mr-1"></i>Low-RAM Streaming Mode <span class="text-slate-500">— writes each file to disk immediately, freeing memory as it goes</span></span>
+              <span><i class="fa-solid fa-droplet text-teal-400 mr-1"></i>Low-RAM Streaming Mode <span
+                  class="text-slate-500">— writes each file to disk immediately, freeing memory as it goes</span></span>
             </label>
             <div id="lowRamFolderRow" class="hidden space-y-2 pl-1">
-              <button onclick="pickStreamingFolder()" class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 flex items-center justify-center gap-2">
+              <button onclick="pickStreamingFolder()"
+                class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-folder-open"></i>
                 <span id="streamingFolderLabel">Choose save folder (required before starting)</span>
               </button>
-              <p class="text-[11px] text-slate-500 leading-relaxed">Best for large sites. Assets are written straight to the folder in small batches as they download, then cleared from memory — so RAM usage stays flat instead of growing with the site size. Because of this, ZIP export, Self-Contained mode, and Sandbox Preview aren't available while this is on.</p>
+              <p class="text-[11px] text-slate-500 leading-relaxed">Best for large sites. Assets are written straight to
+                the folder in small batches as they download, then cleared from memory — so RAM usage stays flat instead
+                of growing with the site size. Because of this, ZIP export, Self-Contained mode, and Sandbox Preview
+                aren't available while this is on.</p>
             </div>
-            <p id="lowRamUnsupportedNote" class="hidden text-[11px] text-amber-400 pl-1">Streaming mode needs the File System Access API, not supported in this browser.</p>
+            <p id="lowRamUnsupportedNote" class="hidden text-[11px] text-amber-400 pl-1">Streaming mode needs the File
+              System Access API, not supported in this browser.</p>
           </div>
 
-          <button id="scrapeBtn" onclick="startScrapeProcess()" class="w-full mt-1 py-3 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
+          <button id="scrapeBtn" onclick="startScrapeProcess()"
+            class="w-full mt-1 py-3 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-bolt"></i>
             <span>Fetch & Analyze Website</span>
           </button>
@@ -195,7 +260,8 @@ Status: published
           </span>
           <button onclick="clearLogs()" class="text-[11px] text-slate-500 hover:text-slate-300">Clear</button>
         </div>
-        <div id="logConsole" class="flex-1 bg-slate-950 rounded-xl p-3 text-[11px] code-editor overflow-y-auto max-h-64 text-slate-400 space-y-1 border border-slate-800/80">
+        <div id="logConsole"
+          class="flex-1 bg-slate-950 rounded-xl p-3 text-[11px] code-editor overflow-y-auto max-h-64 text-slate-400 space-y-1 border border-slate-800/80">
           <div class="text-slate-500">// Ready. Enter a URL and click 'Fetch & Analyze Website'</div>
         </div>
       </div>
@@ -226,19 +292,23 @@ Status: published
     <section class="lg:col-span-7 flex flex-col gap-5">
 
       <!-- SAVE & EXPORT ACTION CARD -->
-      <div id="exportCard" class="export-disabled bg-slate-900 border border-teal-500/30 rounded-2xl p-5 shadow-xl relative overflow-hidden transition-all duration-300">
+      <div id="exportCard"
+        class="export-disabled bg-slate-900 border border-teal-500/30 rounded-2xl p-5 shadow-xl relative overflow-hidden transition-all duration-300">
         <div class="absolute -right-8 -top-8 w-28 h-28 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <h2 class="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-2 flex items-center justify-between flex-wrap gap-1">
+        <h2
+          class="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-2 flex items-center justify-between flex-wrap gap-1">
           <span><i class="fa-solid fa-floppy-disk text-teal-400 mr-2"></i>Save to Disk</span>
           <span class="text-[11px] text-teal-400 font-semibold" id="readyCountBadge">Run a scrape first</span>
         </h2>
         <p class="text-xs text-slate-400 mb-4">Choose how you want to save your localized website:</p>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button id="saveFsBtn" onclick="saveToFileSystem()" class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-sm transition flex items-center justify-between group">
+          <button id="saveFsBtn" onclick="saveToFileSystem()"
+            class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-sm transition flex items-center justify-between group">
             <div class="flex items-center gap-3 text-left">
-              <div class="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
+              <div
+                class="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
                 <i class="fa-solid fa-folder-tree"></i>
               </div>
               <div>
@@ -246,12 +316,15 @@ Status: published
                 <div class="text-[11px] text-slate-400">File System Access API</div>
               </div>
             </div>
-            <i class="fa-solid fa-arrow-right text-xs text-slate-400 group-hover:text-white group-hover:translate-x-1 transition shrink-0"></i>
+            <i
+              class="fa-solid fa-arrow-right text-xs text-slate-400 group-hover:text-white group-hover:translate-x-1 transition shrink-0"></i>
           </button>
 
-          <button id="zipExportBtn" onclick="exportAsZip()" class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-sm transition flex items-center justify-between group">
+          <button id="zipExportBtn" onclick="exportAsZip()"
+            class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-sm transition flex items-center justify-between group">
             <div class="flex items-center gap-3 text-left">
-              <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
+              <div
+                class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
                 <i class="fa-solid fa-file-zipper"></i>
               </div>
               <div>
@@ -259,40 +332,52 @@ Status: published
                 <div class="text-[11px] text-slate-400">Universal archive</div>
               </div>
             </div>
-            <i class="fa-solid fa-download text-xs text-slate-400 group-hover:text-white group-hover:translate-x-1 transition shrink-0"></i>
+            <i
+              class="fa-solid fa-download text-xs text-slate-400 group-hover:text-white group-hover:translate-x-1 transition shrink-0"></i>
           </button>
         </div>
 
-        <button onclick="downloadSingleHtml()" class="w-full mt-3 py-2 px-3 rounded-lg bg-slate-950/80 hover:bg-slate-950 border border-slate-800 text-slate-300 text-xs transition flex items-center justify-center gap-2">
+        <button onclick="downloadSingleHtml()"
+          class="w-full mt-3 py-2 px-3 rounded-lg bg-slate-950/80 hover:bg-slate-950 border border-slate-800 text-slate-300 text-xs transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-code"></i>
           <span>Download single modified <code>index.html</code></span>
         </button>
 
-        <p id="lowRamExportNote" class="hidden text-[11px] text-amber-400 mt-3 leading-relaxed"><i class="fa-solid fa-circle-info mr-1"></i>Low-RAM Streaming Mode was active — assets were already written to your chosen folder during the run. ZIP and Preview need everything in memory at once, so they're disabled for this run; the folder save button re-writes the same files if needed.</p>
+        <p id="lowRamExportNote" class="hidden text-[11px] text-amber-400 mt-3 leading-relaxed"><i
+            class="fa-solid fa-circle-info mr-1"></i>Low-RAM Streaming Mode was active — assets were already written to
+          your chosen folder during the run. ZIP and Preview need everything in memory at once, so they're disabled for
+          this run; the folder save button re-writes the same files if needed.</p>
       </div>
 
       <!-- TABS CONTAINER -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col shadow-xl overflow-hidden min-h-[420px]">
+      <div
+        class="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col shadow-xl overflow-hidden min-h-[420px]">
 
-        <div class="border-b border-slate-800 px-2 sm:px-4 pt-3 flex items-center justify-between gap-2 bg-slate-950/40 overflow-x-auto">
+        <div
+          class="border-b border-slate-800 px-2 sm:px-4 pt-3 flex items-center justify-between gap-2 bg-slate-950/40 overflow-x-auto">
           <div class="flex items-center gap-1">
-            <button onclick="switchTab('assets')" id="tabBtn-assets" class="px-3.5 py-2 text-xs font-semibold rounded-t-lg border-b-2 border-teal-400 text-teal-300 bg-slate-800/60 transition flex items-center gap-2 shrink-0">
+            <button onclick="switchTab('assets')" id="tabBtn-assets"
+              class="px-3.5 py-2 text-xs font-semibold rounded-t-lg border-b-2 border-teal-400 text-teal-300 bg-slate-800/60 transition flex items-center gap-2 shrink-0">
               <i class="fa-solid fa-list-check"></i>
               <span>Assets</span>
-              <span id="tabCountBadge" class="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-teal-500/20 text-teal-300">0</span>
+              <span id="tabCountBadge"
+                class="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-teal-500/20 text-teal-300">0</span>
             </button>
-            <button onclick="switchTab('preview')" id="tabBtn-preview" class="px-3.5 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 shrink-0">
+            <button onclick="switchTab('preview')" id="tabBtn-preview"
+              class="px-3.5 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 shrink-0">
               <i class="fa-solid fa-desktop"></i>
               <span>Preview</span>
             </button>
-            <button onclick="switchTab('source')" id="tabBtn-source" class="px-3.5 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 shrink-0">
+            <button onclick="switchTab('source')" id="tabBtn-source"
+              class="px-3.5 py-2 text-xs font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 shrink-0">
               <i class="fa-solid fa-code"></i>
               <span>HTML</span>
             </button>
           </div>
 
           <div class="text-xs shrink-0">
-            <button onclick="copyRewrittenHtml()" id="copyHtmlBtn" class="hidden text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 transition">
+            <button onclick="copyRewrittenHtml()" id="copyHtmlBtn"
+              class="hidden text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800 transition">
               <i class="fa-regular fa-copy mr-1"></i>Copy
             </button>
           </div>
@@ -302,12 +387,16 @@ Status: published
           <div class="flex items-center justify-between text-xs text-slate-400 mb-3 flex-wrap gap-2">
             <span>Discovered page elements and rewritten relative paths:</span>
             <div class="flex gap-2">
-              <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Cached</span>
-              <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Failed</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                Cached</span>
+              <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                Failed</span>
             </div>
           </div>
 
-          <div class="flex-1 border border-slate-800 rounded-xl overflow-y-auto bg-slate-950/70 p-1 divide-y divide-slate-800/60" id="assetListContainer">
+          <div
+            class="flex-1 border border-slate-800 rounded-xl overflow-y-auto bg-slate-950/70 p-1 divide-y divide-slate-800/60"
+            id="assetListContainer">
             <div class="text-center py-12 text-slate-600">
               <i class="fa-solid fa-box-open text-3xl mb-2 block"></i>
               No assets discovered yet. Run the scraper to populate.
@@ -316,24 +405,31 @@ Status: published
         </div>
 
         <div id="tabContent-preview" class="p-4 flex-1 hidden flex flex-col">
-          <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs px-3 py-2 rounded-lg mb-3 flex items-center justify-between flex-wrap gap-2">
+          <div
+            class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs px-3 py-2 rounded-lg mb-3 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-shield-halved"></i>
               <span>Isolated sandbox — scripts don't execute here, only layout/styling/images are previewed.</span>
             </div>
-            <button onclick="refreshPreview()" class="text-amber-200 underline text-[11px] hover:text-white shrink-0">Refresh Frame</button>
+            <button onclick="refreshPreview()"
+              class="text-amber-200 underline text-[11px] hover:text-white shrink-0">Refresh Frame</button>
           </div>
-          <div id="previewUnavailableNotice" class="hidden flex-1 flex items-center justify-center text-center text-xs text-slate-500 border border-slate-800 rounded-xl bg-slate-950/40 p-6">
-            Preview isn't available for this run — Low-RAM Streaming Mode discarded asset data from memory as it saved each file to disk. Your files are already in the folder you chose.
+          <div id="previewUnavailableNotice"
+            class="hidden flex-1 flex items-center justify-center text-center text-xs text-slate-500 border border-slate-800 rounded-xl bg-slate-950/40 p-6">
+            Preview isn't available for this run — Low-RAM Streaming Mode discarded asset data from memory as it saved
+            each file to disk. Your files are already in the folder you chose.
           </div>
-          <div id="previewFrameWrap" class="flex-1 bg-white rounded-xl overflow-hidden border border-slate-700 relative">
+          <div id="previewFrameWrap"
+            class="flex-1 bg-white rounded-xl overflow-hidden border border-slate-700 relative">
             <iframe id="previewIframe" sandbox="allow-same-origin" class="w-full h-full bg-white"></iframe>
           </div>
         </div>
 
         <div id="tabContent-source" class="p-4 flex-1 hidden flex flex-col">
-          <div class="text-xs text-slate-400 mb-2">Rewritten HTML code pointing all links to local directory structure:</div>
-          <textarea id="sourceCodeViewer" readonly class="flex-1 w-full bg-slate-950 rounded-xl p-3 text-xs code-editor text-teal-300/90 border border-slate-800 resize-none focus:outline-none min-h-[240px]"></textarea>
+          <div class="text-xs text-slate-400 mb-2">Rewritten HTML code pointing all links to local directory structure:
+          </div>
+          <textarea id="sourceCodeViewer" readonly
+            class="flex-1 w-full bg-slate-950 rounded-xl p-3 text-xs code-editor text-teal-300/90 border border-slate-800 resize-none focus:outline-none min-h-[240px]"></textarea>
         </div>
 
       </div>
@@ -343,44 +439,68 @@ Status: published
   </main>
 
   <!-- HELP MODAL -->
-  <div id="helpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 max-w-lg w-full rounded-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+  <div id="helpModal"
+    class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div
+      class="bg-slate-900 border border-slate-800 max-w-lg w-full rounded-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex items-center justify-between">
         <h3 class="font-bold text-lg text-white flex items-center gap-2">
           <i class="fa-solid fa-shield-halved text-teal-400"></i>
           How WebArchiver Studio Works
         </h3>
-        <button onclick="closeHelpModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="closeHelpModal()" class="text-slate-400 hover:text-white"><i
+            class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <div class="text-xs text-slate-300 space-y-3 leading-relaxed">
         <p>
-          <strong class="text-teal-300">1. Cross-Origin (CORS) Protection:</strong> Browsers block a page from reading another domain's response via <code class="bg-slate-800 px-1 py-0.5 rounded text-teal-300">fetch()</code>. To bypass this for research or archiving:
+          <strong class="text-teal-300">1. Cross-Origin (CORS) Protection:</strong> Browsers block a page from reading
+          another domain's response via <code class="bg-slate-800 px-1 py-0.5 rounded text-teal-300">fetch()</code>. To
+          bypass this for research or archiving:
         </p>
         <ul class="list-disc pl-5 space-y-1 text-slate-400">
-          <li>We route requests through public CORS relays (AllOrigins / CorsProxy / CodeTabs) — fine for testing, not for anything sensitive.</li>
+          <li>We route requests through public CORS relays (AllOrigins / CorsProxy / CodeTabs) — fine for testing, not
+            for anything sensitive.</li>
           <li>Or run your own proxy / Cloudflare Worker (use "Custom Proxy" above).</li>
           <li>Or package this tool inside a browser extension with host permissions.</li>
         </ul>
         <p>
-          <strong class="text-teal-300">2. File System Access API:</strong> On Chromium browsers, "Save to Local Folder" prompts you to pick a directory and writes the folder tree (<code class="bg-slate-800 px-1 py-0.5 rounded">/css</code>, <code class="bg-slate-800 px-1 py-0.5 rounded">/images</code>, <code class="bg-slate-800 px-1 py-0.5 rounded">/fonts</code>, <code class="bg-slate-800 px-1 py-0.5 rounded">/js</code>) directly, no backend needed.
+          <strong class="text-teal-300">2. File System Access API:</strong> On Chromium browsers, "Save to Local Folder"
+          prompts you to pick a directory and writes the folder tree (<code
+            class="bg-slate-800 px-1 py-0.5 rounded">/css</code>, <code
+            class="bg-slate-800 px-1 py-0.5 rounded">/images</code>, <code
+            class="bg-slate-800 px-1 py-0.5 rounded">/fonts</code>, <code
+            class="bg-slate-800 px-1 py-0.5 rounded">/js</code>) directly, no backend needed.
         </p>
         <p>
-          <strong class="text-teal-300">3. JSZip Fallback:</strong> On Safari/Firefox (no directory picker), the whole site is bundled into a <code class="bg-slate-800 px-1 py-0.5 rounded">.zip</code>.
+          <strong class="text-teal-300">3. JSZip Fallback:</strong> On Safari/Firefox (no directory picker), the whole
+          site is bundled into a <code class="bg-slate-800 px-1 py-0.5 rounded">.zip</code>.
         </p>
         <p>
-          <strong class="text-teal-300">4. Fonts & background images:</strong> when "Fetch CSS, Fonts & BG Images" is on, downloaded stylesheets are scanned for <code class="bg-slate-800 px-1 py-0.5 rounded">url(...)</code> references and those files are pulled too, then the CSS is rewritten to point at the local copies.
+          <strong class="text-teal-300">4. Fonts & background images:</strong> when "Fetch CSS, Fonts & BG Images" is
+          on, downloaded stylesheets are scanned for <code class="bg-slate-800 px-1 py-0.5 rounded">url(...)</code>
+          references and those files are pulled too, then the CSS is rewritten to point at the local copies.
         </p>
         <p>
-          <strong class="text-teal-300">5. Self-Contained File:</strong> bakes images, fonts and CSS as base64 data URIs directly into the HTML, so the single <code class="bg-slate-800 px-1 py-0.5 rounded">index.html</code> works with no supporting files at all.
+          <strong class="text-teal-300">5. Self-Contained File:</strong> bakes images, fonts and CSS as base64 data URIs
+          directly into the HTML, so the single <code class="bg-slate-800 px-1 py-0.5 rounded">index.html</code> works
+          with no supporting files at all.
         </p>
         <p>
-          <strong class="text-teal-300">6. Low-RAM Streaming Mode:</strong> normally every downloaded file is kept in memory until you export. On a large site that can use a lot of RAM. Streaming mode instead asks for a save folder <em>before</em> the scrape starts, then writes each file to disk the moment it finishes downloading and immediately frees it from memory — logging progress in small batches ("Flushed 6 files, 2.3 MB") — so memory use stays flat rather than growing with the site. Downloads are also throttled slightly between batches so the disk isn't hit with a flood of writes at once. Because files are cleared from memory as they go, ZIP export, Self-Contained inlining, and Sandbox Preview (which all need every file held at once) aren't available for that run — the folder on disk is the deliverable.
+          <strong class="text-teal-300">6. Low-RAM Streaming Mode:</strong> normally every downloaded file is kept in
+          memory until you export. On a large site that can use a lot of RAM. Streaming mode instead asks for a save
+          folder <em>before</em> the scrape starts, then writes each file to disk the moment it finishes downloading and
+          immediately frees it from memory — logging progress in small batches ("Flushed 6 files, 2.3 MB") — so memory
+          use stays flat rather than growing with the site. Downloads are also throttled slightly between batches so the
+          disk isn't hit with a flood of writes at once. Because files are cleared from memory as they go, ZIP export,
+          Self-Contained inlining, and Sandbox Preview (which all need every file held at once) aren't available for
+          that run — the folder on disk is the deliverable.
         </p>
       </div>
 
       <div class="pt-2 flex justify-end">
-        <button onclick="closeHelpModal()" class="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition">
+        <button onclick="closeHelpModal()"
+          class="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition">
           Got it
         </button>
       </div>
@@ -1240,4 +1360,5 @@ Status: published
     }
   </script>
 </body>
+
 </html>
