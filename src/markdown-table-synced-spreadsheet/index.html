@@ -27,21 +27,7 @@ Disable-Footer: true
   <!-- FontAwesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-  <!-- Univer Dependencies -->
-  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/rxjs/dist/bundles/rxjs.umd.min.js"></script>
-  <script src="https://unpkg.com/echarts@5.6.0/dist/echarts.min.js"></script>
-
-  <script src="https://unpkg.com/@univerjs/presets/lib/umd/index.js"></script>
-
-  <!-- Univer Sheets Core Preset & Locales -->
-  <script src="https://unpkg.com/@univerjs/preset-sheets-core/lib/umd/index.js"></script>
-  <script src="https://unpkg.com/@univerjs/preset-sheets-core/lib/umd/locales/en-US.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/@univerjs/preset-sheets-core/lib/index.css" />
-
-  <!-- SheetJS for Excel/CSV Import/Export -->
-  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@univerjs/preset-sheets-core@1.0.0-rc.0/lib/index.css" />
 
   <style>
     html, body {
@@ -333,7 +319,12 @@ Disable-Footer: true
     </main>
   </div>
 
-  <script>
+  <script type="module">
+    import { createUniver, LocaleType, mergeLocales } from 'https://esm.sh/@univerjs/presets@1.0.0-rc.0';
+    import { UniverSheetsCorePreset } from 'https://esm.sh/@univerjs/preset-sheets-core@1.0.0-rc.0';
+    import UniverPresetSheetsCoreEnUS from 'https://esm.sh/@univerjs/preset-sheets-core@1.0.0-rc.0/locales/en-US';
+    import * as XLSX from 'https://esm.sh/xlsx';
+
     // Sample Markdown Datasets
     const SAMPLES = {
       sales: `| ID | Product Name | Category | Stock | Price ($) | Rating |
@@ -431,6 +422,7 @@ Disable-Footer: true
         if (!workbook) return [];
         const sheet = workbook.getActiveSheet();
         if (!sheet) return [];
+        console.log('sheet snapshot', sheet, sheet.getSnapshot?.());
 
         let cellData = null;
         if (typeof sheet.getSheet === 'function') {
@@ -604,7 +596,7 @@ Disable-Footer: true
           }
         }
 
-        currentWorkbook = univerAPI.createUniverSheet({
+        currentWorkbook = univerAPI.createWorkbook({
           id: 'md-sheet-' + Date.now(),
           name: 'Parsed Markdown',
           sheets: {
@@ -659,10 +651,6 @@ Disable-Footer: true
      * Initialize Univer Sheets Preset and register listeners for bidirectional sync
      */
     function initUniver() {
-      const { createUniver } = UniverPresets;
-      const { LocaleType, mergeLocales } = UniverCore;
-      const { UniverSheetsCorePreset } = UniverPresetSheetsCore;
-
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const initialDark = currentTheme === 'dark' || (currentTheme === 'system' && prefersDark);
 
@@ -681,16 +669,17 @@ Disable-Footer: true
 
       univerAPI = result.univerAPI;
 
-      // Listen to commands executed inside Univer sheet (cell edits, range changes, pasting)
-      if (univerAPI && typeof univerAPI.onCommandExecuted === 'function') {
-        univerAPI.onCommandExecuted(() => {
-          if (isSyncingFromMarkdown) return;
-          clearTimeout(syncDebounceTimer);
-          syncDebounceTimer = setTimeout(() => {
-            syncSheetToMarkdown();
-          }, 300);
-        });
-      }
+      const triggerSync = () => {
+        if (isSyncingFromMarkdown) return;
+        clearTimeout(syncDebounceTimer);
+        syncDebounceTimer = setTimeout(() => {
+          syncSheetToMarkdown();
+        }, 300);
+      };
+
+      // Value changes cover cell edits; commands cover structural sheet changes.
+      univerAPI.addEvent(univerAPI.Event.SheetValueChanged, triggerSync);
+      univerAPI.addEvent(univerAPI.Event.CommandExecuted, triggerSync);
 
       // Load initial sample data
       mdInput.value = SAMPLES.sales;
