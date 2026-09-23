@@ -1,0 +1,29 @@
+{
+  "name": "Gist Play",
+  "image": "mcr.microsoft.com/devcontainers/go:1.24-bookworm",
+  "containerEnv": {
+    "GOTOOLCHAIN": "auto"
+  },
+  "features": {
+    "ghcr.io/eitsupi/devcontainer-features/go-task:1.0.4": {}
+  },
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Gist preview",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "task setup",
+  "postStartCommand": "task build",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "task.vscode-task",
+        "RahulDhole.untangled-html",
+        "eamodio.gitlens"
+      ]
+    }
+  }
+}
