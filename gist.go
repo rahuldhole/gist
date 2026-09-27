@@ -428,6 +428,11 @@ func main() {
 		if len(os.Args) > 2 {
 			port = os.Args[2]
 		}
+		if _, err := os.Stat(distDir); os.IsNotExist(err) {
+			cmdBuild()
+		}
+		logInfo("🌐 Preview server starting at http://localhost:%s/", port)
+		logInfo("Press Ctrl+C to stop")
 		log.Fatal(http.ListenAndServe(":"+port, http.FileServer(http.Dir(distDir))))
 	case "clean":
 		os.RemoveAll(distDir)
