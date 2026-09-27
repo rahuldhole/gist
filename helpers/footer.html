@@ -85,8 +85,11 @@
                 </a>
             </nav>
             <p class="gist-footer-copy">
-                &copy; 2025 Gist Play &bull; Crafted without precision for fast prototyping.
+                &copy; <span id="gist-footer-year"></span> Gist Play &bull; Crafted without precision for fast prototyping.
             </p>
+            <script>
+                document.getElementById('gist-footer-year').textContent = new Date().getFullYear();
+            </script>
         </div>
     </footer>
 </div>
