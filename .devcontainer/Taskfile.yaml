@@ -9,6 +9,8 @@ vars:
 tasks:
   up:
     desc: Start the devcontainer environment
+    deps:
+      - down
     cmds:
       - "{{.DEVCONTAINER_BIN}} up --workspace-folder {{.ROOT_DIR}}"
 

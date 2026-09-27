@@ -12,6 +12,8 @@ tasks:
       - index.html
       - favicon.svg
       - "*.go"
+    generates:
+      - dist/**/*
     cmds:
       - go run . build
 
