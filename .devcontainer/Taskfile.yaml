@@ -3,6 +3,8 @@ version: '3'
 vars:
   DEVCONTAINER_BIN:
     sh: command -v devcontainer 2>/dev/null || echo "npx -y @devcontainers/cli"
+  PROJECT_NAME:
+    sh: basename "{{.ROOT_DIR}}"
 
 tasks:
   up:
@@ -24,3 +26,9 @@ tasks:
     desc: Open current folder in devcontainer via VS Code
     cmds:
       - code --devcontainer {{.ROOT_DIR}}
+
+  prune:
+    desc: Cleanup containers and images for this devcontainer only
+    cmds:
+      - docker ps -a -q --filter "label=devcontainer.local_folder={{.ROOT_DIR}}" | xargs -r docker rm -f
+      - docker images -q --filter "reference=vsc-{{.PROJECT_NAME}}-*" | xargs -r docker rmi -f
