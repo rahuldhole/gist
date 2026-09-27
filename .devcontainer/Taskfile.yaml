@@ -1,20 +1,24 @@
 version: '3'
 
+vars:
+  DEVCONTAINER_BIN:
+    sh: command -v devcontainer 2>/dev/null || echo "npx -y @devcontainers/cli"
+
 tasks:
   up:
     desc: Start the devcontainer environment
     cmds:
-      - devcontainer up --workspace-folder {{.ROOT_DIR}}
+      - "{{.DEVCONTAINER_BIN}} up --workspace-folder {{.ROOT_DIR}}"
 
   build:
     desc: Build or rebuild the devcontainer image
     cmds:
-      - devcontainer build --workspace-folder {{.ROOT_DIR}}
+      - "{{.DEVCONTAINER_BIN}} build --workspace-folder {{.ROOT_DIR}}"
 
   exec:
     desc: Run a command inside the devcontainer
     cmds:
-      - devcontainer exec --workspace-folder {{.ROOT_DIR}} {{.CLI_ARGS}}
+      - "{{.DEVCONTAINER_BIN}} exec --workspace-folder {{.ROOT_DIR}} {{.CLI_ARGS}}"
 
   open:
     desc: Open current folder in devcontainer via VS Code
