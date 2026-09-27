@@ -12,6 +12,11 @@ tasks:
     cmds:
       - "{{.DEVCONTAINER_BIN}} up --workspace-folder {{.ROOT_DIR}}"
 
+  down:
+    desc: Stop and remove running devcontainer container for this workspace
+    cmds:
+      - docker ps -a -q --filter "label=devcontainer.local_folder={{.ROOT_DIR}}" | xargs -r docker rm -f
+
   build:
     desc: Build or rebuild the devcontainer image
     cmds:
@@ -30,5 +35,5 @@ tasks:
   prune:
     desc: Cleanup containers and images for this devcontainer only
     cmds:
-      - docker ps -a -q --filter "label=devcontainer.local_folder={{.ROOT_DIR}}" | xargs -r docker rm -f
+      - task: down
       - docker images -q --filter "reference=vsc-{{.PROJECT_NAME}}-*" | xargs -r docker rmi -f

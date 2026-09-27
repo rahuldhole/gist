@@ -6,6 +6,12 @@ includes:
 tasks:
   build:
     desc: Build the app directory (Copy src to dist, inject header/footer)
+    sources:
+      - src/**/*
+      - helpers/**/*
+      - index.html
+      - favicon.svg
+      - "*.go"
     cmds:
       - go run . build
 
@@ -20,6 +26,26 @@ tasks:
       - task: clean
       - task: build
       - go run . preview {{.CLI_ARGS}}
+
+  watch:
+    desc: Watch src/ for changes and rebuild automatically
+    sources:
+      - src/**/*
+      - helpers/**/*
+      - index.html
+      - favicon.svg
+      - "*.go"
+    cmds:
+      - task: build
+
+  dev:
+    desc: Start live development environment (preview server with watch & rebuild on change)
+    cmds:
+      - task: clean
+      - task: build
+      - |
+        task build --watch &
+        go run . preview {{.CLI_ARGS}}
 
   clean:
     desc: Remove the generated dist/ directory

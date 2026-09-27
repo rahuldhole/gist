@@ -15,7 +15,7 @@
     }
   },
   "postCreateCommand": "task setup",
-  "postStartCommand": "task build",
+  "postStartCommand": "task dev",
   "customizations": {
     "vscode": {
       "extensions": [
