@@ -1,0 +1,22 @@
+version: '3'
+
+tasks:
+  up:
+    desc: Start the devcontainer environment
+    cmds:
+      - devcontainer up --workspace-folder {{.ROOT_DIR}}
+
+  build:
+    desc: Build or rebuild the devcontainer image
+    cmds:
+      - devcontainer build --workspace-folder {{.ROOT_DIR}}
+
+  exec:
+    desc: Run a command inside the devcontainer
+    cmds:
+      - devcontainer exec --workspace-folder {{.ROOT_DIR}} {{.CLI_ARGS}}
+
+  open:
+    desc: Open current folder in devcontainer via VS Code
+    cmds:
+      - code --devcontainer {{.ROOT_DIR}}

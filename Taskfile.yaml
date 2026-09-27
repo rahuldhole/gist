@@ -1,5 +1,8 @@
 version: '3'
 
+includes:
+  devcontainer: .devcontainer/Taskfile.yaml
+
 tasks:
   build:
     desc: Build the app directory (Copy src to dist, inject header/footer)
