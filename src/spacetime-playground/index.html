@@ -44,13 +44,17 @@ Updated: 2026-10-12
   {
     "@context": "https://schema.org",
     "@type": "VideoObject",
-    "name": "Why You Fall Into The Future: Gravitational Time Dilation Explained",
+    "name": "Gravity isn't pulling you toward the ground",
     "description": "Visual explanation and intuition of why gravity is a time gradient and how objects fall into the future in curved spacetime.",
     "thumbnailUrl": [
       "https://i.ytimg.com/vi/dOjSZgUfUGI/hqdefault.jpg",
       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800"
     ],
     "uploadDate": "2024-01-01T00:00:00Z",
+    "author": {
+      "@type": "Person",
+      "name": "Rahul Dhole"
+    },
     "contentUrl": "https://www.youtube.com/shorts/dOjSZgUfUGI",
     "embedUrl": "https://www.youtube.com/embed/dOjSZgUfUGI"
   }
@@ -233,7 +237,7 @@ Updated: 2026-10-12
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            <h3 class="text-xs md:text-sm font-bold text-white tracking-wide">60-Second Explanation: Why You Fall Into The Future</h3>
+            <h3 class="text-xs md:text-sm font-bold text-white tracking-wide">Gravity isn't pulling you toward the ground</h3>
           </div>
           <a href="https://www.youtube.com/shorts/dOjSZgUfUGI" target="_blank" rel="noopener noreferrer" class="text-[11px] text-rose-400 hover:text-rose-300 underline font-medium inline-flex items-center gap-1">
             Open on YouTube
@@ -241,17 +245,24 @@ Updated: 2026-10-12
           </a>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-          <figure class="relative w-full max-w-[200px] sm:max-w-none aspect-[9/16] max-h-[290px] mx-auto rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md">
+          <figure class="relative w-full max-w-[200px] sm:max-w-none aspect-[9/16] max-h-[290px] mx-auto rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md group">
             <iframe
               id="yt-short-iframe"
-              class="w-full h-full"
-              src=""
-              data-src="https://www.youtube-nocookie.com/embed/dOjSZgUfUGI?rel=0&modestbranding=1"
-              title="Why You Fall Into The Future - Gravitational Time Dilation Explanation (YouTube Short)"
+              class="w-full h-full relative z-10"
+              src="https://www.youtube.com/embed/dOjSZgUfUGI?rel=0&modestbranding=1"
+              title="Gravity isn't pulling you toward the ground"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowfullscreen
-              loading="lazy">
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen>
             </iframe>
+            <!-- Background thumbnail poster & overlay link if YouTube blocks iframe cookies or webview -->
+            <a href="https://www.youtube.com/shorts/dOjSZgUfUGI" target="_blank" rel="noopener noreferrer" class="absolute inset-0 z-0 flex flex-col items-center justify-center bg-slate-950 p-3 text-center">
+              <img src="https://i.ytimg.com/vi/dOjSZgUfUGI/hqdefault.jpg" alt="Video preview thumbnail" class="absolute inset-0 w-full h-full object-cover opacity-60">
+              <div class="relative z-10 w-12 h-12 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+                <svg class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+              <span class="relative z-10 mt-2 text-[10px] font-semibold text-white bg-black/60 px-2 py-0.5 rounded">Watch Short</span>
+            </a>
           </figure>
           <div class="text-xs text-slate-300 space-y-2 leading-relaxed">
             <p>
@@ -732,11 +743,12 @@ Updated: 2026-10-12
 
     const guide = $('guide');
     const ytIframe = $('yt-short-iframe');
+    const ytSrc = 'https://www.youtube.com/embed/dOjSZgUfUGI?rel=0&modestbranding=1';
     const setGuide = (o) => {
       guide.classList.toggle('hidden', !o);
       if (o) {
-        if (!ytIframe.src && ytIframe.dataset.src) {
-          ytIframe.src = ytIframe.dataset.src;
+        if (!ytIframe.src || ytIframe.src === '' || ytIframe.src === window.location.href) {
+          ytIframe.src = ytSrc;
         }
       } else {
         if (ytIframe.src) {
