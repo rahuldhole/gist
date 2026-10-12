@@ -629,7 +629,7 @@ CHL:CL:CLP CHN:CN:CNY CIV:CI:XOF CMR:CM:XAF COD:CD:CDF COG:CG:XAF COL:CO:COP CRI
 CYP:CY:EUR CZE:CZ:CZK DEU:DE:EUR DJI:DJ:DJF DNK:DK:DKK DOM:DO:DOP DZA:DZ:DZD ECU:EC:USD EGY:EG:EGP
 ERI:ER:ERN ESH:EH:MAD ESP:ES:EUR EST:EE:EUR ETH:ET:ETB FIN:FI:EUR FJI:FJ:FJD FLK:FK:FKP FRA:FR:EUR
 GAB:GA:XAF GBR:GB:GBP GEO:GE:GEL GHA:GH:GHS GIN:GN:GNF GMB:GM:GMD GNB:GW:XOF GNQ:GQ:XAF GRC:GR:EUR
-GRL:GL:DKK GTM:GT:GTQ GUY:GY:GYD HKG:HK:HKD HND:HN:HNL HRV:HR:EUR HTI:HT:HTG HUN:HU:HUF IDN:ID:IDR
+GRL:GL:DKK GTM:GT:GTQ GUF:GF:EUR GUY:GY:GYD HKG:HK:HKD HND:HN:HNL HRV:HR:EUR HTI:HT:HTG HUN:HU:HUF IDN:ID:IDR
 IND:IN:INR IRL:IE:EUR IRN:IR:IRR IRQ:IQ:IQD ISL:IS:ISK ISR:IL:ILS ITA:IT:EUR JAM:JM:JMD JOR:JO:JOD
 JPN:JP:JPY KAZ:KZ:KZT KEN:KE:KES KGZ:KG:KGS KHM:KH:KHR KOR:KR:KRW KWT:KW:KWD LAO:LA:LAK LBN:LB:LBP
 LBR:LR:LRD LBY:LY:LYD LKA:LK:LKR LSO:LS:LSL LTU:LT:EUR LUX:LU:EUR LVA:LV:EUR MAR:MA:MAD MDA:MD:MDL
@@ -1209,7 +1209,8 @@ const app = createApp({
     };
 
     const buildMap = (geo) => {
-      feats = geo.features.filter(f => f.id !== 'ATA');
+      // Filter out Antarctica (ATA) and overlapping/unrecognized duplicate overlays like Somaliland (-99)
+      feats = geo.features.filter(f => f.id !== 'ATA' && f.id !== '-99');
       const proj = d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], {type:'FeatureCollection', features:feats});
       const path = d3.geoPath(proj);
 
@@ -1231,10 +1232,9 @@ const app = createApp({
       svg = d3.select('#map').attr('font-family', "'Twemoji Country Flags',system-ui,sans-serif");
       root = svg.append('g');
 
-      paths = root.append('g').selectAll('path').data(feats).join('path')
+      const landLayer = root.append('g').attr('class', 'land-layer');
+      paths = landLayer.selectAll('path').data(feats).join('path')
         .attr('d', path).attr('fill', '#1b2440')
-        .attr('stroke', '#0a0f1e').attr('stroke-width', .6)
-        .attr('stroke-linejoin', 'round').attr('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
         .on('mousemove', showTip)
         .on('mouseleave', () => { const tip = document.getElementById('tip'); if (tip) tip.style.display = 'none'; })
@@ -1242,6 +1242,13 @@ const app = createApp({
           const c = COUNTRIES[f.id];
           if (c && f._r != null) setBase(c.cur);
         });
+
+      // Unified border overlay layer on top of all fills to eliminate country fill overlaps over neighbor borders
+      root.append('g').attr('class', 'borders-layer').attr('pointer-events', 'none')
+        .selectAll('path').data(feats).join('path')
+        .attr('d', path).attr('fill', 'none')
+        .attr('stroke', '#0a0f1e').attr('stroke-width', .55)
+        .attr('stroke-linejoin', 'round').attr('vector-effect', 'non-scaling-stroke');
 
       labelFeats = feats.filter(f => COUNTRIES[f.id]).sort((a, b) => b._a - a._a);
       labelSel = root.append('g').attr('pointer-events', 'none').selectAll('text').data(labelFeats).join('text')
