@@ -131,6 +131,24 @@ Updated: 2026-10-12
   #map { width: 100%; height: auto; display: block; touch-action: none; cursor: grab; }
   #map:active { cursor: grabbing; }
 
+  /* Fullscreen map presentation */
+  #stage:fullscreen, #stage:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #030712;
+  }
+  #stage:fullscreen #map, #stage:-webkit-full-screen #map {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    object-fit: contain;
+  }
+
   #tip {
     position: absolute;
     pointer-events: none;
@@ -256,12 +274,21 @@ Updated: 2026-10-12
       </div>
 
       <!-- Interactive Map Stage Card -->
-      <div class="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/70 shadow-2xl backdrop-blur-sm" id="stage">
+      <div class="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/70 shadow-2xl backdrop-blur-sm group/stage" id="stage">
         <svg id="map" viewBox="0 0 1000 500"></svg>
         <div id="tip"></div>
         <div id="msg" v-if="toastMsg" class="absolute left-1/2 top-3 -translate-x-1/2 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-2xl z-30" :style="{background: toastBg}">
           {{ toastMsg }}
         </div>
+        <!-- Quick Fullscreen Float Button on Map Corner -->
+        <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Open Map in Fullscreen'" class="absolute top-3 right-3 z-20 bg-slate-900/85 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-sky-400/60 p-1.5 rounded-xl shadow-lg backdrop-blur-md cursor-pointer transition-all flex items-center justify-center opacity-70 hover:opacity-100 group-hover/stage:opacity-100">
+          <svg v-if="!isFullscreen" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+          <svg v-else class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <!-- Contextual Toolbar directly docked BELOW the map -->
@@ -318,11 +345,15 @@ Updated: 2026-10-12
             <span>⟲</span>
             <span class="hidden sm:inline">Reset Zoom</span>
           </button>
+          <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Open Map in Fullscreen'" class="text-[11px] font-semibold text-sky-300 hover:text-white border border-sky-500/40 hover:border-sky-400 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 cursor-pointer transition-all flex items-center gap-1">
+            <span>⛶</span>
+            <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
+          </button>
           <button @click="savePNG" title="Export high-resolution map image" class="text-[11px] font-semibold text-amber-300 hover:text-amber-200 border border-amber-500/40 hover:border-amber-400 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer transition-all flex items-center gap-1">
             <span>📸</span>
             <span>Save Image</span>
           </button>
-          <button @click="copyLink" title="Copy shareable link" class="text-[11px] font-semibold text-sky-300 hover:text-sky-200 border border-sky-500/40 hover:border-sky-400 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 cursor-pointer transition-all flex items-center gap-1">
+          <button @click="copyLink" title="Copy shareable link" class="text-[11px] font-semibold text-slate-300 hover:text-slate-100 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 cursor-pointer transition-all flex items-center gap-1">
             <span>🔗</span>
             <span>Share</span>
           </button>
@@ -1450,6 +1481,13 @@ const app = createApp({
         }
       });
 
+      document.addEventListener('fullscreenchange', () => {
+        isFullscreen.value = !!document.fullscreenElement;
+      });
+      document.addEventListener('webkitfullscreenchange', () => {
+        isFullscreen.value = !!document.webkitFullscreenElement;
+      });
+
       try {
         const geoData = await (await fetch(GEO)).json();
         buildMap(geoData);
@@ -1462,6 +1500,29 @@ const app = createApp({
       layoutLabels(k.value);
     });
 
+    const isFullscreen = ref(false);
+    const toggleFullscreen = async () => {
+      const stage = document.getElementById('stage');
+      if (!stage) return;
+      try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (stage.requestFullscreen) {
+            await stage.requestFullscreen();
+          } else if (stage.webkitRequestFullscreen) {
+            await stage.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+          }
+        }
+      } catch (err) {
+        showToast('Fullscreen mode not available', '#b91c1c');
+      }
+    };
+
     const rightPanelTab = ref('ledger'); // 'ledger' or 'race'
 
     return {
@@ -1473,7 +1534,7 @@ const app = createApp({
       currencyOptions, goldMetrics, goldBadgeText, filteredAssetCards, quickCalc, sortedRace, filteredTable,
       legendLabels, rightPanelTab, resetMapZoom, setBase, setMapMode, sortTable, onRowClick, selectCalcAsset,
       visualizeGoldOnMap, scrollToMetals, toggleTimePopover, togglePlay, onSliderInput, onSliderChange,
-      onDateChange, goToToday, goTo1YAgo, onBaseChange, savePNG, copyLink
+      onDateChange, goToToday, goTo1YAgo, onBaseChange, savePNG, copyLink, isFullscreen, toggleFullscreen
     };
   }
 });
