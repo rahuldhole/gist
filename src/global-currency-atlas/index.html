@@ -1,0 +1,1247 @@
+<!-- APP-META
+Title: Global Currency Atlas
+Description: Real-time interactive exchange rate heatmap, currency converter, time-lapse playback, Top 10 currency race, and global ledger comparing purchasing power across 160+ world currencies.
+Category: Tools
+Icon: fa-solid fa-earth-americas
+Image: https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=800
+Status: published
+Disable-Footer: false
+Disable-PWA: false
+Updated: 2026-10-12
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0f1e">
+<title>What's $1 worth around the world? - Interactive Global Currency Atlas</title>
+<meta name="description" content="Explore real-time exchange rates, global purchasing power, interactive world heatmaps, historical time-lapse playback, and top currency rankings across 160+ world currencies.">
+<meta name="keywords" content="currency atlas, exchange rates, foreign exchange, FX rates, currency converter, world currency heatmap, currency timelapse, purchasing power, USD rates">
+<meta name="author" content="Global Currency Atlas">
+
+<!-- Open Graph / Social Meta Tags -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="What's $1 worth around the world? - Global Currency Atlas">
+<meta property="og:description" content="Interactive world exchange-rate heatmap, time-lapse playback, Top 10 race, and global currency ledger.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=800">
+
+<!-- Twitter Card Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What's $1 worth around the world? - Global Currency Atlas">
+<meta name="twitter:description" content="Interactive world exchange-rate heatmap, time-lapse playback, Top 10 race, and global currency ledger.">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=800">
+
+<style>
+  :root {
+    --ink: #f4f6fb;
+    --mut: #8b95b1;
+    --line: #26335c;
+    --card: #141d38;
+    --card-hover: #1c284c;
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.25);
+    --bg-dark: #0a0f1e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(1400px 700px at 50% -10%, #18244a, var(--bg-dark) 70%) fixed;
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 14px 36px;
+    font-family: 'Twemoji Country Flags', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  #shot, .section-wrap, .foot { width: min(1400px, 100%); }
+
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .title-group {
+    display: flex;
+    flex-direction: column;
+  }
+  h1 {
+    font-size: clamp(22px, 3.4vw, 38px);
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.1;
+  }
+  .hl {
+    background: linear-gradient(90deg, #38bdf8, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sub {
+    color: var(--mut);
+    margin-top: 4px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px #4ade80;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  select, .btn, input[type=date], input[type=text] {
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font: inherit;
+    font-size: 13px;
+  }
+  select { cursor: pointer; max-width: 200px; }
+  .btn {
+    cursor: pointer;
+    font-weight: 600;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn:hover {
+    border-color: var(--accent);
+    background: var(--card-hover);
+  }
+  .btn.primary {
+    background: var(--accent);
+    color: #06101f;
+    border-color: var(--accent);
+  }
+  .btn.primary:hover {
+    background: #7dd3fc;
+  }
+  .btn.active-toggle {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+    background: #182852;
+  }
+
+  #timePopover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(390px, 94vw);
+    background: rgba(13, 22, 47, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid #33457a;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #timePopover.open { display: flex; animation: popIn .18s ease-out; }
+  @keyframes popIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .pop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .time-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .round {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--accent);
+    color: #06101f;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .12s ease;
+  }
+  .round:hover { transform: scale(1.06); }
+  #slider {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 24px;
+    cursor: pointer;
+  }
+  .pop-inputs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .quick-dates {
+    display: flex;
+    gap: 6px;
+  }
+  .chip {
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--mut);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--accent); }
+
+  #stage {
+    position: relative;
+    transition: opacity .25s;
+    background: rgba(14, 23, 49, 0.45);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  #map {
+    width: 100%;
+    height: auto;
+    display: block;
+    touch-action: none;
+    cursor: grab;
+  }
+  #stage.busy #map { opacity: .45; }
+  #tip {
+    position: absolute;
+    pointer-events: none;
+    display: none;
+    z-index: 20;
+    min-width: 180px;
+    background: rgba(11, 18, 38, 0.94);
+    border: 1px solid #36487e;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.65);
+    backdrop-filter: blur(8px);
+  }
+  #tip b { font-size: 14px; color: #fff; }
+  #tip .r { margin-top: 4px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+  #tip .m { color: var(--mut); font-size: 12px; margin-top: 2px; }
+  #msg {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    transform: translateX(-50%);
+    background: #7f1d1d;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    display: none;
+    z-index: 30;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--mut);
+    margin-top: 8px;
+  }
+  .bar {
+    height: 10px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #22c55e, #a3e635, #facc15, #fb923c, #ef4444);
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.2);
+  }
+
+  .dual-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-top: 12px;
+  }
+  @media (min-width: 980px) {
+    .dual-grid {
+      grid-template-columns: 420px 1fr;
+    }
+  }
+  .panel {
+    background: rgba(16, 26, 54, 0.7);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    backdrop-filter: blur(8px);
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .panel-pill {
+    font-size: 11px;
+    color: var(--mut);
+    background: rgba(255,255,255,0.06);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .race-modes {
+    display: flex;
+    gap: 4px;
+    background: #0d152d;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+  }
+  .race-btn {
+    background: transparent;
+    border: 0;
+    color: var(--mut);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .race-btn.active {
+    background: var(--card);
+    color: var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .race-stage {
+    position: relative;
+    height: 440px;
+    width: 100%;
+    overflow: hidden;
+  }
+  .race-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform .32s cubic-bezier(0.2, 0.8, 0.3, 1), opacity .2s;
+  }
+  .race-rank {
+    width: 22px;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--mut);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .race-rank.top3 { color: #facc15; }
+  .race-flag { font-size: 18px; line-height: 1; flex: none; }
+  .race-track {
+    flex: 1;
+    height: 28px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .race-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 8px;
+    transition: width .35s cubic-bezier(0.2, 0.8, 0.3, 1), background .35s;
+    opacity: 0.88;
+  }
+  .race-label {
+    position: relative;
+    z-index: 2;
+    padding-left: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+  .race-val {
+    margin-left: auto;
+    position: relative;
+    z-index: 2;
+    padding-right: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  .table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .table-search {
+    position: relative;
+    width: min(260px, 100%);
+  }
+  .table-search input {
+    width: 100%;
+    padding-left: 28px;
+    font-size: 12px;
+  }
+  .search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--mut);
+    font-size: 12px;
+    pointer-events: none;
+  }
+  .table-container {
+    max-height: 440px;
+    overflow-y: auto;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(10, 16, 34, 0.5);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  thead {
+    position: sticky;
+    top: 0;
+    background: #0f1936;
+    z-index: 5;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--mut);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: #fff; }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(38, 51, 92, 0.4);
+    font-variant-numeric: tabular-nums;
+  }
+  tbody tr {
+    cursor: pointer;
+    transition: background .12s;
+  }
+  tbody tr:hover {
+    background: rgba(56, 189, 248, 0.08);
+  }
+  tbody tr.selected-row {
+    background: rgba(56, 189, 248, 0.16);
+  }
+  .td-country {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .heat-badge {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  .table-container::-webkit-scrollbar { width: 6px; }
+  .table-container::-webkit-scrollbar-thumb {
+    background: #273663;
+    border-radius: 6px;
+  }
+  .hint, .foot { color: var(--mut); font-size: 12px; text-align: center; }
+  .foot { opacity: .7; margin-top: 6px; }
+  .foot a { color: inherit; }
+</style>
+</head>
+<body>
+
+<main id="shot">
+  <div class="top">
+    <div class="title-group">
+      <h1 id="title">What's <span class="hl">1 USD</span> worth around the world?</h1>
+      <p class="sub">
+        <span id="dateline">Loading rates…</span>
+        <span class="live-pill"><span class="live-dot"></span> LIVE FX ENGINE</span>
+      </p>
+    </div>
+
+    <div class="actions">
+      <select id="base" aria-label="Base currency"></select>
+      
+      <!-- Time Travel Popover Trigger -->
+      <button class="btn" id="timeBtn" title="Change date or run timelapse">
+        <span>⏱️</span>
+        <span id="timeBtnLabel">Time Travel</span>
+      </button>
+
+      <button class="btn primary" id="save" title="Export canvas high-resolution picture">Save image</button>
+      <button class="btn" id="link" title="Share current currency view">Copy link</button>
+
+      <!-- Time Travel Floating Popover Menu -->
+      <div id="timePopover">
+        <div class="pop-header">
+          <span>Time-Lapse & Historical Rates</span>
+          <button id="closePop" class="chip" style="font-size:12px;">✕</button>
+        </div>
+        
+        <div class="time-slider-row">
+          <button class="round" id="play" title="Time-lapse playback">▶</button>
+          <input type="range" id="slider" aria-label="Time travel">
+        </div>
+
+        <div class="pop-inputs">
+          <input type="date" id="date">
+          <div class="quick-dates">
+            <button class="chip" id="btnToday">Today</button>
+            <button class="chip" id="btn1Y">1Y Ago</button>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--mut);line-height:1.4;">
+          Hit <b>▶</b> to play a smooth historical animation. Map and the Top 10 race will update automatically.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <svg id="map" viewBox="0 0 1000 500"></svg>
+    <div id="tip"></div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="legend">
+    <span id="lMin"></span>
+    <div class="bar"></div>
+    <span id="lMax"></span>
+  </div>
+
+  <div class="dual-grid">
+    
+    <!-- Left: Viral Social Media Top 10 History Race -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🏁 Top 10 Currency Race</span>
+        </div>
+        <div class="race-modes">
+          <button class="race-btn active" id="modeStrong">Highest Unit Value</button>
+          <button class="race-btn" id="modeNominal">Most Units</button>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--mut);">
+        Dynamic social-media ranking bar chart race relative to 1 <span class="base-badge">USD</span>.
+      </p>
+
+      <div class="race-stage" id="raceStage">
+        <!-- Dynamically rendered animated bar race rows -->
+      </div>
+    </div>
+
+    <!-- Right: Complete Global Currency Ledger Table -->
+    <div class="panel">
+      <div class="table-controls">
+        <div class="panel-title">
+          <span>📊 World Currency Ledger</span>
+          <span class="panel-pill" id="tableCount">0 currencies</span>
+        </div>
+        <div class="table-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="tableQuery" placeholder="Filter by country or code...">
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="window.sortTable('country')">Country & Currency</th>
+              <th onclick="window.sortTable('rate')">Rate (per base)</th>
+              <th onclick="window.sortTable('inverse')">Inverse (1 local)</th>
+              <th onclick="window.sortTable('tier')">Heat Tier</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Dynamically populated table rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<p class="hint" style="margin-top:10px;">Tap any country or table row to make its currency base · Drag to pan · Scroll/pinch to zoom</p>
+<p class="foot">Rates: fawazahmed0/currency-api · Open Exchange Rates · Natural Earth Map · Reference values only</p>
+
+<script type="module">
+  import {polyfillCountryFlagEmojis} from 'https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill/+esm';
+  polyfillCountryFlagEmojis(); // Windows flag emoji polyfill
+</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+<script>
+const RAW = `
+AFG:AF:AFN AGO:AO:AOA ALB:AL:ALL ARE:AE:AED ARG:AR:ARS ARM:AM:AMD AUS:AU:AUD AUT:AT:EUR AZE:AZ:AZN
+BDI:BI:BIF BEL:BE:EUR BEN:BJ:XOF BFA:BF:XOF BGD:BD:BDT BGR:BG:EUR BHS:BS:BSD BIH:BA:BAM BLR:BY:BYN
+BLZ:BZ:BZD BOL:BO:BOB BRA:BR:BRL BRN:BN:BND BTN:BT:BTN BWA:BW:BWP CAF:CF:XAF CAN:CA:CAD CHE:CH:CHF
+CHL:CL:CLP CHN:CN:CNY CIV:CI:XOF CMR:CM:XAF COD:CD:CDF COG:CG:XAF COL:CO:COP CRI:CR:CRC CUB:CU:CUP
+CYP:CY:EUR CZE:CZ:CZK DEU:DE:EUR DJI:DJ:DJF DNK:DK:DKK DOM:DO:DOP DZA:DZ:DZD ECU:EC:USD EGY:EG:EGP
+ERI:ER:ERN ESH:EH:MAD ESP:ES:EUR EST:EE:EUR ETH:ET:ETB FIN:FI:EUR FJI:FJ:FJD FLK:FK:FKP FRA:FR:EUR
+GAB:GA:XAF GBR:GB:GBP GEO:GE:GEL GHA:GH:GHS GIN:GN:GNF GMB:GM:GMD GNB:GW:XOF GNQ:GQ:XAF GRC:GR:EUR
+GRL:GL:DKK GTM:GT:GTQ GUY:GY:GYD HKG:HK:HKD HND:HN:HNL HRV:HR:EUR HTI:HT:HTG HUN:HU:HUF IDN:ID:IDR
+IND:IN:INR IRL:IE:EUR IRN:IR:IRR IRQ:IQ:IQD ISL:IS:ISK ISR:IL:ILS ITA:IT:EUR JAM:JM:JMD JOR:JO:JOD
+JPN:JP:JPY KAZ:KZ:KZT KEN:KE:KES KGZ:KG:KGS KHM:KH:KHR KOR:KR:KRW KWT:KW:KWD LAO:LA:LAK LBN:LB:LBP
+LBR:LR:LRD LBY:LY:LYD LKA:LK:LKR LSO:LS:LSL LTU:LT:EUR LUX:LU:EUR LVA:LV:EUR MAR:MA:MAD MDA:MD:MDL
+MDG:MG:MGA MEX:MX:MXN MKD:MK:MKD MLI:ML:XOF MLT:MT:EUR MMR:MM:MMK MNE:ME:EUR MNG:MN:MNT MOZ:MZ:MZN
+MRT:MR:MRU MUS:MU:MUR MDV:MV:MVR MWI:MW:MWK MYS:MY:MYR NAM:NA:NAD NCL:NC:XPF NER:NE:XOF NGA:NG:NGN
+NIC:NI:NIO NLD:NL:EUR NOR:NO:NOK NPL:NP:NPR NZL:NZ:NZD OMN:OM:OMR PAK:PK:PKR PAN:PA:PAB PER:PE:PEN
+PHL:PH:PHP PNG:PG:PGK POL:PL:PLN PRI:PR:USD PRK:KP:KPW PRT:PT:EUR PRY:PY:PYG PSE:PS:ILS QAT:QA:QAR
+ROU:RO:RON RUS:RU:RUB RWA:RW:RWF SAU:SA:SAR SDN:SD:SDG SEN:SN:XOF SGP:SG:SGD SLB:SB:SBD SLE:SL:SLE
+SLV:SV:USD SOM:SO:SOS SRB:RS:RSD SSD:SS:SSP SUR:SR:SRD SVK:SK:EUR SVN:SI:EUR SWE:SE:SEK SWZ:SZ:SZL
+SYR:SY:SYP TCD:TD:XAF TGO:TG:XOF THA:TH:THB TJK:TJ:TJS TKM:TM:TMT TLS:TL:USD TTO:TT:TTD TUN:TN:TND
+TUR:TR:TRY TWN:TW:TWD TZA:TZ:TZS UGA:UG:UGX UKR:UA:UAH URY:UY:UYU USA:US:USD UZB:UZ:UZS VEN:VE:VES
+VNM:VN:VND VUT:VU:VUV YEM:YE:YER ZAF:ZA:ZAR ZMB:ZM:ZMW ZWE:ZW:ZWG BHR:BH:BHD
+`;
+
+const GEO = 'https://cdn.jsdelivr.net/gh/johan/world.geo.json@master/countries.geo.json';
+const W = 1000, H = 500;
+const ALT = {SLE:'SLL', MRU:'MRO', ZWG:'ZWL', STN:'STD', VES:'VEF'};
+const STOPS = ['#22c55e', '#a3e635', '#facc15', '#fb923c', '#ef4444'];
+const heat = d3.interpolateRgbBasis(STOPS);
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const regionNames = new Intl.DisplayNames(['en'], {type:'region'});
+const currNames = new Intl.DisplayNames(['en'], {type:'currency'});
+const cname = c => { try { return currNames.of(c) } catch { return c } };
+const flag = a2 => String.fromCodePoint(...[...a2].map(c => 127397 + c.charCodeAt(0)));
+
+const COUNTRIES = {};
+RAW.trim().split(/\s+/).forEach(s => {
+  const [a3, a2, cur] = s.split(':');
+  COUNTRIES[a3] = {a3, a2, cur, name: regionNames.of(a2), flag: flag(a2)};
+});
+
+const MIN = new Date('2024-03-02T00:00:00Z');
+const todayUTC = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); };
+const iso = d => d.toISOString().slice(0, 10);
+const maxBack = Math.floor((todayUTC() - MIN) / 864e5);
+const dateForPos = p => new Date(todayUTC().getTime() - (maxBack - p) * 864e5);
+const posFromDate = d => { const p = maxBack - Math.round((todayUTC() - d) / 864e5); return isNaN(p) ? maxBack : Math.max(0, Math.min(maxBack, p)); };
+const fmtDate = s => new Date(s + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric', timeZone:'UTC'});
+
+const S = {
+  base: 'USD',
+  pos: maxBack,
+  date: '',
+  rates: null,
+  k: 1,
+  playing: false,
+  raceMode: 'strong', // 'strong' or 'nominal'
+  tableSearch: '',
+  sortCol: 'rate',
+  sortAsc: true
+};
+
+const cache = {};
+let tok = 0, feats = [], labelFeats = [], paths, labelSel, svg, root, legend = {min: 0, max: 0};
+
+async function fetchRates(key) {
+  if (cache[key]) return cache[key];
+  const urls = [
+    `https://${key}.currency-api.pages.dev/v1/currencies/usd.json`,
+    `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${key}/v1/currencies/usd.json`
+  ];
+  for (const u of urls) {
+    try {
+      const r = await fetch(u);
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (j && j.usd) { j.usd.usd = 1; return cache[key] = {date: j.date, rates: j.usd}; }
+    } catch (e) {}
+  }
+  if (key === 'latest') {
+    try {
+      const r = await fetch('https://open.er-api.com/v6/latest/USD');
+      const j = await r.json();
+      const rates = {};
+      for (const k in j.rates) rates[k.toLowerCase()] = j.rates[k];
+      return cache[key] = {date: iso(new Date(j.time_last_update_unix * 1000)), rates};
+    } catch (e) {}
+  }
+  throw new Error('no data');
+}
+
+function rateOf(cur) {
+  const r = S.rates;
+  if (!r) return null;
+  const f = c => r[c.toLowerCase()] ?? r[(ALT[c] || '').toLowerCase()];
+  const t = f(cur), b = f(S.base);
+  return (t && b) ? t / b : null;
+}
+
+function fmt(n) {
+  if (n == null || isNaN(n)) return '---';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1000) return Math.round(n).toLocaleString('en-US');
+  if (n >= 100) return n.toFixed(1);
+  if (n >= 1) return n.toFixed(2);
+  if (n >= 0.01) return n.toFixed(3);
+  return n.toPrecision(3);
+}
+
+function toast(t, bg = '#7f1d1d') {
+  const m = $('msg');
+  m.textContent = t;
+  m.style.background = bg;
+  m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 3500);
+}
+
+async function load() {
+  const my = ++tok;
+  $('stage').classList.add('busy');
+  try {
+    const key = S.pos === maxBack ? 'latest' : iso(dateForPos(S.pos));
+    const d = await fetchRates(key);
+    if (my !== tok) return;
+    S.rates = d.rates;
+    S.date = d.date;
+    if (!S.rates[S.base.toLowerCase()]) S.base = 'USD';
+    refresh();
+  } catch (e) {
+    if (my === tok) toast("Couldn't load rates for that date");
+  }
+  if (my === tok) $('stage').classList.remove('busy');
+}
+
+function buildMap(geo) {
+  feats = geo.features.filter(f => f.id !== 'ATA');
+  const proj = d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], {type:'FeatureCollection', features:feats});
+  const path = d3.geoPath(proj);
+
+  feats.forEach(f => {
+    let g = f.geometry;
+    if (g.type === 'MultiPolygon') {
+      let best = null, ba = -1;
+      g.coordinates.forEach(c => {
+        const p = {type:'Polygon', coordinates:c};
+        const a = d3.geoArea(p);
+        if (a > ba) { ba = a; best = p; }
+      });
+      g = best;
+    }
+    f._c = path.centroid(g);
+    f._a = path.area(g);
+  });
+
+  svg = d3.select('#map').attr('font-family', "'Twemoji Country Flags',system-ui,sans-serif");
+  root = svg.append('g');
+
+  paths = root.append('g').selectAll('path').data(feats).join('path')
+    .attr('d', path).attr('fill', '#1b2440')
+    .attr('stroke', '#0a0f1e').attr('stroke-width', .6)
+    .attr('stroke-linejoin', 'round').attr('vector-effect', 'non-scaling-stroke')
+    .style('cursor', 'pointer')
+    .on('mousemove', showTip).on('mouseleave', () => $('tip').style.display = 'none')
+    .on('click', (e, f) => {
+      const c = COUNTRIES[f.id];
+      if (c && f._r != null) { setBase(c.cur); }
+    });
+
+  labelFeats = feats.filter(f => COUNTRIES[f.id]).sort((a, b) => b._a - a._a);
+  labelSel = root.append('g').attr('pointer-events', 'none').selectAll('text').data(labelFeats).join('text')
+    .attr('transform', f => `translate(${f._c[0]},${f._c[1]})`)
+    .attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-weight', 700)
+    .attr('stroke', 'rgba(8,12,24,.8)').attr('stroke-linejoin', 'round')
+    .style('paint-order', 'stroke');
+  labelSel.append('tspan').attr('x', 0).attr('font-size', '1.25em').text(f => COUNTRIES[f.id].flag);
+  labelSel.append('tspan').attr('class', 'v').attr('x', 0).attr('dy', '1.15em');
+
+  let queued = false;
+  const zoom = d3.zoom().scaleExtent([1, 14])
+    .extent([[0, 0], [W, H]]).translateExtent([[0, 0], [W, H]])
+    .on('zoom', e => {
+      root.attr('transform', e.transform);
+      S.k = e.transform.k;
+      if (!queued) {
+        queued = true;
+        requestAnimationFrame(() => { queued = false; layout(S.k); });
+      }
+    });
+  svg.call(zoom).on('dblclick.zoom', null);
+}
+
+function layout(k) {
+  if (!labelSel) return;
+  const fs = 10 / Math.sqrt(k), vis = new Set(), boxes = [];
+  for (const f of labelFeats) {
+    if (f._r == null || f._a * k * k < 240) continue;
+    const [cx, cy] = f._c, w = fs * 3.9, h = fs * 2.6;
+    const b = [cx - w / 2, cy - h * .45, cx + w / 2, cy + h * .55];
+    if (boxes.some(o => b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1])) continue;
+    boxes.push(b); vis.add(f.id);
+  }
+  labelSel.attr('display', f => vis.has(f.id) ? null : 'none')
+    .attr('font-size', fs).attr('stroke-width', fs * .22);
+}
+
+function paint() {
+  if (!S.rates || !paths) return;
+  const vals = [];
+  feats.forEach(f => {
+    const c = COUNTRIES[f.id];
+    f._r = c ? rateOf(c.cur) : null;
+    if (f._r != null && c.cur !== S.base) vals.push(Math.log10(f._r));
+  });
+  const s = vals.sort(d3.ascending), mn = s[0], mx = s[s.length - 1];
+  const rank = v => d3.bisectLeft(s, v) / Math.max(1, s.length - 1);
+
+  paths.interrupt().transition().duration(280).attr('fill', f => {
+    const c = COUNTRIES[f.id];
+    if (!c || f._r == null) return '#1b2440';
+    if (c.cur === S.base) return '#38bdf8';
+    const v = Math.log10(f._r);
+    const t = .5 * rank(v) + .5 * ((v - mn) / ((mx - mn) || 1));
+    return heat(Math.max(0, Math.min(1, t)));
+  });
+
+  labelSel.select('.v').text(f => f._r == null ? '' : (COUNTRIES[f.id].cur === S.base ? '1.00' : fmt(f._r)));
+
+  legend = {min: 10 ** mn, max: 10 ** mx};
+  $('lMin').textContent = `High unit value (fewer units) · ${fmt(legend.min)}`;
+  $('lMax').textContent = `High nominal (more units) · ${fmt(legend.max)}`;
+}
+
+function showTip(e, f) {
+  const c = COUNTRIES[f.id], tip = $('tip');
+  const name = c ? `${c.flag} ${c.name}` : f.properties.name;
+  let html = `<b>${name}</b>`;
+  if (c && f._r != null) {
+    html += c.cur === S.base
+      ? `<div class="r">Base Currency (1.00)</div>`
+      : `<div class="r">1 ${S.base} = ${fmt(f._r)} ${c.cur}</div><div class="m">1 ${c.cur} = ${fmt(1 / f._r)} ${S.base}</div>`;
+    html += `<div class="m">${cname(c.cur)}</div>`;
+  } else html += `<div class="m">No rate data available</div>`;
+  tip.innerHTML = html; tip.style.display = 'block';
+  const r = $('stage').getBoundingClientRect();
+  tip.style.left = Math.min(e.clientX - r.left + 14, r.width - tip.offsetWidth - 6) + 'px';
+  tip.style.top = Math.min(e.clientY - r.top + 14, r.height - tip.offsetHeight - 6) + 'px';
+}
+
+function renderTop10Race() {
+  const container = $('raceStage');
+  if (!container || !S.rates) return;
+
+  const list = Object.values(COUNTRIES).map(c => {
+    const r = rateOf(c.cur);
+    return { ...c, rate: r };
+  }).filter(c => c.rate != null && c.cur !== S.base);
+
+  // Deduplicate by currency code so EUR/USD aren't repeated 15 times
+  const uniqueCurrencies = new Map();
+  list.forEach(item => {
+    if (!uniqueCurrencies.has(item.cur)) {
+      uniqueCurrencies.set(item.cur, item);
+    }
+  });
+  const deduped = Array.from(uniqueCurrencies.values());
+
+  let sorted = [];
+  if (S.raceMode === 'strong') {
+    // Lowest rate = highest value per unit (e.g., KWD, BHD, GBP, EUR)
+    sorted = deduped.sort((a, b) => a.rate - b.rate).slice(0, 10);
+  } else {
+    // Highest nominal rate = most units per base (e.g., VND, IDR, IRR)
+    sorted = deduped.sort((a, b) => b.rate - a.rate).slice(0, 10);
+  }
+
+  // Calculate normalized width percentages
+  const maxVal = sorted.length ? (S.raceMode === 'strong' ? sorted[sorted.length - 1].rate : sorted[0].rate) : 1;
+  const minVal = sorted.length ? (S.raceMode === 'strong' ? sorted[0].rate : sorted[sorted.length - 1].rate) : 1;
+
+  let html = '';
+  sorted.forEach((item, idx) => {
+    const topPos = idx * 42;
+    // Log scale ratio for visual aesthetics
+    let pct = 30 + (idx === 0 ? 68 : Math.max(10, 68 - idx * 5.8));
+    if (S.raceMode === 'strong') {
+      pct = 95 - (idx * 6.5);
+    }
+    const barColor = S.raceMode === 'strong'
+      ? `linear-gradient(90deg, #10b981, #38bdf8)`
+      : `linear-gradient(90deg, #f97316, #ef4444)`;
+
+    html += `
+      <div class="race-row" style="transform: translateY(${topPos}px);">
+        <span class="race-rank ${idx < 3 ? 'top3' : ''}">#${idx + 1}</span>
+        <span class="race-flag">${item.flag}</span>
+        <div class="race-track" onclick="window.setBase('${item.cur}')" title="Click to make ${item.cur} base" style="cursor:pointer">
+          <div class="race-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
+          <div class="race-label">
+            <span>${item.cur}</span>
+            <span style="font-size:11px;opacity:0.8;font-weight:500;">${item.name}</span>
+          </div>
+          <div class="race-val">${fmt(item.rate)}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderTable() {
+  const tbody = $('tableBody');
+  if (!tbody || !S.rates) return;
+
+  const seenCur = new Set();
+  let items = Object.values(COUNTRIES).map(c => {
+    const r = rateOf(c.cur);
+    const inv = r ? 1 / r : null;
+    return {
+      ...c,
+      rate: r,
+      inverse: inv
+    };
+  }).filter(c => c.rate != null);
+
+  // Filter search
+  const q = S.tableSearch.toLowerCase().trim();
+  if (q) {
+    items = items.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.cur.toLowerCase().includes(q) ||
+      c.a2.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  const asc = S.sortAsc ? 1 : -1;
+  items.sort((a, b) => {
+    if (S.sortCol === 'country') return asc * a.name.localeCompare(b.name);
+    if (S.sortCol === 'rate') return asc * ((a.rate || 0) - (b.rate || 0));
+    if (S.sortCol === 'inverse') return asc * ((a.inverse || 0) - (b.inverse || 0));
+    return 0;
+  });
+
+  $('tableCount').textContent = `${items.length} markets`;
+
+  let html = '';
+  items.forEach(c => {
+    const isBase = c.cur === S.base;
+    const tierColor = isBase ? '#38bdf8' : (c.rate ? heat(Math.min(1, Math.max(0, Math.log10(c.rate) / 4))) : '#888');
+    html += `
+      <tr class="${isBase ? 'selected-row' : ''}" onclick="window.setBase('${c.cur}')">
+        <td>
+          <div class="td-country">
+            <span>${c.flag}</span>
+            <div>
+              <div>${c.name}</div>
+              <div style="font-size:11px;color:var(--mut);">${c.cur} · ${cname(c.cur)}</div>
+            </div>
+          </div>
+        </td>
+        <td style="font-weight:700;color:${isBase ? '#38bdf8' : '#f1f5f9'};">
+          ${isBase ? '1.00 (Base)' : fmt(c.rate) + ' ' + c.cur}
+        </td>
+        <td style="color:var(--mut);">
+          ${isBase ? '1.00 ' + S.base : fmt(c.inverse) + ' ' + S.base}
+        </td>
+        <td>
+          <span class="heat-badge" style="background:${tierColor};color:${tierColor};"></span>
+          <span style="font-size:11px;color:var(--mut);">${isBase ? 'Standard' : (c.rate < 1 ? 'High Value' : 'Nominal Tier')}</span>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+window.sortTable = function(col) {
+  if (S.sortCol === col) {
+    S.sortAsc = !S.sortAsc;
+  } else {
+    S.sortCol = col;
+    S.sortAsc = true;
+  }
+  renderTable();
+};
+
+window.setBase = function(cur) {
+  if (!cur) return;
+  S.base = cur.toUpperCase();
+  refresh();
+};
+
+function refresh() {
+  $('title').innerHTML = `What's <span class="hl">1 ${S.base}</span> worth around the world?`;
+  $('dateline').textContent = fmtDate(S.date) + ' · rates per 1 ' + S.base;
+  $('timeBtnLabel').textContent = fmtDate(S.date);
+  $('base').value = S.base;
+  $('date').value = S.date;
+  $('slider').value = S.pos;
+
+  paint();
+  layout(S.k);
+  renderTop10Race();
+  renderTable();
+
+  history.replaceState(null, '', '#' + S.base + (S.pos === maxBack ? '' : '@' + S.date));
+}
+
+async function savePNG() {
+  const CW = 1600, CH = 1000, c = document.createElement('canvas');
+  c.width = CW; c.height = CH;
+  const x = c.getContext('2d');
+  const bg = x.createLinearGradient(0, 0, 0, CH);
+  bg.addColorStop(0, '#16224a'); bg.addColorStop(1, '#080c18');
+  x.fillStyle = bg; x.fillRect(0, 0, CW, CH);
+
+  const clone = svg.node().cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('width', 1600); clone.setAttribute('height', 800);
+  const img = new Image();
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+  await img.decode();
+  x.drawImage(img, 0, 110, 1600, 800);
+
+  x.fillStyle = '#fff'; x.font = '800 50px system-ui,sans-serif'; x.textAlign = 'left';
+  x.fillText(`What's 1 ${S.base} worth around the world?`, 48, 76);
+  x.fillStyle = '#8b95b1'; x.font = '500 24px system-ui,sans-serif'; x.textAlign = 'right';
+  x.fillText(fmtDate(S.date), CW - 48, 72);
+
+  const lg = x.createLinearGradient(300, 0, CW - 300, 0);
+  STOPS.forEach((col, i) => lg.addColorStop(i / (STOPS.length - 1), col));
+  x.fillStyle = lg; x.beginPath(); x.roundRect(300, 944, CW - 600, 14, 7); x.fill();
+  x.fillStyle = '#8b95b1'; x.font = '500 22px system-ui,sans-serif';
+  x.textAlign = 'right'; x.fillText(`High unit value · ${fmt(legend.min)}`, 280, 958);
+  x.textAlign = 'left'; x.fillText(`High nominal · ${fmt(legend.max)}`, CW - 280, 958);
+
+  c.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = `exchange-heatmap-${S.base}-${S.date}.png`;
+    a.click();
+  });
+}
+
+function setPos(p) {
+  S.pos = p;
+  $('slider').value = p;
+  $('date').value = iso(dateForPos(p));
+}
+
+async function play() {
+  const btn = $('play');
+  if (S.playing) {
+    S.playing = false;
+    btn.textContent = '▶';
+    return;
+  }
+  S.playing = true;
+  btn.textContent = '⏸';
+  let p = S.pos >= maxBack - 1 ? 0 : S.pos;
+
+  while (S.playing) {
+    setPos(p);
+    await load();
+    if (p >= maxBack) break;
+    await sleep(650);
+    p = Math.min(maxBack, p + 25);
+  }
+  S.playing = false;
+  btn.textContent = '▶';
+}
+
+function initControls() {
+  const sl = $('slider');
+  sl.min = 0; sl.max = maxBack; sl.value = S.pos;
+  const dt = $('date');
+  dt.min = iso(MIN); dt.max = iso(todayUTC());
+
+  const curs = [...new Set(Object.values(COUNTRIES).map(c => c.cur))].sort();
+  $('base').innerHTML = curs.map(c => `<option value="${c}">${c} · ${cname(c)}</option>`).join('');
+  $('base').value = S.base;
+  $('base').onchange = e => { setBase(e.target.value); };
+
+  // Popover toggle
+  const pop = $('timePopover');
+  const tBtn = $('timeBtn');
+  tBtn.onclick = (e) => {
+    e.stopPropagation();
+    pop.classList.toggle('open');
+    tBtn.classList.toggle('active-toggle');
+  };
+  $('closePop').onclick = () => {
+    pop.classList.remove('open');
+    tBtn.classList.remove('active-toggle');
+  };
+  document.addEventListener('click', (e) => {
+    if (!pop.contains(e.target) && e.target !== tBtn) {
+      pop.classList.remove('open');
+      tBtn.classList.remove('active-toggle');
+    }
+  });
+
+  // Slider and dates
+  sl.oninput = () => { $('date').value = iso(dateForPos(+sl.value)); };
+  sl.onchange = () => { S.playing = false; $('play').textContent = '▶'; S.pos = +sl.value; load(); };
+  dt.onchange = () => {
+    if (!dt.value) return;
+    S.playing = false; $('play').textContent = '▶';
+    S.pos = posFromDate(new Date(dt.value + 'T00:00:00Z'));
+    sl.value = S.pos; load();
+  };
+
+  $('btnToday').onclick = () => {
+    S.playing = false; $('play').textContent = '▶';
+    setPos(maxBack); load();
+  };
+  $('btn1Y').onclick = () => {
+    S.playing = false; $('play').textContent = '▶';
+    setPos(Math.max(0, maxBack - 365)); load();
+  };
+
+  $('play').onclick = play;
+  $('save').onclick = savePNG;
+  $('link').onclick = () => {
+    const url = location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => toast('Share link copied to clipboard!', '#14532d'))
+      .catch(() => copyFallback(url));
+    } else {
+      copyFallback(url);
+    }
+  };
+
+  function copyFallback(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      toast('Share link copied to clipboard!', '#14532d');
+    } catch (e) {
+      toast(text, '#1e293b');
+    }
+    document.body.removeChild(ta);
+  }
+
+  // Top 10 race mode buttons
+  $('modeStrong').onclick = () => {
+    S.raceMode = 'strong';
+    $('modeStrong').classList.add('active');
+    $('modeNominal').classList.remove('active');
+    renderTop10Race();
+  };
+  $('modeNominal').onclick = () => {
+    S.raceMode = 'nominal';
+    $('modeNominal').classList.add('active');
+    $('modeStrong').classList.remove('active');
+    renderTop10Race();
+  };
+
+  // Table search
+  $('tableQuery').oninput = (e) => {
+    S.tableSearch = e.target.value;
+    renderTable();
+  };
+}
+
+(async function init() {
+  const m = location.hash.match(/^#([A-Za-z]{3})(?:@(\d{4}-\d{2}-\d{2}))?$/);
+  if (m) {
+    S.base = m[1].toUpperCase();
+    if (m[2]) S.pos = posFromDate(new Date(m[2] + 'T00:00:00Z'));
+  }
+  initControls();
+  try {
+    buildMap(await (await fetch(GEO)).json());
+  } catch (e) {
+    toast("Couldn't load the map boundaries");
+    return;
+  }
+  load();
+})();
+</script>
+</body>
+</html>
