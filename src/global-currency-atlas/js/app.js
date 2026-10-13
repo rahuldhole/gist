@@ -38,6 +38,7 @@ export default {
 
     const showRatesPopover = ref(false);
     const showTimePopover = ref(false);
+    const showMapConfigs = ref(typeof window !== 'undefined' ? window.innerWidth >= 640 : true);
     const rightPanelTab = ref('ledger'); // 'ledger' or 'race'
     const isFullscreen = ref(false);
 
@@ -364,7 +365,7 @@ export default {
       selectedDate: computed({ get: () => date.value, set: val => date.value = val }),
       sliderPos: computed({ get: () => pos.value, set: val => pos.value = val }),
       playing, mapMode, metalWeight, metalDisplayCur, raceMode, tableFilter, tableSearch, sortCol, sortAsc,
-      showRatesPopover, showTimePopover, ratesTab, goldUnit, calcAmt, calcAsset, toastMsg, toastBg,
+      showRatesPopover, showTimePopover, showMapConfigs, ratesTab, goldUnit, calcAmt, calcAsset, toastMsg, toastBg,
       currencyOptions, goldMetrics, goldBadgeText, filteredAssetCards, quickCalc, sortedRace, filteredTable,
       legendLabels, rightPanelTab, resetMapZoom, setBase, setMapMode, sortTable, onRowClick, selectCalcAsset,
       visualizeGoldOnMap, visualizeFuelOnMap, scrollToMetals, toggleTimePopover, togglePlay, onSliderInput, onSliderChange,

@@ -229,6 +229,17 @@ Updated: 2026-10-12
         </select>
       </div>
 
+      <!-- Layer Mode Dropdown in Navbar -->
+      <div class="flex items-center gap-1 bg-slate-800/90 border border-slate-700/80 rounded-lg px-2 py-1 text-xs font-bold text-white shadow-sm">
+        <span class="text-slate-400 text-[11px]">Layer:</span>
+        <select v-model="mapMode" @change="setMapMode(mapMode)" aria-label="Map layer" class="bg-transparent text-white font-black cursor-pointer focus:outline-none">
+          <option value="fx" class="bg-slate-900 text-white">🌐 Exchange Rates</option>
+          <option value="fuel" class="bg-slate-900 text-white">⛽ Fuel / Petrol</option>
+          <option value="gold" class="bg-slate-900 text-white">🏅 Gold (24K)</option>
+          <option value="silver" class="bg-slate-900 text-white">🥈 Silver</option>
+        </select>
+      </div>
+
       <!-- Time Travel Compact Pill -->
       <button class="text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5"
               :class="showTimePopover ? 'bg-sky-950/80 text-sky-400 border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.25)]' : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:border-sky-400'"
@@ -334,73 +345,59 @@ Updated: 2026-10-12
             </span>
           </div>
         </div>
-      </div>
 
-      <!-- Contextual Toolbar directly docked BELOW the map -->
-      <div class="bg-slate-900/80 backdrop-blur-md border border-slate-800/80 rounded-xl px-3 py-2 shadow-md flex flex-wrap items-center justify-between gap-2.5">
-        <!-- Layer Mode Switcher (Wrap-safe & compact) -->
-        <div class="flex items-center gap-1.5 flex-wrap min-w-0">
-          <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Layer:</span>
-          <div class="flex items-center gap-1 flex-wrap">
-            <button v-for="m in [
-                      { id: 'fx', label: '🌐 Exchange Rates' },
-                      { id: 'fuel', label: '⛽ Fuel / Petrol' },
-                      { id: 'gold', label: '🏅 Gold (24K)' },
-                      { id: 'silver', label: '🥈 Silver' }
-                    ]"
-                    :key="m.id"
-                    @click="setMapMode(m.id)"
-                    class="text-[11px] font-bold px-2 sm:px-2.5 py-1 rounded-md border transition-all cursor-pointer inline-flex items-center gap-1 flex-none"
-                    :class="mapMode === m.id
-                      ? (m.id === 'fuel' ? 'bg-[#281a05] text-amber-400 border-amber-500 shadow-sm'
-                         : (m.id === 'gold' ? 'bg-[#26210d] text-amber-300 border-amber-400 shadow-sm'
-                         : (m.id === 'silver' ? 'bg-[#182030] text-slate-100 border-slate-300 shadow-sm'
-                         : 'bg-sky-950/80 text-sky-400 border-sky-400 shadow-sm')))
-                      : 'bg-slate-900/90 text-slate-400 border-slate-800 hover:text-white'">
-              {{ m.label }}
-            </button>
-          </div>
-        </div>
+        <!-- Floating Bottom-Left Contextual Config Drawer Inside Map Stage -->
+        <div v-if="mapMode !== 'fx'" class="absolute bottom-3 left-3 z-20 flex flex-col gap-1 items-start">
+          <!-- Toggle reveal button for small screens -->
+          <button @click="showMapConfigs = !showMapConfigs"
+                  class="sm:hidden text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700/80 backdrop-blur-md shadow-lg flex items-center gap-1 cursor-pointer">
+            <span>⚙️</span>
+            <span>{{ showMapConfigs ? 'Hide Options' : 'Unit Options' }}</span>
+          </button>
 
-        <!-- Secondary Units / Weight & Currency (for physical metals: Gold & Silver) -->
-        <div v-if="mapMode === 'gold' || mapMode === 'silver'" class="flex items-center gap-1.5 flex-wrap ml-auto">
-          <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-            <button v-for="w in [ {id:'g', label:'1g'}, {id:'10g', label:'10g'}, {id:'oz', label:'1 Oz'} ]"
-                    :key="w.id"
-                    @click="metalWeight = w.id"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalWeight === w.id ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'">
-              {{ w.label }}
-            </button>
-          </div>
+          <!-- Drawer Body: revealed if showMapConfigs is true (default true on sm+) -->
+          <div v-show="showMapConfigs" class="flex items-center gap-1.5 flex-wrap bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-xl">
+            <!-- For physical metals: Gold & Silver -->
+            <template v-if="mapMode === 'gold' || mapMode === 'silver'">
+              <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                <button v-for="w in [ {id:'g', label:'1g'}, {id:'10g', label:'10g'}, {id:'oz', label:'1 Oz'} ]"
+                        :key="w.id"
+                        @click="metalWeight = w.id"
+                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalWeight === w.id ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'">
+                  {{ w.label }}
+                </button>
+              </div>
 
-          <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-            <button @click="metalDisplayCur = 'local'"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalDisplayCur === 'local' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
-              Local
-            </button>
-            <button @click="metalDisplayCur = 'base'"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalDisplayCur === 'base' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
-              In {{ base }}
-            </button>
-          </div>
-        </div>
+              <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                <button @click="metalDisplayCur = 'local'"
+                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'local' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
+                  Local
+                </button>
+                <button @click="metalDisplayCur = 'base'"
+                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'base' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
+                  In {{ base }}
+                </button>
+              </div>
+            </template>
 
-        <!-- Secondary Units for Fuel Mode: Local Currency vs USD -->
-        <div v-else-if="mapMode === 'fuel'" class="flex items-center gap-1.5 flex-wrap ml-auto">
-          <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-            <button @click="metalDisplayCur = 'local'"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalDisplayCur === 'local' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
-              Local Currency / Liter
-            </button>
-            <button @click="metalDisplayCur = 'base'"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalDisplayCur === 'base' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
-              $ USD / Liter
-            </button>
+            <!-- For Fuel Mode: Local Currency vs USD -->
+            <template v-else-if="mapMode === 'fuel'">
+              <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                <button @click="metalDisplayCur = 'local'"
+                        class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'local' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
+                  Local / Liter
+                </button>
+                <button @click="metalDisplayCur = 'base'"
+                        class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'base' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
+                  $ USD / Liter
+                </button>
+              </div>
+            </template>
           </div>
         </div>
       </div>
