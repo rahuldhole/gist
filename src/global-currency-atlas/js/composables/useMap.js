@@ -279,8 +279,23 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
     await img.decode();
     x.drawImage(img, 0, 110, 1600, 800);
 
-    x.fillStyle = '#fff'; x.font = '800 50px system-ui,sans-serif'; x.textAlign = 'left';
-    x.fillText(`What's 1 ${base.value} worth around the world?`, 48, 76);
+    let mapTitle = `What's 1 ${base.value} worth around the world?`;
+    let filePrefix = `exchange-heatmap-${base.value.toLowerCase()}`;
+    if (mapMode.value === 'fuel') {
+      mapTitle = `Global Fuel & Petrol Pump Prices (${metalDisplayCur.value === 'usd' ? 'USD/L' : (metalDisplayCur.value === 'local' ? 'Local/L' : `${base.value}/L`)})`;
+      filePrefix = `fuel-prices-${metalDisplayCur.value}`;
+    } else if (mapMode.value === 'gold') {
+      const wLabel = metalWeight.value === '10g' ? '10g' : (metalWeight.value === 'oz' ? '1 oz' : '1g');
+      mapTitle = `World Pure Gold (24K) Rates · ${wLabel} (${metalDisplayCur.value === 'local' ? 'Local' : `In ${base.value}`})`;
+      filePrefix = `gold-rates-${metalWeight.value}-${metalDisplayCur.value}`;
+    } else if (mapMode.value === 'silver') {
+      const wLabel = metalWeight.value === '10g' ? '10g' : (metalWeight.value === 'oz' ? '1 oz' : '1g');
+      mapTitle = `World Fine Silver Rates · ${wLabel} (${metalDisplayCur.value === 'local' ? 'Local' : `In ${base.value}`})`;
+      filePrefix = `silver-rates-${metalWeight.value}-${metalDisplayCur.value}`;
+    }
+
+    x.fillStyle = '#fff'; x.font = '800 46px system-ui,sans-serif'; x.textAlign = 'left';
+    x.fillText(mapTitle, 48, 76);
     x.fillStyle = '#8b95b1'; x.font = '500 24px system-ui,sans-serif'; x.textAlign = 'right';
     x.fillText(formattedDate, CW - 48, 72);
 
@@ -294,7 +309,7 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
     c.toBlob(b => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(b);
-      a.download = `exchange-heatmap-${base.value}-${dateVal}.png`;
+      a.download = `${filePrefix}-${dateVal}.png`;
       a.click();
     });
   };
