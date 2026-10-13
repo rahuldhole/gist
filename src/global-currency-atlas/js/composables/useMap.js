@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { MAP_DIMENSIONS, COLOR_STOPS } from '../config.js';
 import { COUNTRIES, fmt, cname } from '../utils.js';
 
-export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateOf, getCountryAssetData, setBase) {
+export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateOf, getCountryAssetData, getCountryFuelData, setBase) {
   const k = ref(1);
   const legendLabels = ref({ min: 'High unit value', max: 'High nominal' });
 
@@ -17,7 +17,28 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
     const name = c ? `${c.flag} ${c.name}` : f.properties.name;
     let html = `<b>${name}</b>`;
 
-    if (c && mapMode.value === 'gold') {
+    if (c && mapMode.value === 'fuel') {
+      const fuel = f._fuel || (getCountryFuelData ? getCountryFuelData(c.a3, c.cur) : null);
+      if (fuel) {
+        const tag = fuel.isSubsidized
+          ? '<span style="color:#22c55e;background:rgba(34,197,94,0.15);padding:1px 5px;border-radius:4px;font-size:10px;">⚡ State Subsidized</span>'
+          : (fuel.isHighTax ? '<span style="color:#f87171;background:rgba(239,68,68,0.15);padding:1px 5px;border-radius:4px;font-size:10px;">🏷️ High Fuel Tax</span>' : '');
+        html += `
+          <div class="r" style="color:#f59e0b;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+            <span>⛽ Retail Gasoline / Petrol</span>
+            ${tag}
+          </div>
+          <div style="margin-top:4px;font-size:12px;line-height:1.4;">
+            <div>• Pump Price: <b>$${fuel.priceUsd.toFixed(2)} USD</b> / Liter</div>
+            <div>• Local Cost: <b>${fmt(fuel.localPricePerLiter)} ${c.cur}</b> / Liter</div>
+            <div>• In ${base.value}: <b>${fmt(fuel.basePricePerLiter)} ${base.value}</b> / Liter</div>
+          </div>
+          <div class="m" style="margin-top:6px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
+            1 ${base.value} buys <b style="color:#facc15;">${fuel.litersPerBaseUnit.toFixed(2)} Liters</b> of fuel here.
+          </div>
+        `;
+      }
+    } else if (c && mapMode.value === 'gold') {
       const a = f._asset || getCountryAssetData(c.cur, 'xau');
       if (a) {
         html += `
@@ -145,15 +166,21 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
 
   const paintMap = () => {
     if (!rates.value || !paths) return;
+    const isFuel = mapMode.value === 'fuel';
     const isMetal = mapMode.value === 'gold' || mapMode.value === 'silver';
     const assetKey = mapMode.value === 'gold' ? 'xau' : (mapMode.value === 'silver' ? 'xag' : null);
     const vals = [];
 
     feats.forEach(f => {
       const c = COUNTRIES[f.id];
-      if (!c) { f._r = null; f._asset = null; return; }
+      if (!c) { f._r = null; f._asset = null; f._fuel = null; return; }
       f._r = rateOf(c.cur);
-      if (isMetal) {
+      if (isFuel) {
+        f._fuel = getCountryFuelData ? getCountryFuelData(c.a3, c.cur) : null;
+        if (f._fuel && f._fuel.priceUsd > 0) {
+          vals.push(f._fuel.priceUsd);
+        }
+      } else if (isMetal) {
         f._asset = getCountryAssetData(c.cur, assetKey);
         if (f._asset) {
           const v = f._asset.localPricePerGram || f._asset.localPricePerUnit;
@@ -171,7 +198,13 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
     paths.interrupt().transition().duration(280).attr('fill', f => {
       const c = COUNTRIES[f.id];
       if (!c) return '#1b2440';
-      if (isMetal) {
+      if (isFuel) {
+        if (!f._fuel) return '#1b2440';
+        const v = f._fuel.priceUsd;
+        // Green for cheaper/subsidized gas, red for highly taxed expensive gas
+        const t = .5 * rank(v) + .5 * ((v - mn) / ((mx - mn) || 1));
+        return heat(Math.max(0, Math.min(1, t)));
+      } else if (isMetal) {
         if (!f._asset) return '#1b2440';
         const v = Math.log10(f._asset.localPricePerGram || f._asset.localPricePerUnit);
         const t = .5 * rank(v) + .5 * ((v - mn) / ((mx - mn) || 1));
@@ -188,7 +221,14 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
     labelSel.select('.v').text(f => {
       const c = COUNTRIES[f.id];
       if (!c) return '';
-      if (isMetal) {
+      if (isFuel) {
+        if (!f._fuel) return '';
+        if (metalDisplayCur.value === 'local') {
+          return fmt(f._fuel.localPricePerLiter);
+        } else {
+          return `$${f._fuel.priceUsd.toFixed(2)}`;
+        }
+      } else if (isMetal) {
         if (!f._asset) return '';
         if (metalDisplayCur.value === 'local') {
           let val = f._asset.localPricePerGram;
@@ -205,8 +245,10 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
       }
     });
 
-    const lMin = 10 ** mn, lMax = 10 ** mx;
-    if (mapMode.value === 'gold') {
+    const lMin = isFuel ? mn : 10 ** mn, lMax = isFuel ? mx : 10 ** mx;
+    if (mapMode.value === 'fuel') {
+      legendLabels.value = { min: `Lowest Pump Price · $${mn.toFixed(2)}/L`, max: `Highest Duty/Price · $${mx.toFixed(2)}/L` };
+    } else if (mapMode.value === 'gold') {
       legendLabels.value = { min: `Strongest Gold Value · ${fmt(lMin)}`, max: `High Nominal Units/g · ${fmt(lMax)}` };
     } else if (mapMode.value === 'silver') {
       legendLabels.value = { min: `Strongest Silver Value · ${fmt(lMin)}`, max: `High Nominal Units · ${fmt(lMax)}` };

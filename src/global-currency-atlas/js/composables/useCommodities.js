@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { COMMODITIES, ALT_CURRENCIES } from '../config.js';
+import { COMMODITIES, ALT_CURRENCIES, FUEL_PRICES_USD, GLOBAL_MEDIAN_FUEL_USD } from '../config.js';
 import { fmt } from '../utils.js';
 
 export function useCommodities(rates, base, rateOf) {
@@ -7,6 +7,35 @@ export function useCommodities(rates, base, rateOf) {
   const calcAmt = ref(1);
   const calcAsset = ref('xau_oz');
   const ratesTab = ref('all');
+
+  const getCountryFuelData = (countryA3, curCode) => {
+    if (!rates.value) return null;
+    const r = rates.value;
+    const f = c => r[c.toLowerCase()] ?? r[(ALT_CURRENCIES[c] || '').toLowerCase()];
+    const localPerUsd = f(curCode) || 1;
+    const basePerUsd = f(base.value) || 1;
+
+    // Local pump price benchmark in USD per liter
+    const priceUsd = FUEL_PRICES_USD[countryA3] ?? GLOBAL_MEDIAN_FUEL_USD;
+    // Price in local currency per liter
+    const localPricePerLiter = priceUsd * localPerUsd;
+    // Price in currently selected base currency per liter
+    const basePricePerLiter = priceUsd * basePerUsd;
+    // How many liters 1 base unit buys in this country
+    const litersPerBaseUnit = basePricePerLiter > 0 ? (1 / basePricePerLiter) : 0;
+    // How many liters 1 local currency unit buys
+    const litersPerLocalUnit = localPricePerLiter > 0 ? (1 / localPricePerLiter) : 0;
+
+    return {
+      priceUsd,
+      localPricePerLiter,
+      basePricePerLiter,
+      litersPerBaseUnit,
+      litersPerLocalUnit,
+      isSubsidized: priceUsd < 0.60,
+      isHighTax: priceUsd > 1.70
+    };
+  };
 
   const getCountryAssetData = (curCode, assetId = 'xau') => {
     if (!rates.value) return null;
@@ -166,6 +195,7 @@ export function useCommodities(rates, base, rateOf) {
     filteredAssetCards,
     quickCalc,
     getCountryAssetData,
+    getCountryFuelData,
     selectCalcAsset
   };
 }

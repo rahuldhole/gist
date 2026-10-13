@@ -44,17 +44,18 @@ export default {
     // Commodities & Precious Metals
     const {
       goldUnit, calcAmt, calcAsset, ratesTab, goldMetrics, goldBadgeText,
-      filteredAssetCards, quickCalc, getCountryAssetData, selectCalcAsset
+      filteredAssetCards, quickCalc, getCountryAssetData, getCountryFuelData, selectCalcAsset
     } = useCommodities(rates, base, rateOf);
 
     // D3 Heatmap Map Composable
     const {
       k, legendLabels, heat, buildMap, paintMap, layoutLabels, resetMapZoom, savePNG
-    } = useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateOf, getCountryAssetData, setBase);
+    } = useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateOf, getCountryAssetData, getCountryFuelData, setBase);
 
     // Top 10 Currency Race Computed List
     const sortedRace = computed(() => {
       if (!rates.value) return [];
+      const isFuel = mapMode.value === 'fuel';
       const isMetal = mapMode.value === 'gold' || mapMode.value === 'silver';
       const assetKey = mapMode.value === 'gold' ? 'xau' : (mapMode.value === 'silver' ? 'xag' : null);
 
@@ -65,7 +66,20 @@ export default {
       });
 
       let list = [];
-      if (isMetal) {
+      if (isFuel) {
+        list = deduped.map(c => {
+          const f = getCountryFuelData(c.a3, c.cur);
+          if (!f) return null;
+          return {
+            ...c,
+            fuel: f,
+            // When 'strong', rank by lowest price per liter (most liters per base)
+            rate: raceMode.value === 'strong' ? f.litersPerBaseUnit : f.localPricePerLiter
+          };
+        }).filter(c => c && c.rate != null);
+
+        list.sort((a, b) => b.rate - a.rate);
+      } else if (isMetal) {
         list = deduped.map(c => {
           const a = getCountryAssetData(c.cur, assetKey);
           if (!a) return null;
@@ -91,11 +105,19 @@ export default {
       return top10.map((item, idx) => {
         const barPct = raceMode.value === 'strong' ? (95 - idx * 6.5) : (idx === 0 ? 98 : Math.max(15, 98 - idx * 7.5));
         const barColor = raceMode.value === 'strong'
-          ? (mapMode.value === 'gold' ? 'linear-gradient(90deg, #10b981, #facc15)' : 'linear-gradient(90deg, #10b981, #38bdf8)')
+          ? (mapMode.value === 'fuel'
+              ? 'linear-gradient(90deg, #10b981, #f59e0b)'
+              : (mapMode.value === 'gold' ? 'linear-gradient(90deg, #10b981, #facc15)' : 'linear-gradient(90deg, #10b981, #38bdf8)'))
           : 'linear-gradient(90deg, #f97316, #ef4444)';
 
         let valDisplay = fmt(item.rate);
-        if (isMetal) {
+        if (isFuel) {
+          if (raceMode.value === 'strong') {
+            valDisplay = `${item.fuel.litersPerBaseUnit.toFixed(1)} L / ${base.value}`;
+          } else {
+            valDisplay = `${fmt(item.fuel.localPricePerLiter)} ${item.cur}/L`;
+          }
+        } else if (isMetal) {
           if (raceMode.value === 'strong') {
             valDisplay = `${fmt(item.asset.mgPerLocalUnit)} mg`;
           } else {
@@ -162,7 +184,15 @@ export default {
 
       return items.map(c => {
         let rateText = '', invText = '', tierColor = '', tierLabel = '';
-        if (mapMode.value === 'gold' && !c.isCommodity) {
+        if (mapMode.value === 'fuel' && !c.isCommodity) {
+          const fuel = getCountryFuelData(c.a3, c.cur);
+          if (fuel) {
+            rateText = `${fmt(fuel.localPricePerLiter)} ${c.cur} / L`;
+            invText = `$${fuel.priceUsd.toFixed(2)} USD / L`;
+            tierColor = fuel.isSubsidized ? '#22c55e' : (fuel.isHighTax ? '#ef4444' : '#f59e0b');
+            tierLabel = fuel.isSubsidized ? '⚡ Subsidized' : (fuel.isHighTax ? 'High Duty' : 'Market');
+          }
+        } else if (mapMode.value === 'gold' && !c.isCommodity) {
           const a = getCountryAssetData(c.cur, 'xau');
           if (a) {
             rateText = `${fmt(a.localPricePerGram)} ${c.cur} / g`;
@@ -191,6 +221,7 @@ export default {
 
     const dateline = computed(() => {
       if (!date.value) return 'Loading rates…';
+      if (mapMode.value === 'fuel') return `${formattedDate.value} · Retail Gasoline & Fuel prices across world markets in local & USD/base`;
       if (mapMode.value === 'gold') return `${formattedDate.value} · 24K Pure Gold rates across 160+ countries in local currency & ${base.value}`;
       if (mapMode.value === 'silver') return `${formattedDate.value} · Fine Silver rates across 160+ countries in local currency & ${base.value}`;
       return `${formattedDate.value} · live foreign exchange rates per 1 ${base.value}`;
@@ -217,6 +248,13 @@ export default {
     const visualizeGoldOnMap = () => {
       showRatesPopover.value = false;
       mapMode.value = 'gold';
+      const st = document.getElementById('stage');
+      if (st) st.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    const visualizeFuelOnMap = () => {
+      showRatesPopover.value = false;
+      mapMode.value = 'fuel';
       const st = document.getElementById('stage');
       if (st) st.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
@@ -329,7 +367,7 @@ export default {
       showRatesPopover, showTimePopover, ratesTab, goldUnit, calcAmt, calcAsset, toastMsg, toastBg,
       currencyOptions, goldMetrics, goldBadgeText, filteredAssetCards, quickCalc, sortedRace, filteredTable,
       legendLabels, rightPanelTab, resetMapZoom, setBase, setMapMode, sortTable, onRowClick, selectCalcAsset,
-      visualizeGoldOnMap, scrollToMetals, toggleTimePopover, togglePlay, onSliderInput, onSliderChange,
+      visualizeGoldOnMap, visualizeFuelOnMap, scrollToMetals, toggleTimePopover, togglePlay, onSliderInput, onSliderChange,
       onDateChange, goToToday, goTo1YAgo, onBaseChange,
       savePNG: () => savePNG(formattedDate.value, date.value),
       copyLink, isFullscreen, toggleFullscreen
