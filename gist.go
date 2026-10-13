@@ -470,6 +470,16 @@ func cmdBuild() {
 	// Build-time hydration of index.html
 	if indexData, err := os.ReadFile("index.html"); err == nil {
 		injectedIndex := bytes.Replace(indexData, []byte("/*__APPS_JSON__*/ []"), jsonData, 1)
+
+		// Inject shared footer into root index.html if available
+		if len(footer) > 0 {
+			// Adapt footer paths for root directory (e.g. "../" -> "./", "../feed.xml" -> "feed.xml")
+			rootFooter := bytes.ReplaceAll(footer, []byte("href=\"../\""), []byte("href=\"./\""))
+			rootFooter = bytes.ReplaceAll(rootFooter, []byte("src=\"../"), []byte("src=\"./"))
+			rootFooter = bytes.ReplaceAll(rootFooter, []byte("href=\"../feed.xml\""), []byte("href=\"feed.xml\""))
+			injectedIndex = injectBytePartials(injectedIndex, nil, rootFooter)
+		}
+
 		_ = os.WriteFile(filepath.Join(distDir, "index.html"), injectedIndex, 0644)
 		logSuccess("  Hydrated index.html at build-time")
 	} else {
