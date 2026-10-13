@@ -285,15 +285,55 @@ Updated: 2026-10-12
         <div id="msg" v-if="toastMsg" class="absolute left-1/2 top-3 -translate-x-1/2 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-2xl z-30" :style="{background: toastBg}">
           {{ toastMsg }}
         </div>
-        <!-- Quick Fullscreen Float Button on Map Corner -->
-        <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Open Map in Fullscreen'" class="absolute top-3 right-3 z-20 bg-slate-900/85 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-sky-400/60 p-1.5 rounded-xl shadow-lg backdrop-blur-md cursor-pointer transition-all flex items-center justify-center opacity-70 hover:opacity-100 group-hover/stage:opacity-100">
-          <svg v-if="!isFullscreen" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-          </svg>
-          <svg v-else class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <!-- Sleek Floating Vertical Icon Dock Inside Map Stage (Top-Right) -->
+        <div class="absolute top-3 right-3 z-20 flex flex-col items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-xl">
+          <!-- Reset Zoom -->
+          <div class="relative group/btn flex items-center">
+            <button @click="resetMapZoom" title="Reset Zoom" class="w-7 h-7 flex items-center justify-center text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer">
+              <span>⟲</span>
+            </button>
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              Reset Zoom
+            </span>
+          </div>
+
+          <!-- Save PNG -->
+          <div class="relative group/btn flex items-center">
+            <button @click="savePNG" title="Save Image" class="w-7 h-7 flex items-center justify-center text-xs text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 rounded-lg transition-all cursor-pointer">
+              <span>📸</span>
+            </button>
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              Save Image
+            </span>
+          </div>
+
+          <!-- Share Link -->
+          <div class="relative group/btn flex items-center">
+            <button @click="copyLink" title="Share Link" class="w-7 h-7 flex items-center justify-center text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer">
+              <span>🔗</span>
+            </button>
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              Share Link
+            </span>
+          </div>
+
+          <div class="w-4 h-px bg-slate-700/70 my-0.5"></div>
+
+          <!-- Fullscreen Toggle -->
+          <div class="relative group/btn flex items-center">
+            <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'" class="w-7 h-7 flex items-center justify-center text-xs text-sky-300 hover:text-white hover:bg-sky-500/10 rounded-lg transition-all cursor-pointer">
+              <svg v-if="!isFullscreen" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+              <svg v-else class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- Contextual Toolbar directly docked BELOW the map -->
@@ -323,7 +363,7 @@ Updated: 2026-10-12
         </div>
 
         <!-- Secondary Units / Weight & Currency (for physical metals: Gold & Silver) -->
-        <div v-if="mapMode === 'gold' || mapMode === 'silver'" class="flex items-center gap-1.5 flex-wrap">
+        <div v-if="mapMode === 'gold' || mapMode === 'silver'" class="flex items-center gap-1.5 flex-wrap ml-auto">
           <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
             <button v-for="w in [ {id:'g', label:'1g'}, {id:'10g', label:'10g'}, {id:'oz', label:'1 Oz'} ]"
                     :key="w.id"
@@ -349,7 +389,7 @@ Updated: 2026-10-12
         </div>
 
         <!-- Secondary Units for Fuel Mode: Local Currency vs USD -->
-        <div v-else-if="mapMode === 'fuel'" class="flex items-center gap-1.5 flex-wrap">
+        <div v-else-if="mapMode === 'fuel'" class="flex items-center gap-1.5 flex-wrap ml-auto">
           <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
             <button @click="metalDisplayCur = 'local'"
                     class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
@@ -362,26 +402,6 @@ Updated: 2026-10-12
               $ USD / Liter
             </button>
           </div>
-        </div>
-
-        <!-- Map & Export Actions Grouped Properly Below the Map -->
-        <div class="flex items-center gap-1.5 ml-auto">
-          <button @click="resetMapZoom" title="Reset map pan & zoom" class="text-[11px] font-semibold text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg bg-slate-800/90 cursor-pointer transition-all flex items-center gap-1">
-            <span>⟲</span>
-            <span class="hidden sm:inline">Reset Zoom</span>
-          </button>
-          <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Open Map in Fullscreen'" class="text-[11px] font-semibold text-sky-300 hover:text-white border border-sky-500/40 hover:border-sky-400 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 cursor-pointer transition-all flex items-center gap-1">
-            <span>⛶</span>
-            <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
-          </button>
-          <button @click="savePNG" title="Export high-resolution map image" class="text-[11px] font-semibold text-amber-300 hover:text-amber-200 border border-amber-500/40 hover:border-amber-400 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer transition-all flex items-center gap-1">
-            <span>📸</span>
-            <span>Save Image</span>
-          </button>
-          <button @click="copyLink" title="Copy shareable link" class="text-[11px] font-semibold text-slate-300 hover:text-slate-100 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 cursor-pointer transition-all flex items-center gap-1">
-            <span>🔗</span>
-            <span>Share</span>
-          </button>
         </div>
       </div>
     </div>
