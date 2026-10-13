@@ -120,6 +120,36 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 		return nil, err
 	}
 
+	// Copy all app sub-assets (js/, styles/, assets/, etc.) while skipping Taskfiles and internal dev files
+	appSrcDir := filepath.Join(srcDir, name)
+	appDistDir := filepath.Join(distDir, name)
+	_ = filepath.Walk(appSrcDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || path == appSrcDir {
+			return nil
+		}
+		rel, err := filepath.Rel(appSrcDir, path)
+		if err != nil {
+			return nil
+		}
+		base := info.Name()
+		// Skip index.html (processed separately), Taskfiles, and task cache dirs
+		if rel == "index.html" || strings.HasPrefix(base, "Taskfile") || strings.HasPrefix(base, ".task") {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		target := filepath.Join(appDistDir, rel)
+		if info.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		data, err := os.ReadFile(path)
+		if err == nil {
+			_ = os.WriteFile(target, data, 0644)
+		}
+		return nil
+	})
+
 	// Extract metadata for OG & PWA tags
 	title := extractMeta("Title", content)
 	if title == "" {
