@@ -485,7 +485,11 @@ Disable-PWA: true
     // --- State Management ---
     const STATE = {
       brotli: null,
-      theme: localStorage.getItem('mdshare-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+      theme: (() => {
+        const saved = localStorage.getItem('gist-theme');
+        if (saved === 'dark' || saved === 'light') return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      })(),
       viewMode: localStorage.getItem('mdshare-viewmode') || 'split', // 'split' | 'editor' | 'preview'
       currentPassword: '',
       isEncrypted: false,
@@ -1572,7 +1576,7 @@ async function decryptPayload(ciphertext, salt, iv, password) {
     // --- Theme Management ---
     function applyTheme(newTheme) {
       STATE.theme = newTheme;
-      localStorage.setItem('mdshare-theme', newTheme);
+      localStorage.setItem('gist-theme', newTheme);
       if (newTheme === 'dark') {
         DOM.html.classList.add('dark');
       } else {

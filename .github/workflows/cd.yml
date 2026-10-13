@@ -48,6 +48,11 @@ jobs:
       - name: Run build
         run: ./gist-tool build
 
+      - name: Exclude internal dev files from deployment
+        run: |
+          find dist -type f -name "Taskfile*" -delete
+          find dist -type d -name ".task*" -exec rm -rf {} +
+
       # ── Deploy ──────────────────────────────────────────────────────────
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"log"
 	"net/http"
@@ -119,6 +120,36 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 	if err := os.MkdirAll(filepath.Dir(distIdx), 0755); err != nil {
 		return nil, err
 	}
+
+	// Copy all app sub-assets (js/, styles/, assets/, etc.) while skipping Taskfiles and internal dev files
+	appSrcDir := filepath.Join(srcDir, name)
+	appDistDir := filepath.Join(distDir, name)
+	_ = filepath.Walk(appSrcDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || path == appSrcDir {
+			return nil
+		}
+		rel, err := filepath.Rel(appSrcDir, path)
+		if err != nil {
+			return nil
+		}
+		base := info.Name()
+		// Skip index.html (processed separately), Taskfiles, and task cache dirs
+		if rel == "index.html" || strings.HasPrefix(base, "Taskfile") || strings.HasPrefix(base, ".task") {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		target := filepath.Join(appDistDir, rel)
+		if info.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		data, err := os.ReadFile(path)
+		if err == nil {
+			_ = os.WriteFile(target, data, 0644)
+		}
+		return nil
+	})
 
 	// Extract metadata for OG & PWA tags
 	title := extractMeta("Title", content)
@@ -333,6 +364,49 @@ func generateRobotsTxt() []byte {
 	return b.Bytes()
 }
 
+func generateRSSFeed(apps []AppMeta) []byte {
+	var b bytes.Buffer
+	b.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+	b.WriteString("<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n")
+	b.WriteString("  <channel>\n")
+	b.WriteString("    <title>Gist Apps</title>\n")
+	fmt.Fprintf(&b, "    <link>%s</link>\n", baseURL)
+	b.WriteString("    <description>Curated directory of interactive micro web applications and tools.</description>\n")
+	b.WriteString("    <language>en-us</language>\n")
+	fmt.Fprintf(&b, "    <atom:link href=\"%sfeed.xml\" rel=\"self\" type=\"application/rss+xml\" />\n", baseURL)
+	fmt.Fprintf(&b, "    <lastBuildDate>%s</lastBuildDate>\n", time.Now().Format(time.RFC1123Z))
+
+	for _, app := range apps {
+		b.WriteString("    <item>\n")
+		var titleEsc bytes.Buffer
+		_ = xml.EscapeText(&titleEsc, []byte(app.Title))
+		fmt.Fprintf(&b, "      <title>%s</title>\n", titleEsc.String())
+
+		appURL := baseURL + app.Path
+		fmt.Fprintf(&b, "      <link>%s</link>\n", appURL)
+		fmt.Fprintf(&b, "      <guid isPermaLink=\"true\">%s</guid>\n", appURL)
+
+		if app.Description != "" {
+			var descEsc bytes.Buffer
+			_ = xml.EscapeText(&descEsc, []byte(app.Description))
+			fmt.Fprintf(&b, "      <description>%s</description>\n", descEsc.String())
+		}
+		if app.Category != "" {
+			var catEsc bytes.Buffer
+			_ = xml.EscapeText(&catEsc, []byte(app.Category))
+			fmt.Fprintf(&b, "      <category>%s</category>\n", catEsc.String())
+		}
+		if !app.UpdatedAt.IsZero() {
+			fmt.Fprintf(&b, "      <pubDate>%s</pubDate>\n", app.UpdatedAt.Format(time.RFC1123Z))
+		}
+		b.WriteString("    </item>\n")
+	}
+
+	b.WriteString("  </channel>\n")
+	b.WriteString("</rss>\n")
+	return b.Bytes()
+}
+
 // ── Command Implementation ───────────────────────────────────────────────────
 
 func cmdBuild() {
@@ -396,6 +470,16 @@ func cmdBuild() {
 	// Build-time hydration of index.html
 	if indexData, err := os.ReadFile("index.html"); err == nil {
 		injectedIndex := bytes.Replace(indexData, []byte("/*__APPS_JSON__*/ []"), jsonData, 1)
+
+		// Inject shared footer into root index.html if available
+		if len(footer) > 0 {
+			// Adapt footer paths for root directory (e.g. "../" -> "./", "../feed.xml" -> "feed.xml")
+			rootFooter := bytes.ReplaceAll(footer, []byte("href=\"../\""), []byte("href=\"./\""))
+			rootFooter = bytes.ReplaceAll(rootFooter, []byte("src=\"../"), []byte("src=\"./"))
+			rootFooter = bytes.ReplaceAll(rootFooter, []byte("href=\"../feed.xml\""), []byte("href=\"feed.xml\""))
+			injectedIndex = injectBytePartials(injectedIndex, nil, rootFooter)
+		}
+
 		_ = os.WriteFile(filepath.Join(distDir, "index.html"), injectedIndex, 0644)
 		logSuccess("  Hydrated index.html at build-time")
 	} else {
@@ -406,6 +490,10 @@ func cmdBuild() {
 	sitemapData := generateSitemap(apps)
 	_ = os.WriteFile(filepath.Join(distDir, "sitemap.xml"), sitemapData, 0644)
 	logSuccess("  Generated: sitemap.xml (%d URLs)", len(apps)+1)
+
+	feedData := generateRSSFeed(apps)
+	_ = os.WriteFile(filepath.Join(distDir, "feed.xml"), feedData, 0644)
+	logSuccess("  Generated: feed.xml (%d items)", len(apps))
 
 	robotsData := generateRobotsTxt()
 	_ = os.WriteFile(filepath.Join(distDir, "robots.txt"), robotsData, 0644)

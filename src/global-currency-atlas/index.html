@@ -67,127 +67,131 @@ Updated: 2026-10-12
   };
 </script>
 
-<style>
-  :root {
-    --ink: #f8fafc;
-    --mut: #94a3b8;
-    --line: #233463;
-    --accent: #38bdf8;
-    --accent-glow: rgba(56, 189, 248, 0.25);
-  }
-  * { box-sizing: border-box; }
-  body {
-    background: radial-gradient(1300px 650px at 50% -5%, #131d3d, #060a15 75%) fixed;
-    color: var(--ink);
-    min-height: 100vh;
-    font-family: 'Twemoji Country Flags', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  }
-  .hl {
-    background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .hl-gold {
-    background: linear-gradient(90deg, #facc15, #f59e0b, #fbbf24);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .hl-silver {
-    background: linear-gradient(90deg, #f1f5f9, #cbd5e1, #94a3b8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .hl-btc {
-    background: linear-gradient(90deg, #f97316, #fb923c, #fbbf24);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .btn {
-    cursor: pointer;
-    font-weight: 600;
-    transition: all .15s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    background: #0f172a;
-    color: #f1f5f9;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 7px 12px;
-    font-size: 13px;
-  }
-  .btn:hover { border-color: var(--accent); background: #1e293b; }
-  .btn.primary { background: #0284c7; color: #fff; border-color: #0284c7; box-shadow: 0 0 14px rgba(2, 132, 199, 0.35); }
-  .btn.primary:hover { background: #0369a1; }
-  .btn.active-toggle { border-color: var(--accent); box-shadow: 0 0 14px var(--accent-glow); background: #0c1a3b; }
-  .btn.active-toggle-gold { border-color: #facc15 !important; box-shadow: 0 0 16px rgba(250, 204, 21, 0.4) !important; background: #26210d !important; }
+<!-- Styles -->
+<link rel="stylesheet" href="styles/main.css">
 
-  #stage.busy #map { opacity: .45; }
-  #map { width: 100%; height: auto; display: block; touch-action: none; cursor: grab; }
-  #map:active { cursor: grabbing; }
-
-  /* Fullscreen map presentation */
-  #stage:fullscreen, #stage:-webkit-full-screen {
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #030712;
+<!-- JSPM Import Map: Must be in <head> before any module scripts execute -->
+<script type="importmap">
+{
+  "imports": {
+    "country-flag-emoji-polyfill": "https://ga.jspm.io/npm:country-flag-emoji-polyfill@0.1.8/dist/index.mjs",
+    "d3": "https://ga.jspm.io/npm:d3@7.9.0/src/index.js",
+    "vue": "https://ga.jspm.io/npm:vue@3.5.44/dist/vue.esm-browser.js"
+  },
+  "scopes": {
+    "https://ga.jspm.io/npm:d3-array@3.2.4/": {
+      "internmap": "https://ga.jspm.io/npm:internmap@2.0.3/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-brush@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-drag": "https://ga.jspm.io/npm:d3-drag@3.0.0/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-transition": "https://ga.jspm.io/npm:d3-transition@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-chord@3.0.1/": {
+      "d3-path": "https://ga.jspm.io/npm:d3-path@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-contour@4.0.2/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-delaunay@6.0.4/": {
+      "delaunator": "https://ga.jspm.io/npm:delaunator@5.1.0/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-drag@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-fetch@3.0.1/": {
+      "d3-dsv": "https://ga.jspm.io/npm:d3-dsv@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-force@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-quadtree": "https://ga.jspm.io/npm:d3-quadtree@3.0.1/src/index.js",
+      "d3-timer": "https://ga.jspm.io/npm:d3-timer@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-geo@3.1.1/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-interpolate@3.0.1/": {
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-scale-chromatic@3.1.0/": {
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-scale@4.0.2/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js",
+      "d3-format": "https://ga.jspm.io/npm:d3-format@3.1.2/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-time": "https://ga.jspm.io/npm:d3-time@3.1.0/src/index.js",
+      "d3-time-format": "https://ga.jspm.io/npm:d3-time-format@4.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-shape@3.2.0/": {
+      "d3-path": "https://ga.jspm.io/npm:d3-path@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-time-format@4.1.0/": {
+      "d3-time": "https://ga.jspm.io/npm:d3-time@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-time@3.1.0/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-transition@3.0.1/": {
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js",
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-ease": "https://ga.jspm.io/npm:d3-ease@3.0.1/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-timer": "https://ga.jspm.io/npm:d3-timer@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-zoom@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-drag": "https://ga.jspm.io/npm:d3-drag@3.0.0/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-transition": "https://ga.jspm.io/npm:d3-transition@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3@7.9.0/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js",
+      "d3-axis": "https://ga.jspm.io/npm:d3-axis@3.0.0/src/index.js",
+      "d3-brush": "https://ga.jspm.io/npm:d3-brush@3.0.0/src/index.js",
+      "d3-chord": "https://ga.jspm.io/npm:d3-chord@3.0.1/src/index.js",
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js",
+      "d3-contour": "https://ga.jspm.io/npm:d3-contour@4.0.2/src/index.js",
+      "d3-delaunay": "https://ga.jspm.io/npm:d3-delaunay@6.0.4/src/index.js",
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-drag": "https://ga.jspm.io/npm:d3-drag@3.0.0/src/index.js",
+      "d3-dsv": "https://ga.jspm.io/npm:d3-dsv@3.0.1/src/index.js",
+      "d3-ease": "https://ga.jspm.io/npm:d3-ease@3.0.1/src/index.js",
+      "d3-fetch": "https://ga.jspm.io/npm:d3-fetch@3.0.1/src/index.js",
+      "d3-force": "https://ga.jspm.io/npm:d3-force@3.0.0/src/index.js",
+      "d3-format": "https://ga.jspm.io/npm:d3-format@3.1.2/src/index.js",
+      "d3-geo": "https://ga.jspm.io/npm:d3-geo@3.1.1/src/index.js",
+      "d3-hierarchy": "https://ga.jspm.io/npm:d3-hierarchy@3.1.2/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-path": "https://ga.jspm.io/npm:d3-path@3.1.0/src/index.js",
+      "d3-polygon": "https://ga.jspm.io/npm:d3-polygon@3.0.1/src/index.js",
+      "d3-quadtree": "https://ga.jspm.io/npm:d3-quadtree@3.0.1/src/index.js",
+      "d3-random": "https://ga.jspm.io/npm:d3-random@3.0.1/src/index.js",
+      "d3-scale": "https://ga.jspm.io/npm:d3-scale@4.0.2/src/index.js",
+      "d3-scale-chromatic": "https://ga.jspm.io/npm:d3-scale-chromatic@3.1.0/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-shape": "https://ga.jspm.io/npm:d3-shape@3.2.0/src/index.js",
+      "d3-time": "https://ga.jspm.io/npm:d3-time@3.1.0/src/index.js",
+      "d3-time-format": "https://ga.jspm.io/npm:d3-time-format@4.1.0/src/index.js",
+      "d3-timer": "https://ga.jspm.io/npm:d3-timer@3.0.1/src/index.js",
+      "d3-transition": "https://ga.jspm.io/npm:d3-transition@3.0.1/src/index.js",
+      "d3-zoom": "https://ga.jspm.io/npm:d3-zoom@3.0.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:delaunator@5.1.0/": {
+      "robust-predicates": "https://ga.jspm.io/npm:robust-predicates@3.0.3/index.js"
+    }
   }
-  #stage:fullscreen #map, #stage:-webkit-full-screen #map {
-    width: 100%;
-    height: 100%;
-    max-height: 100vh;
-    object-fit: contain;
-  }
+}
+</script>
 
-  #tip {
-    position: absolute;
-    pointer-events: none;
-    display: none;
-    z-index: 20;
-    min-width: 180px;
-    background: rgba(11, 18, 38, 0.95);
-    border: 1px solid #36487e;
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 13px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.65);
-    backdrop-filter: blur(8px);
-  }
-  #tip b { font-size: 14px; color: #fff; }
-  #tip .r { margin-top: 4px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
-  #tip .m { color: var(--mut); font-size: 12px; margin-top: 2px; }
-
-  .race-stage { position: relative; height: 440px; width: 100%; overflow: hidden; }
-  .race-row {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: transform .32s cubic-bezier(0.2, 0.8, 0.3, 1), opacity .2s;
-  }
-  .race-track:hover { border-color: rgba(56, 189, 248, 0.4); }
-
-  tbody tr { cursor: pointer; transition: background .12s; }
-  tbody tr:hover { background: rgba(56, 189, 248, 0.08); }
-  tbody tr.selected-row { background: rgba(56, 189, 248, 0.16); }
-
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-thumb { background: #273663; border-radius: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-</style>
+<!-- ES Module Polyfill fallback -->
+<script async src="https://ga.jspm.io/npm:es-module-shims@2.0.10/dist/es-module-shims.js" crossorigin="anonymous"></script>
 </head>
 <body class="flex flex-col items-center gap-2.5 px-2 sm:px-4 py-2 sm:py-3 text-slate-100">
 
@@ -204,7 +208,8 @@ Updated: 2026-10-12
       <div class="h-3 w-px bg-slate-700 hidden sm:block"></div>
       <h1 class="text-xs sm:text-sm font-extrabold tracking-tight text-white truncate">
         What's
-        <span v-if="mapMode === 'gold'" class="hl-gold">Gold (24K)</span>
+        <span v-if="mapMode === 'fuel'" class="hl-oil">1 Liter Fuel (Petrol)</span>
+        <span v-else-if="mapMode === 'gold'" class="hl-gold">Gold (24K)</span>
         <span v-else-if="mapMode === 'silver'" class="hl-silver">Silver</span>
         <span v-else class="hl">1 {{ base }}</span>
         worth?
@@ -221,6 +226,17 @@ Updated: 2026-10-12
           <option v-for="cur in currencyOptions" :key="cur.code" :value="cur.code" class="bg-slate-900 text-white">
             {{ cur.code }} · {{ cur.name }}
           </option>
+        </select>
+      </div>
+
+      <!-- Layer Mode Dropdown in Navbar -->
+      <div class="flex items-center gap-1 bg-slate-800/90 border border-slate-700/80 rounded-lg px-2 py-1 text-xs font-bold text-white shadow-sm">
+        <span class="text-slate-400 text-[11px]">Layer:</span>
+        <select v-model="mapMode" @change="setMapMode(mapMode)" aria-label="Map layer" class="bg-transparent text-white font-black cursor-pointer focus:outline-none">
+          <option value="fx" class="bg-slate-900 text-white">🌐 Exchange Rates</option>
+          <option value="fuel" class="bg-slate-900 text-white">⛽ Fuel / Petrol</option>
+          <option value="gold" class="bg-slate-900 text-white">🏅 Gold (24K)</option>
+          <option value="silver" class="bg-slate-900 text-white">🥈 Silver</option>
         </select>
       </div>
 
@@ -280,83 +296,109 @@ Updated: 2026-10-12
         <div id="msg" v-if="toastMsg" class="absolute left-1/2 top-3 -translate-x-1/2 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-2xl z-30" :style="{background: toastBg}">
           {{ toastMsg }}
         </div>
-        <!-- Quick Fullscreen Float Button on Map Corner -->
-        <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Open Map in Fullscreen'" class="absolute top-3 right-3 z-20 bg-slate-900/85 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-sky-400/60 p-1.5 rounded-xl shadow-lg backdrop-blur-md cursor-pointer transition-all flex items-center justify-center opacity-70 hover:opacity-100 group-hover/stage:opacity-100">
-          <svg v-if="!isFullscreen" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-          </svg>
-          <svg v-else class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Contextual Toolbar directly docked BELOW the map -->
-      <div class="bg-slate-900/80 backdrop-blur-md border border-slate-800/80 rounded-xl px-3 py-2 shadow-md flex flex-wrap items-center justify-between gap-2.5">
-        <!-- Layer Mode Switcher -->
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Layer:</span>
-          <button v-for="m in [
-                    { id: 'fx', label: '🌐 Exchange Rates' },
-                    { id: 'gold', label: '🏅 Gold (24K)' },
-                    { id: 'silver', label: '🥈 Silver' }
-                  ]"
-                  :key="m.id"
-                  @click="setMapMode(m.id)"
-                  class="text-[11px] font-bold px-2.5 py-1 rounded-md border transition-all cursor-pointer inline-flex items-center gap-1"
-                  :class="mapMode === m.id
-                    ? (m.id === 'gold' ? 'bg-[#26210d] text-amber-300 border-amber-400 shadow-sm'
-                       : (m.id === 'silver' ? 'bg-[#182030] text-slate-100 border-slate-300 shadow-sm'
-                       : 'bg-sky-950/80 text-sky-400 border-sky-400 shadow-sm'))
-                    : 'bg-slate-900/90 text-slate-400 border-slate-800 hover:text-white'">
-            {{ m.label }}
-          </button>
-        </div>
-
-        <!-- Secondary Units / Weight & Currency (strictly for physical precious metals: Gold & Silver) -->
-        <div v-if="mapMode !== 'fx'" class="flex items-center gap-1.5 flex-wrap">
-          <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-            <button v-for="w in [ {id:'g', label:'1g'}, {id:'10g', label:'10g'}, {id:'oz', label:'1 Oz'} ]"
-                    :key="w.id"
-                    @click="metalWeight = w.id"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalWeight === w.id ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'">
-              {{ w.label }}
+        <!-- Sleek Floating Vertical Icon Dock Inside Map Stage (Top-Right) -->
+        <div class="absolute top-3 right-3 z-20 flex flex-col items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-xl">
+          <!-- Reset Zoom -->
+          <div class="relative group/btn flex items-center">
+            <button @click="resetMapZoom" title="Reset Zoom" class="w-7 h-7 flex items-center justify-center text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer">
+              <span>⟲</span>
             </button>
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              Reset Zoom
+            </span>
           </div>
 
-          <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-            <button @click="metalDisplayCur = 'local'"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalDisplayCur === 'local' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
-              Local
+          <!-- Save PNG -->
+          <div class="relative group/btn flex items-center">
+            <button @click="savePNG" title="Save Image" class="w-7 h-7 flex items-center justify-center text-xs text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 rounded-lg transition-all cursor-pointer">
+              <span>📸</span>
             </button>
-            <button @click="metalDisplayCur = 'base'"
-                    class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                    :class="metalDisplayCur === 'base' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
-              In {{ base }}
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              Save Image
+            </span>
+          </div>
+
+          <!-- Share Link -->
+          <div class="relative group/btn flex items-center">
+            <button @click="copyLink" title="Share Link" class="w-7 h-7 flex items-center justify-center text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all cursor-pointer">
+              <span>🔗</span>
             </button>
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              Share Link
+            </span>
+          </div>
+
+          <div class="w-4 h-px bg-slate-700/70 my-0.5"></div>
+
+          <!-- Fullscreen Toggle -->
+          <div class="relative group/btn flex items-center">
+            <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'" class="w-7 h-7 flex items-center justify-center text-xs text-sky-300 hover:text-white hover:bg-sky-500/10 rounded-lg transition-all cursor-pointer">
+              <svg v-if="!isFullscreen" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+              <svg v-else class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <span class="absolute right-full mr-2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[10px] font-semibold text-slate-200 whitespace-nowrap shadow-xl opacity-0 pointer-events-none group-hover/btn:opacity-100 transition-opacity">
+              {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
+            </span>
           </div>
         </div>
 
-        <!-- Map & Export Actions Grouped Properly Below the Map -->
-        <div class="flex items-center gap-1.5 ml-auto">
-          <button @click="resetMapZoom" title="Reset map pan & zoom" class="text-[11px] font-semibold text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg bg-slate-800/90 cursor-pointer transition-all flex items-center gap-1">
-            <span>⟲</span>
-            <span class="hidden sm:inline">Reset Zoom</span>
+        <!-- Floating Bottom-Left Contextual Config Drawer Inside Map Stage -->
+        <div v-if="mapMode !== 'fx'" class="absolute bottom-3 left-3 z-20 flex flex-col gap-1 items-start">
+          <!-- Toggle reveal button for small screens -->
+          <button @click="showMapConfigs = !showMapConfigs"
+                  class="sm:hidden text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700/80 backdrop-blur-md shadow-lg flex items-center gap-1 cursor-pointer">
+            <span>⚙️</span>
+            <span>{{ showMapConfigs ? 'Hide Options' : 'Unit Options' }}</span>
           </button>
-          <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit Fullscreen' : 'Open Map in Fullscreen'" class="text-[11px] font-semibold text-sky-300 hover:text-white border border-sky-500/40 hover:border-sky-400 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 cursor-pointer transition-all flex items-center gap-1">
-            <span>⛶</span>
-            <span class="hidden sm:inline">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}</span>
-          </button>
-          <button @click="savePNG" title="Export high-resolution map image" class="text-[11px] font-semibold text-amber-300 hover:text-amber-200 border border-amber-500/40 hover:border-amber-400 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer transition-all flex items-center gap-1">
-            <span>📸</span>
-            <span>Save Image</span>
-          </button>
-          <button @click="copyLink" title="Copy shareable link" class="text-[11px] font-semibold text-slate-300 hover:text-slate-100 border border-slate-700 hover:border-slate-500 px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700/90 cursor-pointer transition-all flex items-center gap-1">
-            <span>🔗</span>
-            <span>Share</span>
-          </button>
+
+          <!-- Drawer Body: revealed if showMapConfigs is true (default true on sm+) -->
+          <div v-show="showMapConfigs" class="flex items-center gap-1.5 flex-wrap bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-xl">
+            <!-- For physical metals: Gold & Silver -->
+            <template v-if="mapMode === 'gold' || mapMode === 'silver'">
+              <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                <button v-for="w in [ {id:'g', label:'1g'}, {id:'10g', label:'10g'}, {id:'oz', label:'1 Oz'} ]"
+                        :key="w.id"
+                        @click="metalWeight = w.id"
+                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalWeight === w.id ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'">
+                  {{ w.label }}
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                <button @click="metalDisplayCur = 'local'"
+                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'local' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
+                  Local
+                </button>
+                <button @click="metalDisplayCur = 'base'"
+                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'base' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
+                  In {{ base }}
+                </button>
+              </div>
+            </template>
+
+            <!-- For Fuel Mode: Local Currency vs USD -->
+            <template v-else-if="mapMode === 'fuel'">
+              <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                <button @click="metalDisplayCur = 'local'"
+                        class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'local' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
+                  Local / Liter
+                </button>
+                <button @click="metalDisplayCur = 'base'"
+                        class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'base' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
+                  $ USD / Liter
+                </button>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -515,10 +557,14 @@ Updated: 2026-10-12
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button @click="visualizeFuelOnMap" class="text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-all cursor-pointer flex items-center gap-1.5">
+          <span>⛽</span>
+          <span>View Fuel Pump Heatmap</span>
+        </button>
         <button @click="visualizeGoldOnMap" class="text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-all cursor-pointer flex items-center gap-1.5">
-          <span>🗺️</span>
-          <span>View Gold Heatmap on Map</span>
+          <span>🏅</span>
+          <span>View Gold Heatmap</span>
         </button>
       </div>
     </div>
@@ -641,905 +687,7 @@ Updated: 2026-10-12
 <p class="text-xs text-slate-400 text-center mt-1">Tap any country or row to set base currency · Drag to pan · Scroll/pinch to zoom</p>
 <p class="text-[11px] text-slate-500 text-center pb-2">Rates: fawazahmed0/currency-api · Open Exchange Rates · Natural Earth Map</p>
 
-<!-- Windows Flag Emoji Polyfill -->
-<script type="module">
-  import {polyfillCountryFlagEmojis} from 'https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill/+esm';
-  polyfillCountryFlagEmojis();
-</script>
-
-<!-- Libraries: D3 & Vue 3 -->
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-
-<script>
-const RAW = `
-AFG:AF:AFN AGO:AO:AOA ALB:AL:ALL ARE:AE:AED ARG:AR:ARS ARM:AM:AMD AUS:AU:AUD AUT:AT:EUR AZE:AZ:AZN
-BDI:BI:BIF BEL:BE:EUR BEN:BJ:XOF BFA:BF:XOF BGD:BD:BDT BGR:BG:EUR BHS:BS:BSD BIH:BA:BAM BLR:BY:BYN
-BLZ:BZ:BZD BOL:BO:BOB BRA:BR:BRL BRN:BN:BND BTN:BT:BTN BWA:BW:BWP CAF:CF:XAF CAN:CA:CAD CHE:CH:CHF
-CHL:CL:CLP CHN:CN:CNY CIV:CI:XOF CMR:CM:XAF COD:CD:CDF COG:CG:XAF COL:CO:COP CRI:CR:CRC CUB:CU:CUP
-CYP:CY:EUR CZE:CZ:CZK DEU:DE:EUR DJI:DJ:DJF DNK:DK:DKK DOM:DO:DOP DZA:DZ:DZD ECU:EC:USD EGY:EG:EGP
-ERI:ER:ERN ESH:EH:MAD ESP:ES:EUR EST:EE:EUR ETH:ET:ETB FIN:FI:EUR FJI:FJ:FJD FLK:FK:FKP FRA:FR:EUR
-GAB:GA:XAF GBR:GB:GBP GEO:GE:GEL GHA:GH:GHS GIN:GN:GNF GMB:GM:GMD GNB:GW:XOF GNQ:GQ:XAF GRC:GR:EUR
-GRL:GL:DKK GTM:GT:GTQ GUF:GF:EUR GUY:GY:GYD HKG:HK:HKD HND:HN:HNL HRV:HR:EUR HTI:HT:HTG HUN:HU:HUF IDN:ID:IDR
-IND:IN:INR IRL:IE:EUR IRN:IR:IRR IRQ:IQ:IQD ISL:IS:ISK ISR:IL:ILS ITA:IT:EUR JAM:JM:JMD JOR:JO:JOD
-JPN:JP:JPY KAZ:KZ:KZT KEN:KE:KES KGZ:KG:KGS KHM:KH:KHR KOR:KR:KRW KWT:KW:KWD LAO:LA:LAK LBN:LB:LBP
-LBR:LR:LRD LBY:LY:LYD LKA:LK:LKR LSO:LS:LSL LTU:LT:EUR LUX:LU:EUR LVA:LV:EUR MAR:MA:MAD MDA:MD:MDL
-MDG:MG:MGA MEX:MX:MXN MKD:MK:MKD MLI:ML:XOF MLT:MT:EUR MMR:MM:MMK MNE:ME:EUR MNG:MN:MNT MOZ:MZ:MZN
-MRT:MR:MRU MUS:MU:MUR MDV:MV:MVR MWI:MW:MWK MYS:MY:MYR NAM:NA:NAD NCL:NC:XPF NER:NE:XOF NGA:NG:NGN
-NIC:NI:NIO NLD:NL:EUR NOR:NO:NOK NPL:NP:NPR NZL:NZ:NZD OMN:OM:OMR PAK:PK:PKR PAN:PA:PAB PER:PE:PEN
-PHL:PH:PHP PNG:PG:PGK POL:PL:PLN PRI:PR:USD PRK:KP:KPW PRT:PT:EUR PRY:PY:PYG PSE:PS:ILS QAT:QA:QAR
-ROU:RO:RON RUS:RU:RUB RWA:RW:RWF SAU:SA:SAR SDN:SD:SDG SEN:SN:XOF SGP:SG:SGD SLB:SB:SBD SLE:SL:SLE
-SLV:SV:USD SOM:SO:SOS SRB:RS:RSD SSD:SS:SSP SUR:SR:SRD SVK:SK:EUR SVN:SI:EUR SWE:SE:SEK SWZ:SZ:SZL
-SYR:SY:SYP TCD:TD:XAF TGO:TG:XOF THA:TH:THB TJK:TJ:TJS TKM:TM:TMT TLS:TL:USD TTO:TT:TTD TUN:TN:TND
-TUR:TR:TRY TWN:TW:TWD TZA:TZ:TZS UGA:UG:UGX UKR:UA:UAH URY:UY:UYU USA:US:USD UZB:UZ:UZS VEN:VE:VES
-VNM:VN:VND VUT:VU:VUV YEM:YE:YER ZAF:ZA:ZAR ZMB:ZM:ZMW ZWE:ZW:ZWG BHR:BH:BHD
-`;
-
-const GEO = 'https://cdn.jsdelivr.net/gh/johan/world.geo.json@master/countries.geo.json';
-const W = 1000, H = 500;
-const ALT = {SLE:'SLL', MRU:'MRO', ZWG:'ZWL', STN:'STD', VES:'VEF'};
-const STOPS = ['#22c55e', '#a3e635', '#facc15', '#fb923c', '#ef4444'];
-const heat = d3.interpolateRgbBasis(STOPS);
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-const regionNames = new Intl.DisplayNames(['en'], {type:'region'});
-const currNames = new Intl.DisplayNames(['en'], {type:'currency'});
-const cname = c => { try { return currNames.of(c) } catch { return c } };
-const flag = a2 => String.fromCodePoint(...[...a2].map(c => 127397 + c.charCodeAt(0)));
-
-const COUNTRIES = {};
-RAW.trim().split(/\s+/).forEach(s => {
-  const [a3, a2, cur] = s.split(':');
-  COUNTRIES[a3] = {a3, a2, cur, name: regionNames.of(a2), flag: flag(a2)};
-});
-
-const MIN = new Date('2024-03-02T00:00:00Z');
-const todayUTC = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); };
-const iso = d => d.toISOString().slice(0, 10);
-const maxBack = Math.floor((todayUTC() - MIN) / 864e5);
-const dateForPos = p => new Date(todayUTC().getTime() - (maxBack - p) * 864e5);
-const posFromDate = d => { const p = maxBack - Math.round((todayUTC() - d) / 864e5); return isNaN(p) ? maxBack : Math.max(0, Math.min(maxBack, p)); };
-const fmtDate = s => new Date(s + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric', timeZone:'UTC'});
-
-function fmt(n) {
-  if (n == null || isNaN(n)) return '---';
-  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-  if (n >= 1000) return Math.round(n).toLocaleString('en-US');
-  if (n >= 100) return n.toFixed(1);
-  if (n >= 1) return n.toFixed(2);
-  if (n >= 0.01) return n.toFixed(3);
-  return n.toPrecision(3);
-}
-
-const COMMODITIES = [
-  { id: 'xau', name: 'Gold Bullion (24K Pure)', symbol: 'XAU', icon: '🏅', category: 'metal', unit: 'troy oz', unitGrams: 31.1034768, desc: 'Pure 99.9% Investment Gold Standard' },
-  { id: 'xag', name: 'Silver Bullion', symbol: 'XAG', icon: '🥈', category: 'metal', unit: 'troy oz', unitGrams: 31.1034768, desc: 'Fine Silver Bullion (99.9%)' },
-  { id: 'xpt', name: 'Platinum Bullion', symbol: 'XPT', icon: '🪙', category: 'metal', unit: 'troy oz', unitGrams: 31.1034768, desc: 'Noble Catalyst & Industrial Precious Metal' },
-  { id: 'xpd', name: 'Palladium', symbol: 'XPD', icon: '⚙️', category: 'metal', unit: 'troy oz', unitGrams: 31.1034768, desc: 'Rare Automotive & Industrial Noble Metal' }
-];
-
-const cache = {};
-let feats = [], labelFeats = [], paths, labelSel, svg, root, zoomBehavior;
-
-const { createApp, ref, computed, watch, onMounted } = Vue;
-
-const app = createApp({
-  setup() {
-    const base = ref('USD');
-    const pos = ref(maxBack);
-    const date = ref('');
-    const rates = ref(null);
-    const k = ref(1);
-    const playing = ref(false);
-
-    const mapMode = ref('fx'); // 'fx', 'gold', 'silver'
-    const metalWeight = ref('g'); // 'g', '10g', 'oz'
-    const metalDisplayCur = ref('local'); // 'local', 'base'
-
-    const raceMode = ref('strong'); // 'strong', 'nominal'
-    const tableFilter = ref('all'); // 'all', 'commodities'
-    const tableSearch = ref('');
-    const sortCol = ref('rate');
-    const sortAsc = ref(true);
-
-    const showRatesPopover = ref(false);
-    const showTimePopover = ref(false);
-    const ratesTab = ref('all');
-    const goldUnit = ref('oz');
-
-    const calcAmt = ref(1);
-    const calcAsset = ref('xau_oz');
-
-    const toastMsg = ref('');
-    const toastBg = ref('#7f1d1d');
-    let toastTimer = null;
-
-    const showToast = (text, bg = '#7f1d1d') => {
-      toastMsg.value = text;
-      toastBg.value = bg;
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { toastMsg.value = ''; }, 3500);
-    };
-
-    const currencyOptions = computed(() => {
-      const set = new Map();
-      Object.values(COUNTRIES).forEach(c => {
-        if (!set.has(c.cur)) set.set(c.cur, { code: c.cur, name: cname(c.cur) });
-      });
-      return Array.from(set.values()).sort((a,b) => a.code.localeCompare(b.code));
-    });
-
-    const rateOf = (cur) => {
-      if (!rates.value) return null;
-      const r = rates.value;
-      const f = c => r[c.toLowerCase()] ?? r[(ALT[c] || '').toLowerCase()];
-      const t = f(cur), b = f(base.value);
-      return (t && b) ? t / b : null;
-    };
-
-    const getCountryAssetData = (curCode, assetId = 'xau') => {
-      if (!rates.value) return null;
-      const r = rates.value;
-      const f = c => r[c.toLowerCase()] ?? r[(ALT[c] || '').toLowerCase()];
-      const localPerUsd = f(curCode);
-      const assetPerUsd = f(assetId);
-      if (!localPerUsd || !assetPerUsd) return null;
-
-      const localPricePerUnit = localPerUsd / assetPerUsd;
-      const basePerUsd = f(base.value) || 1;
-      const basePricePerUnit = basePerUsd / assetPerUsd;
-      const isMetal = (assetId === 'xau' || assetId === 'xag' || assetId === 'xpt' || assetId === 'xpd');
-      const gramsPerUnit = isMetal ? 31.1034768 : 1;
-      const localPricePerGram = localPricePerUnit / gramsPerUnit;
-      const localPricePer10G = localPricePerGram * 10;
-      const basePricePerGram = basePricePerUnit / gramsPerUnit;
-      const basePricePer10G = basePricePerGram * 10;
-      const assetUnitsPerLocalUnit = assetPerUsd / localPerUsd;
-      const mgPerLocalUnit = assetUnitsPerLocalUnit * gramsPerUnit * 1000;
-      const satsPerLocalUnit = assetId === 'btc' ? Math.round(assetUnitsPerLocalUnit * 100000000) : 0;
-
-      return {
-        localPricePerUnit, localPricePerGram, localPricePer10G,
-        basePricePerUnit, basePricePerGram, basePricePer10G,
-        assetUnitsPerLocalUnit, mgPerLocalUnit, satsPerLocalUnit,
-        gramsPerUnit, isMetal
-      };
-    };
-
-    // Gold bullion calculations
-    const goldMetrics = computed(() => {
-      const gRate = rateOf('xau');
-      if (!gRate) return { pOz: '---', pGram: '---', p10g: '---', pKg: '---', mainPrice: '---', unitSuffix: '/ troy oz', powerStr: '---', hundredPower: '---' };
-      const pOz = 1 / gRate;
-      const pGram = pOz / 31.1034768;
-      const p10g = pGram * 10;
-      const pKg = pGram * 1000;
-
-      let main = pOz, suffix = '/ troy oz (31.10g)';
-      if (goldUnit.value === 'g') { main = pGram; suffix = '/ gram (24K)'; }
-      else if (goldUnit.value === '10g') { main = p10g; suffix = '/ 10 grams (Tola)'; }
-      else if (goldUnit.value === 'kg') { main = pKg; suffix = '/ kilogram (1,000g)'; }
-
-      const mgPerBase = gRate * 31103.4768;
-      const powerStr = mgPerBase >= 1000 ? `${(mgPerBase / 1000).toFixed(3)} g` : `${mgPerBase.toFixed(2)} mg`;
-      const hundredPower = (mgPerBase * 100) >= 1000 ? `${((mgPerBase * 100) / 1000).toFixed(2)} g` : `${(mgPerBase * 100).toFixed(1)} mg`;
-
-      return {
-        pOz: fmt(pOz), pGram: fmt(pGram), p10g: fmt(p10g), pKg: fmt(pKg),
-        mainPrice: fmt(main), unitSuffix: suffix, powerStr, hundredPower
-      };
-    });
-
-    const goldBadgeText = computed(() => {
-      const gRate = rateOf('xau');
-      if (!gRate) return '---';
-      const pOz = 1 / gRate;
-      const pGram = pOz / 31.1034768;
-      const p10g = pGram * 10;
-      if (goldUnit.value === 'g') return `${fmt(pGram)}/g`;
-      if (goldUnit.value === '10g') return `${fmt(p10g)}/10g`;
-      return `${fmt(pOz)}/oz`;
-    });
-
-    // Asset Cards for popover
-    const filteredAssetCards = computed(() => {
-      return COMMODITIES.filter(c => {
-        if (c.id === 'xau') return false;
-        if (ratesTab.value === 'metal') return c.category === 'metal';
-        if (ratesTab.value === 'crypto') return c.category === 'crypto';
-        return true;
-      }).map(c => {
-        const r = rateOf(c.id);
-        if (!r) return null;
-        const price = 1 / r;
-        let sub1 = '', sub2 = '';
-        if (c.category === 'metal') {
-          sub1 = `1g: ${fmt(price / c.unitGrams)}`;
-          sub2 = `1 ${base.value} = ${(r * c.unitGrams).toFixed(2)}g`;
-        } else if (c.id === 'btc') {
-          sub1 = `1 ${base.value} = ${Math.round(r * 100000000).toLocaleString()} sats`;
-          sub2 = `21M Cap`;
-        } else {
-          sub1 = `1 ${base.value} = ${fmt(r)} ${c.symbol}`;
-          sub2 = `Benchmark`;
-        }
-        return { ...c, priceFormatted: fmt(price), sub1, sub2 };
-      }).filter(Boolean);
-    });
-
-    // Quick Asset Converter
-    const quickCalc = computed(() => {
-      const amt = parseFloat(calcAmt.value) || 0;
-      const sel = calcAsset.value;
-      const goldOz = 1 / (rateOf('xau') || 1);
-      const silverOz = 1 / (rateOf('xag') || 1);
-      let unitCost = 0, label = '';
-
-      switch (sel) {
-        case 'xau_g': unitCost = goldOz / 31.1034768; label = `${amt} g Gold (24K)`; break;
-        case 'xau_10g': unitCost = (goldOz / 31.1034768) * 10; label = `${amt * 10} g Gold (Tola)`; break;
-        case 'xau_oz': unitCost = goldOz; label = `${amt} Troy Oz Gold`; break;
-        case 'xag_oz': unitCost = silverOz; label = `${amt} Troy Oz Silver`; break;
-        case 'xag_g': unitCost = silverOz / 31.1034768; label = `${amt} g Silver`; break;
-        case 'xpt': unitCost = 1 / (rateOf('xpt') || 1); label = `${amt} Oz Platinum`; break;
-        case 'xpd': unitCost = 1 / (rateOf('xpd') || 1); label = `${amt} Oz Palladium`; break;
-        case 'btc': unitCost = 1 / (rateOf('btc') || 1); label = `${amt} Bitcoin`; break;
-        case 'eth': unitCost = 1 / (rateOf('eth') || 1); label = `${amt} Ethereum`; break;
-        case 'sol': unitCost = 1 / (rateOf('sol') || 1); label = `${amt} Solana`; break;
-        default: unitCost = goldOz; label = `${amt} Gold`;
-      }
-      return { label, result: fmt(amt * unitCost) };
-    });
-
-    // Top 10 Race List
-    const sortedRace = computed(() => {
-      if (!rates.value) return [];
-      const isMetal = mapMode.value === 'gold' || mapMode.value === 'silver' || false;
-      const assetKey = mapMode.value === 'gold' ? 'xau' : (mapMode.value === 'silver' ? 'xag' : (false ? 'btc' : null));
-
-      const deduped = [];
-      const seen = new Set();
-      Object.values(COUNTRIES).forEach(c => {
-        if (!seen.has(c.cur)) { seen.add(c.cur); deduped.push(c); }
-      });
-
-      let list = [];
-      if (isMetal) {
-        list = deduped.map(c => {
-          const a = getCountryAssetData(c.cur, assetKey);
-          if (!a) return null;
-          return {
-            ...c,
-            asset: a,
-            rate: raceMode.value === 'strong' ? a.mgPerLocalUnit : a.localPricePerGram || a.localPricePerUnit
-          };
-        }).filter(c => c && c.rate != null);
-
-        list.sort((a, b) => b.rate - a.rate);
-      } else {
-        list = deduped.map(c => {
-          const r = rateOf(c.cur);
-          return { ...c, rate: r };
-        }).filter(c => c.rate != null && c.cur !== base.value);
-
-        if (raceMode.value === 'strong') list.sort((a, b) => a.rate - b.rate);
-        else list.sort((a, b) => b.rate - a.rate);
-      }
-
-      const top10 = list.slice(0, 10);
-      return top10.map((item, idx) => {
-        let barPct = raceMode.value === 'strong' ? (95 - idx * 6.5) : (idx === 0 ? 98 : Math.max(15, 98 - idx * 7.5));
-        let barColor = raceMode.value === 'strong'
-          ? (mapMode.value === 'gold' ? 'linear-gradient(90deg, #10b981, #facc15)' : 'linear-gradient(90deg, #10b981, #38bdf8)')
-          : 'linear-gradient(90deg, #f97316, #ef4444)';
-
-        let valDisplay = fmt(item.rate);
-        if (isMetal) {
-          if (raceMode.value === 'strong') {
-            valDisplay = false ? `${item.asset.satsPerLocalUnit.toLocaleString()} sats` : `${fmt(item.asset.mgPerLocalUnit)} mg`;
-          } else {
-            valDisplay = `${fmt(item.asset.localPricePerGram || item.asset.localPricePerUnit)} ${item.cur}`;
-          }
-        }
-        return { ...item, barPct, barColor, valDisplay };
-      });
-    });
-
-    // World Currency Ledger Table
-    const filteredTable = computed(() => {
-      if (!rates.value) return [];
-      let items = Object.values(COUNTRIES).map(c => {
-        const r = rateOf(c.cur);
-        return {
-          ...c,
-          rate: r,
-          inverse: r ? 1 / r : null,
-          isCommodity: false,
-          subText: `${c.cur} · ${cname(c.cur)}`
-        };
-      }).filter(c => c.rate != null);
-
-      const commodityItems = COMMODITIES.map(c => {
-        const r = rateOf(c.id);
-        return {
-          a3: c.id.toUpperCase(),
-          a2: c.symbol,
-          cur: c.symbol,
-          name: c.name,
-          flag: c.icon,
-          rate: r,
-          inverse: r ? 1 / r : null,
-          isCommodity: true,
-          subText: `${c.symbol} · ${c.desc}`
-        };
-      }).filter(c => c.rate != null);
-
-      if (tableFilter.value === 'commodities') {
-        items = commodityItems;
-      } else {
-        const q = tableSearch.value.toLowerCase().trim();
-        if (q) {
-          const matchedComm = commodityItems.filter(c =>
-            c.name.toLowerCase().includes(q) || c.cur.toLowerCase().includes(q) || 'gold metal silver crypto bitcoin'.includes(q)
-          );
-          items = [...items, ...matchedComm];
-        }
-      }
-
-      const q = tableSearch.value.toLowerCase().trim();
-      if (q) {
-        items = items.filter(c => c.name.toLowerCase().includes(q) || c.cur.toLowerCase().includes(q) || (c.a2 && c.a2.toLowerCase().includes(q)));
-      }
-
-      const asc = sortAsc.value ? 1 : -1;
-      items.sort((a, b) => {
-        if (sortCol.value === 'country') return asc * a.name.localeCompare(b.name);
-        if (sortCol.value === 'rate') return asc * ((a.rate || 0) - (b.rate || 0));
-        if (sortCol.value === 'inverse') return asc * ((a.inverse || 0) - (b.inverse || 0));
-        return 0;
-      });
-
-      return items.map(c => {
-        let rateText = '', invText = '', tierColor = '', tierLabel = '';
-        if (mapMode.value === 'gold' && !c.isCommodity) {
-          const a = getCountryAssetData(c.cur, 'xau');
-          if (a) {
-            rateText = `${fmt(a.localPricePerGram)} ${c.cur} / g`;
-            invText = `${fmt(a.basePricePerGram)} ${base.value} / g`;
-            tierColor = heat(Math.min(1, Math.max(0, Math.log10(a.localPricePerGram) / 4)));
-            tierLabel = `${a.mgPerLocalUnit.toFixed(2)} mg/unit`;
-          }
-        } else if (mapMode.value === 'silver' && !c.isCommodity) {
-          const a = getCountryAssetData(c.cur, 'xag');
-          if (a) {
-            rateText = `${fmt(a.localPricePerGram)} ${c.cur} / g`;
-            invText = `${fmt(a.basePricePerGram)} ${base.value} / g`;
-            tierColor = heat(Math.min(1, Math.max(0, Math.log10(a.localPricePerGram) / 4)));
-            tierLabel = `${a.mgPerLocalUnit.toFixed(2)} mg/unit`;
-          }
-        } else if (false && !c.isCommodity) {
-          const a = getCountryAssetData(c.cur, 'btc');
-          if (a) {
-            rateText = `${fmt(a.localPricePerUnit)} ${c.cur}`;
-            invText = `${fmt(a.basePricePerUnit)} ${base.value}`;
-            tierColor = heat(Math.min(1, Math.max(0, Math.log10(a.localPricePerUnit) / 7)));
-            tierLabel = `${a.satsPerLocalUnit.toLocaleString()} sats`;
-          }
-        } else {
-          const isBase = c.cur === base.value;
-          rateText = isBase ? '1.00 (Base)' : `${fmt(c.rate)} ${c.cur}`;
-          invText = isBase ? `1.00 ${base.value}` : `${fmt(c.inverse)} ${base.value}`;
-          tierColor = isBase ? '#38bdf8' : (c.isCommodity ? '#facc15' : (c.rate ? heat(Math.min(1, Math.max(0, Math.log10(c.rate) / 4))) : '#888'));
-          tierLabel = c.isCommodity ? 'Commodity / Asset' : (isBase ? 'Standard' : (c.rate < 1 ? 'High Value' : 'Nominal Tier'));
-        }
-        return { ...c, rateText, invText, tierColor, tierLabel };
-      });
-    });
-
-    const legendLabels = ref({ min: 'High unit value', max: 'High nominal' });
-
-    const formattedDate = computed(() => date.value ? fmtDate(date.value) : 'Loading…');
-    const dateline = computed(() => {
-      if (!date.value) return 'Loading rates…';
-      if (mapMode.value === 'gold') return `${formattedDate.value} · 24K Pure Gold rates across 160+ countries in local currency & ${base.value}`;
-      if (mapMode.value === 'silver') return `${formattedDate.value} · Fine Silver rates across 160+ countries in local currency & ${base.value}`;
-      if (false) return `${formattedDate.value} · Bitcoin rates and satoshi purchasing power across countries`;
-      return `${formattedDate.value} · live foreign exchange rates per 1 ${base.value}`;
-    });
-
-    // Actions & Methods
-    let fetchToken = 0;
-    const loadRates = async () => {
-      const my = ++fetchToken;
-      const stage = document.getElementById('stage');
-      if (stage) stage.classList.add('busy');
-
-      try {
-        const key = pos.value === maxBack ? 'latest' : iso(dateForPos(pos.value));
-        let d = cache[key];
-        if (!d) {
-          const urls = [
-            `https://${key}.currency-api.pages.dev/v1/currencies/usd.json`,
-            `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${key}/v1/currencies/usd.json`
-          ];
-          for (const u of urls) {
-            try {
-              const res = await fetch(u);
-              if (!res.ok) continue;
-              const j = await res.json();
-              if (j && j.usd) { j.usd.usd = 1; d = cache[key] = { date: j.date, rates: j.usd }; break; }
-            } catch (e) {}
-          }
-          if (!d && key === 'latest') {
-            const res = await fetch('https://open.er-api.com/v6/latest/USD');
-            const j = await res.json();
-            const rMap = {};
-            for (const k in j.rates) rMap[k.toLowerCase()] = j.rates[k];
-            d = cache[key] = { date: iso(new Date(j.time_last_update_unix * 1000)), rates: rMap };
-          }
-        }
-        if (my !== fetchToken) return;
-        if (!d) throw new Error('Data unavailable');
-
-        rates.value = d.rates;
-        date.value = d.date;
-        if (!rates.value[base.value.toLowerCase()]) base.value = 'USD';
-        history.replaceState(null, '', '#' + base.value + (pos.value === maxBack ? '' : '@' + date.value));
-      } catch (e) {
-        if (my === fetchToken) showToast("Couldn't load rates for that date");
-      } finally {
-        if (my === fetchToken && stage) stage.classList.remove('busy');
-      }
-    };
-
-    const paintMap = () => {
-      if (!rates.value || !paths) return;
-      const isMetal = mapMode.value === 'gold' || mapMode.value === 'silver' || false;
-      const assetKey = mapMode.value === 'gold' ? 'xau' : (mapMode.value === 'silver' ? 'xag' : (false ? 'btc' : null));
-      const vals = [];
-
-      feats.forEach(f => {
-        const c = COUNTRIES[f.id];
-        if (!c) { f._r = null; f._asset = null; return; }
-        f._r = rateOf(c.cur);
-        if (isMetal) {
-          f._asset = getCountryAssetData(c.cur, assetKey);
-          if (f._asset) {
-            const v = f._asset.localPricePerGram || f._asset.localPricePerUnit;
-            if (v > 0) vals.push(Math.log10(v));
-          }
-        } else {
-          if (f._r != null && c.cur !== base.value) vals.push(Math.log10(f._r));
-        }
-      });
-
-      const s = vals.sort(d3.ascending);
-      const mn = s.length ? s[0] : 0, mx = s.length ? s[s.length - 1] : 1;
-      const rank = v => d3.bisectLeft(s, v) / Math.max(1, s.length - 1);
-
-      paths.interrupt().transition().duration(280).attr('fill', f => {
-        const c = COUNTRIES[f.id];
-        if (!c) return '#1b2440';
-        if (isMetal) {
-          if (!f._asset) return '#1b2440';
-          const v = Math.log10(f._asset.localPricePerGram || f._asset.localPricePerUnit);
-          const t = .5 * rank(v) + .5 * ((v - mn) / ((mx - mn) || 1));
-          return heat(Math.max(0, Math.min(1, t)));
-        } else {
-          if (f._r == null) return '#1b2440';
-          if (c.cur === base.value) return '#38bdf8';
-          const v = Math.log10(f._r);
-          const t = .5 * rank(v) + .5 * ((v - mn) / ((mx - mn) || 1));
-          return heat(Math.max(0, Math.min(1, t)));
-        }
-      });
-
-      labelSel.select('.v').text(f => {
-        const c = COUNTRIES[f.id];
-        if (!c) return '';
-        if (isMetal) {
-          if (!f._asset) return '';
-          if (metalDisplayCur.value === 'local') {
-            let val = f._asset.localPricePerGram;
-            if (metalWeight.value === '10g') val = f._asset.localPricePer10G;
-            else if (metalWeight.value === 'oz' || false) val = f._asset.localPricePerUnit;
-            return fmt(val);
-          } else {
-            if (false) return `${fmt(f._asset.satsPerLocalUnit)} sats`;
-            return f._asset.mgPerLocalUnit >= 1000
-              ? `${(f._asset.mgPerLocalUnit / 1000).toFixed(2)}g`
-              : `${fmt(f._asset.mgPerLocalUnit)}mg`;
-          }
-        } else {
-          return f._r == null ? '' : (c.cur === base.value ? '1.00' : fmt(f._r));
-        }
-      });
-
-      const lMin = 10 ** mn, lMax = 10 ** mx;
-      if (mapMode.value === 'gold') {
-        legendLabels.value = { min: `Strongest Gold Value · ${fmt(lMin)}`, max: `High Nominal Units/g · ${fmt(lMax)}` };
-      } else if (mapMode.value === 'silver') {
-        legendLabels.value = { min: `Strongest Silver Value · ${fmt(lMin)}`, max: `High Nominal Units · ${fmt(lMax)}` };
-      } else if (false) {
-        legendLabels.value = { min: `Strongest Bitcoin Value · ${fmt(lMin)}`, max: `High Nominal Units · ${fmt(lMax)}` };
-      } else {
-        legendLabels.value = { min: `High unit value · ${fmt(lMin)}`, max: `High nominal · ${fmt(lMax)}` };
-      }
-    };
-
-    const layoutLabels = (scale) => {
-      if (!labelSel) return;
-      const fs = 10 / Math.sqrt(scale), vis = new Set(), boxes = [];
-      for (const f of labelFeats) {
-        if (f._r == null || f._a * scale * scale < 240) continue;
-        const [cx, cy] = f._c, w = fs * 3.9, h = fs * 2.6;
-        const b = [cx - w / 2, cy - h * .45, cx + w / 2, cy + h * .55];
-        if (boxes.some(o => b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1])) continue;
-        boxes.push(b); vis.add(f.id);
-      }
-      labelSel.attr('display', f => vis.has(f.id) ? null : 'none').attr('font-size', fs).attr('stroke-width', fs * .22);
-    };
-
-    const showTip = (e, f) => {
-      const c = COUNTRIES[f.id], tip = document.getElementById('tip');
-      if (!tip) return;
-      const name = c ? `${c.flag} ${c.name}` : f.properties.name;
-      let html = `<b>${name}</b>`;
-
-      if (c && mapMode.value === 'gold') {
-        const a = f._asset || getCountryAssetData(c.cur, 'xau');
-        if (a) {
-          html += `
-            <div class="r" style="color:#facc15;">🏅 24K Pure Gold Rates</div>
-            <div style="margin-top:4px;font-size:12px;line-height:1.4;">
-              <div>• 1 Gram: <b>${fmt(a.localPricePerGram)} ${c.cur}</b> <span style="color:var(--mut);">(${fmt(a.basePricePerGram)} ${base.value})</span></div>
-              <div>• 10 Grams (Tola): <b>${fmt(a.localPricePer10G)} ${c.cur}</b></div>
-              <div>• 1 Troy Oz (31.1g): <b>${fmt(a.localPricePerUnit)} ${c.cur}</b></div>
-            </div>
-            <div class="m" style="margin-top:6px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
-              Purchasing power: 1 ${c.cur} buys <b>${a.mgPerLocalUnit >= 1000 ? (a.mgPerLocalUnit/1000).toFixed(2)+'g' : a.mgPerLocalUnit.toFixed(2)+'mg'}</b> gold.
-            </div>
-          `;
-        }
-      } else if (c && mapMode.value === 'silver') {
-        const a = f._asset || getCountryAssetData(c.cur, 'xag');
-        if (a) {
-          html += `
-            <div class="r" style="color:#cbd5e1;">🥈 Silver Bullion Rates</div>
-            <div style="margin-top:4px;font-size:12px;line-height:1.4;">
-              <div>• 1 Gram: <b>${fmt(a.localPricePerGram)} ${c.cur}</b> <span style="color:var(--mut);">(${fmt(a.basePricePerGram)} ${base.value})</span></div>
-              <div>• 1 Troy Oz: <b>${fmt(a.localPricePerUnit)} ${c.cur}</b></div>
-            </div>
-          `;
-        }
-      } else if (c && false) {
-        const a = f._asset || getCountryAssetData(c.cur, 'btc');
-        if (a) {
-          html += `
-            <div class="r" style="color:#fb923c;">₿ Bitcoin Rates</div>
-            <div style="margin-top:4px;font-size:12px;line-height:1.4;">
-              <div>• 1 BTC: <b>${fmt(a.localPricePerUnit)} ${c.cur}</b> <span style="color:var(--mut);">(${fmt(a.basePricePerUnit)} ${base.value})</span></div>
-              <div>• Purchasing power: 1 ${c.cur} = <b>${a.satsPerLocalUnit.toLocaleString()} sats</b></div>
-            </div>
-          `;
-        }
-      } else if (c && f._r != null) {
-        html += c.cur === base.value
-          ? `<div class="r">Base Currency (1.00)</div>`
-          : `<div class="r">1 ${base.value} = ${fmt(f._r)} ${c.cur}</div><div class="m">1 ${c.cur} = ${fmt(1 / f._r)} ${base.value}</div>`;
-        html += `<div class="m">${cname(c.cur)}</div>`;
-      } else {
-        html += `<div class="m">No rate data available</div>`;
-      }
-
-      tip.innerHTML = html;
-      tip.style.display = 'block';
-      const r = document.getElementById('stage').getBoundingClientRect();
-      tip.style.left = Math.min(e.clientX - r.left + 14, r.width - tip.offsetWidth - 6) + 'px';
-      tip.style.top = Math.min(e.clientY - r.top + 14, r.height - tip.offsetHeight - 6) + 'px';
-    };
-
-    const buildMap = (geo) => {
-      // Filter out Antarctica (ATA) and overlapping/unrecognized duplicate overlays like Somaliland (-99)
-      feats = geo.features.filter(f => f.id !== 'ATA' && f.id !== '-99');
-      const proj = d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], {type:'FeatureCollection', features:feats});
-      const path = d3.geoPath(proj);
-
-      feats.forEach(f => {
-        let g = f.geometry;
-        if (g.type === 'MultiPolygon') {
-          let best = null, ba = -1;
-          g.coordinates.forEach(c => {
-            const p = {type:'Polygon', coordinates:c};
-            const a = d3.geoArea(p);
-            if (a > ba) { ba = a; best = p; }
-          });
-          g = best;
-        }
-        f._c = path.centroid(g);
-        f._a = path.area(g);
-      });
-
-      svg = d3.select('#map').attr('font-family', "'Twemoji Country Flags',system-ui,sans-serif");
-      root = svg.append('g');
-
-      const landLayer = root.append('g').attr('class', 'land-layer');
-      paths = landLayer.selectAll('path').data(feats).join('path')
-        .attr('d', path).attr('fill', '#1b2440')
-        .style('cursor', 'pointer')
-        .on('mousemove', showTip)
-        .on('mouseleave', () => { const tip = document.getElementById('tip'); if (tip) tip.style.display = 'none'; })
-        .on('click', (e, f) => {
-          const c = COUNTRIES[f.id];
-          if (c && f._r != null) setBase(c.cur);
-        });
-
-      // Unified border overlay layer on top of all fills to eliminate country fill overlaps over neighbor borders
-      root.append('g').attr('class', 'borders-layer').attr('pointer-events', 'none')
-        .selectAll('path').data(feats).join('path')
-        .attr('d', path).attr('fill', 'none')
-        .attr('stroke', '#0a0f1e').attr('stroke-width', .55)
-        .attr('stroke-linejoin', 'round').attr('vector-effect', 'non-scaling-stroke');
-
-      labelFeats = feats.filter(f => COUNTRIES[f.id]).sort((a, b) => b._a - a._a);
-      labelSel = root.append('g').attr('pointer-events', 'none').selectAll('text').data(labelFeats).join('text')
-        .attr('transform', f => `translate(${f._c[0]},${f._c[1]})`)
-        .attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-weight', 700)
-        .attr('stroke', 'rgba(8,12,24,.8)').attr('stroke-linejoin', 'round')
-        .style('paint-order', 'stroke');
-      labelSel.append('tspan').attr('x', 0).attr('font-size', '1.25em').text(f => COUNTRIES[f.id].flag);
-      labelSel.append('tspan').attr('class', 'v').attr('x', 0).attr('dy', '1.15em');
-
-      let queued = false;
-      zoomBehavior = d3.zoom().scaleExtent([1, 14])
-        .extent([[0, 0], [W, H]]).translateExtent([[0, 0], [W, H]])
-        .on('zoom', e => {
-          root.attr('transform', e.transform);
-          k.value = e.transform.k;
-          if (!queued) {
-            queued = true;
-            requestAnimationFrame(() => { queued = false; layoutLabels(k.value); });
-          }
-        });
-      svg.call(zoomBehavior).on('dblclick.zoom', null);
-    };
-
-    const resetMapZoom = () => {
-      if (svg && zoomBehavior) svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity);
-    };
-
-    const setBase = (cur) => {
-      if (!cur) return;
-      base.value = cur.toUpperCase();
-    };
-
-    const setMapMode = (mode) => {
-      mapMode.value = mode;
-    };
-
-    const sortTable = (col) => {
-      if (sortCol.value === col) sortAsc.value = !sortAsc.value;
-      else { sortCol.value = col; sortAsc.value = true; }
-    };
-
-    const onRowClick = (c) => {
-      if (c.isCommodity) {
-        showRatesPopover.value = true;
-        selectCalcAsset(c.a3.toLowerCase());
-      } else {
-        setBase(c.cur);
-      }
-    };
-
-    const selectCalcAsset = (id) => {
-      if (id === 'xau') calcAsset.value = 'xau_oz';
-      else if (id === 'xag') calcAsset.value = 'xag_oz';
-      else calcAsset.value = id;
-    };
-
-    const visualizeGoldOnMap = () => {
-      showRatesPopover.value = false;
-      mapMode.value = 'gold';
-      const st = document.getElementById('stage');
-      if (st) st.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    };
-
-    const scrollToMetals = () => {
-      const el = document.getElementById('metals-benchmarks');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    const toggleTimePopover = () => {
-      showTimePopover.value = !showTimePopover.value;
-      if (showTimePopover.value) showRatesPopover.value = false;
-    };
-
-    // Timelapse playback
-    const togglePlay = async () => {
-      if (playing.value) { playing.value = false; return; }
-      playing.value = true;
-      let p = pos.value >= maxBack - 1 ? 0 : pos.value;
-      while (playing.value) {
-        pos.value = p;
-        await loadRates();
-        if (p >= maxBack) break;
-        await sleep(650);
-        p = Math.min(maxBack, p + 25);
-      }
-      playing.value = false;
-    };
-
-    const onSliderInput = (e) => {
-      pos.value = +e.target.value;
-      date.value = iso(dateForPos(pos.value));
-    };
-
-    const onSliderChange = () => {
-      playing.value = false;
-      loadRates();
-    };
-
-    const onDateChange = (e) => {
-      if (!e.target.value) return;
-      playing.value = false;
-      pos.value = posFromDate(new Date(e.target.value + 'T00:00:00Z'));
-      loadRates();
-    };
-
-    const goToToday = () => {
-      playing.value = false;
-      pos.value = maxBack;
-      loadRates();
-    };
-
-    const goTo1YAgo = () => {
-      playing.value = false;
-      pos.value = Math.max(0, maxBack - 365);
-      loadRates();
-    };
-
-    const onBaseChange = () => {
-      history.replaceState(null, '', '#' + base.value + (pos.value === maxBack ? '' : '@' + date.value));
-    };
-
-    const savePNG = async () => {
-      const CW = 1600, CH = 1000, c = document.createElement('canvas');
-      c.width = CW; c.height = CH;
-      const x = c.getContext('2d');
-      const bg = x.createLinearGradient(0, 0, 0, CH);
-      bg.addColorStop(0, '#16224a'); bg.addColorStop(1, '#080c18');
-      x.fillStyle = bg; x.fillRect(0, 0, CW, CH);
-
-      const clone = svg.node().cloneNode(true);
-      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      clone.setAttribute('width', 1600); clone.setAttribute('height', 800);
-      const img = new Image();
-      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
-      await img.decode();
-      x.drawImage(img, 0, 110, 1600, 800);
-
-      x.fillStyle = '#fff'; x.font = '800 50px system-ui,sans-serif'; x.textAlign = 'left';
-      x.fillText(`What's 1 ${base.value} worth around the world?`, 48, 76);
-      x.fillStyle = '#8b95b1'; x.font = '500 24px system-ui,sans-serif'; x.textAlign = 'right';
-      x.fillText(formattedDate.value, CW - 48, 72);
-
-      const lg = x.createLinearGradient(300, 0, CW - 300, 0);
-      STOPS.forEach((col, i) => lg.addColorStop(i / (STOPS.length - 1), col));
-      x.fillStyle = lg; x.beginPath(); x.roundRect(300, 944, CW - 600, 14, 7); x.fill();
-      x.fillStyle = '#8b95b1'; x.font = '500 22px system-ui,sans-serif';
-      x.textAlign = 'right'; x.fillText(legendLabels.value.min, 280, 958);
-      x.textAlign = 'left'; x.fillText(legendLabels.value.max, CW - 280, 958);
-
-      c.toBlob(b => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b);
-        a.download = `exchange-heatmap-${base.value}-${date.value}.png`;
-        a.click();
-      });
-    };
-
-    const copyLink = () => {
-      const url = location.href;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url)
-          .then(() => showToast('Share link copied to clipboard!', '#14532d'))
-          .catch(() => copyFallback(url));
-      } else copyFallback(url);
-    };
-
-    const copyFallback = (text) => {
-      const ta = document.createElement('textarea');
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); showToast('Share link copied to clipboard!', '#14532d'); }
-      catch (e) { showToast(text, '#1e293b'); }
-      document.body.removeChild(ta);
-    };
-
-    // Watchers for automatic map rendering
-    watch([rates, base, mapMode, metalWeight, metalDisplayCur], () => {
-      paintMap();
-      layoutLabels(k.value);
-    });
-
-    onMounted(async () => {
-      const m = location.hash.match(/^#([A-Za-z]{3})(?:@(\d{4}-\d{2}-\d{2}))?$/);
-      if (m) {
-        base.value = m[1].toUpperCase();
-        if (m[2]) pos.value = posFromDate(new Date(m[2] + 'T00:00:00Z'));
-      }
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.popover-menu-container')) {
-          showRatesPopover.value = false;
-          showTimePopover.value = false;
-        }
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          showRatesPopover.value = false;
-          showTimePopover.value = false;
-        }
-      });
-
-      document.addEventListener('fullscreenchange', () => {
-        isFullscreen.value = !!document.fullscreenElement;
-      });
-      document.addEventListener('webkitfullscreenchange', () => {
-        isFullscreen.value = !!document.webkitFullscreenElement;
-      });
-
-      try {
-        const geoData = await (await fetch(GEO)).json();
-        buildMap(geoData);
-      } catch (e) {
-        showToast("Couldn't load map boundaries");
-        return;
-      }
-      await loadRates();
-      paintMap();
-      layoutLabels(k.value);
-    });
-
-    const isFullscreen = ref(false);
-    const toggleFullscreen = async () => {
-      const stage = document.getElementById('stage');
-      if (!stage) return;
-      try {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          if (stage.requestFullscreen) {
-            await stage.requestFullscreen();
-          } else if (stage.webkitRequestFullscreen) {
-            await stage.webkitRequestFullscreen();
-          }
-        } else {
-          if (document.exitFullscreen) {
-            await document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            await document.webkitExitFullscreen();
-          }
-        }
-      } catch (err) {
-        showToast('Fullscreen mode not available', '#b91c1c');
-      }
-    };
-
-    const rightPanelTab = ref('ledger'); // 'ledger' or 'race'
-
-    return {
-      base, pos, date, formattedDate, dateline, maxBack, minDateStr: iso(MIN), maxDateStr: iso(todayUTC()),
-      selectedDate: computed({ get: () => date.value, set: val => date.value = val }),
-      sliderPos: computed({ get: () => pos.value, set: val => pos.value = val }),
-      playing, mapMode, metalWeight, metalDisplayCur, raceMode, tableFilter, tableSearch, sortCol, sortAsc,
-      showRatesPopover, showTimePopover, ratesTab, goldUnit, calcAmt, calcAsset, toastMsg, toastBg,
-      currencyOptions, goldMetrics, goldBadgeText, filteredAssetCards, quickCalc, sortedRace, filteredTable,
-      legendLabels, rightPanelTab, resetMapZoom, setBase, setMapMode, sortTable, onRowClick, selectCalcAsset,
-      visualizeGoldOnMap, scrollToMetals, toggleTimePopover, togglePlay, onSliderInput, onSliderChange,
-      onDateChange, goToToday, goTo1YAgo, onBaseChange, savePNG, copyLink, isFullscreen, toggleFullscreen
-    };
-  }
-});
-
-app.mount('#app');
-</script>
+<!-- Main Vue Application Module -->
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,116 @@
+{
+  "imports": {
+    "country-flag-emoji-polyfill": "https://ga.jspm.io/npm:country-flag-emoji-polyfill@0.1.8/dist/index.mjs",
+    "d3": "https://ga.jspm.io/npm:d3@7.9.0/src/index.js",
+    "vue": "https://ga.jspm.io/npm:vue@3.5.44/dist/vue.esm-browser.js"
+  },
+  "scopes": {
+    "https://ga.jspm.io/npm:d3-array@3.2.4/": {
+      "internmap": "https://ga.jspm.io/npm:internmap@2.0.3/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-brush@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-drag": "https://ga.jspm.io/npm:d3-drag@3.0.0/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-transition": "https://ga.jspm.io/npm:d3-transition@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-chord@3.0.1/": {
+      "d3-path": "https://ga.jspm.io/npm:d3-path@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-contour@4.0.2/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-delaunay@6.0.4/": {
+      "delaunator": "https://ga.jspm.io/npm:delaunator@5.1.0/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-drag@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-fetch@3.0.1/": {
+      "d3-dsv": "https://ga.jspm.io/npm:d3-dsv@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-force@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-quadtree": "https://ga.jspm.io/npm:d3-quadtree@3.0.1/src/index.js",
+      "d3-timer": "https://ga.jspm.io/npm:d3-timer@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-geo@3.1.1/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-interpolate@3.0.1/": {
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-scale-chromatic@3.1.0/": {
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-scale@4.0.2/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js",
+      "d3-format": "https://ga.jspm.io/npm:d3-format@3.1.2/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-time": "https://ga.jspm.io/npm:d3-time@3.1.0/src/index.js",
+      "d3-time-format": "https://ga.jspm.io/npm:d3-time-format@4.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-shape@3.2.0/": {
+      "d3-path": "https://ga.jspm.io/npm:d3-path@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-time-format@4.1.0/": {
+      "d3-time": "https://ga.jspm.io/npm:d3-time@3.1.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-time@3.1.0/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-transition@3.0.1/": {
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js",
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-ease": "https://ga.jspm.io/npm:d3-ease@3.0.1/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-timer": "https://ga.jspm.io/npm:d3-timer@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3-zoom@3.0.0/": {
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-drag": "https://ga.jspm.io/npm:d3-drag@3.0.0/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-transition": "https://ga.jspm.io/npm:d3-transition@3.0.1/src/index.js"
+    },
+    "https://ga.jspm.io/npm:d3@7.9.0/": {
+      "d3-array": "https://ga.jspm.io/npm:d3-array@3.2.4/src/index.js",
+      "d3-axis": "https://ga.jspm.io/npm:d3-axis@3.0.0/src/index.js",
+      "d3-brush": "https://ga.jspm.io/npm:d3-brush@3.0.0/src/index.js",
+      "d3-chord": "https://ga.jspm.io/npm:d3-chord@3.0.1/src/index.js",
+      "d3-color": "https://ga.jspm.io/npm:d3-color@3.1.0/src/index.js",
+      "d3-contour": "https://ga.jspm.io/npm:d3-contour@4.0.2/src/index.js",
+      "d3-delaunay": "https://ga.jspm.io/npm:d3-delaunay@6.0.4/src/index.js",
+      "d3-dispatch": "https://ga.jspm.io/npm:d3-dispatch@3.0.1/src/index.js",
+      "d3-drag": "https://ga.jspm.io/npm:d3-drag@3.0.0/src/index.js",
+      "d3-dsv": "https://ga.jspm.io/npm:d3-dsv@3.0.1/src/index.js",
+      "d3-ease": "https://ga.jspm.io/npm:d3-ease@3.0.1/src/index.js",
+      "d3-fetch": "https://ga.jspm.io/npm:d3-fetch@3.0.1/src/index.js",
+      "d3-force": "https://ga.jspm.io/npm:d3-force@3.0.0/src/index.js",
+      "d3-format": "https://ga.jspm.io/npm:d3-format@3.1.2/src/index.js",
+      "d3-geo": "https://ga.jspm.io/npm:d3-geo@3.1.1/src/index.js",
+      "d3-hierarchy": "https://ga.jspm.io/npm:d3-hierarchy@3.1.2/src/index.js",
+      "d3-interpolate": "https://ga.jspm.io/npm:d3-interpolate@3.0.1/src/index.js",
+      "d3-path": "https://ga.jspm.io/npm:d3-path@3.1.0/src/index.js",
+      "d3-polygon": "https://ga.jspm.io/npm:d3-polygon@3.0.1/src/index.js",
+      "d3-quadtree": "https://ga.jspm.io/npm:d3-quadtree@3.0.1/src/index.js",
+      "d3-random": "https://ga.jspm.io/npm:d3-random@3.0.1/src/index.js",
+      "d3-scale": "https://ga.jspm.io/npm:d3-scale@4.0.2/src/index.js",
+      "d3-scale-chromatic": "https://ga.jspm.io/npm:d3-scale-chromatic@3.1.0/src/index.js",
+      "d3-selection": "https://ga.jspm.io/npm:d3-selection@3.0.0/src/index.js",
+      "d3-shape": "https://ga.jspm.io/npm:d3-shape@3.2.0/src/index.js",
+      "d3-time": "https://ga.jspm.io/npm:d3-time@3.1.0/src/index.js",
+      "d3-time-format": "https://ga.jspm.io/npm:d3-time-format@4.1.0/src/index.js",
+      "d3-timer": "https://ga.jspm.io/npm:d3-timer@3.0.1/src/index.js",
+      "d3-transition": "https://ga.jspm.io/npm:d3-transition@3.0.1/src/index.js",
+      "d3-zoom": "https://ga.jspm.io/npm:d3-zoom@3.0.0/src/index.js"
+    },
+    "https://ga.jspm.io/npm:delaunator@5.1.0/": {
+      "robust-predicates": "https://ga.jspm.io/npm:robust-predicates@3.0.3/index.js"
+    }
+  }
+}

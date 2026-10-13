@@ -1,0 +1,27 @@
+version: '3'
+
+vars:
+  DEPS: vue d3 country-flag-emoji-polyfill
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  map:
+    desc: Regenerate JSPM import maps (importmap.json and importmap.js)
+    preconditions:
+      - sh: which jspm
+        msg: "JSPM CLI is not installed or not in PATH. Please install it with 'brew install jspm' or 'npm install -g jspm'."
+    cmds:
+      - jspm link {{.DEPS}} -o importmap.json
+      - jspm link {{.DEPS}} -o importmap.js
+    generates:
+      - importmap.json
+      - importmap.js
+
+  start:
+    desc: Start local development static server on port 8080
+    cmds:
+      - python3 -m http.server 8080
