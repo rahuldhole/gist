@@ -1,0 +1,220 @@
+:root {
+  --ink: #f8fafc;
+  --mut: #94a3b8;
+  --line: #233463;
+  --accent: #38bdf8;
+  --accent-glow: rgba(56, 189, 248, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(1300px 650px at 50% -5%, #131d3d, #060a15 75%) fixed;
+  color: var(--ink);
+  min-height: 100vh;
+  font-family: 'Twemoji Country Flags', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.hl {
+  background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hl-gold {
+  background: linear-gradient(90deg, #facc15, #f59e0b, #fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hl-silver {
+  background: linear-gradient(90deg, #f1f5f9, #cbd5e1, #94a3b8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hl-oil {
+  background: linear-gradient(90deg, #fbbf24, #d97706, #78350f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hl-btc {
+  background: linear-gradient(90deg, #f97316, #fb923c, #fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn {
+  cursor: pointer;
+  font-weight: 600;
+  transition: all .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  background: #1e293b;
+}
+
+.btn.primary {
+  background: #0284c7;
+  color: #fff;
+  border-color: #0284c7;
+  box-shadow: 0 0 14px rgba(2, 132, 199, 0.35);
+}
+
+.btn.primary:hover {
+  background: #0369a1;
+}
+
+.btn.active-toggle {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px var(--accent-glow);
+  background: #0c1a3b;
+}
+
+.btn.active-toggle-gold {
+  border-color: #facc15 !important;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.4) !important;
+  background: #26210d !important;
+}
+
+.btn.active-toggle-oil {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.4) !important;
+  background: #281a05 !important;
+}
+
+#stage.busy #map {
+  opacity: .45;
+}
+
+#map {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+
+#map:active {
+  cursor: grabbing;
+}
+
+/* Fullscreen map presentation */
+#stage:fullscreen, #stage:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #030712;
+}
+
+#stage:fullscreen #map, #stage:-webkit-full-screen #map {
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  object-fit: contain;
+}
+
+#tip {
+  position: absolute;
+  pointer-events: none;
+  display: none;
+  z-index: 20;
+  min-width: 180px;
+  background: rgba(11, 18, 38, 0.95);
+  border: 1px solid #36487e;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.65);
+  backdrop-filter: blur(8px);
+}
+
+#tip b {
+  font-size: 14px;
+  color: #fff;
+}
+
+#tip .r {
+  margin-top: 4px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+#tip .m {
+  color: var(--mut);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.race-stage {
+  position: relative;
+  height: 440px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.race-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform .32s cubic-bezier(0.2, 0.8, 0.3, 1), opacity .2s;
+}
+
+.race-track:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+tbody tr {
+  cursor: pointer;
+  transition: background .12s;
+}
+
+tbody tr:hover {
+  background: rgba(56, 189, 248, 0.08);
+}
+
+tbody tr.selected-row {
+  background: rgba(56, 189, 248, 0.16);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #273663;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
