@@ -929,12 +929,12 @@ Disable-Footer: true
     });
 
     // --- Theme (Light / Dark / System) Management ---
-    let currentTheme = localStorage.getItem('md_spreadsheet_theme') || 'system';
+    let currentTheme = localStorage.getItem('gist-theme') || 'system';
     const themeIconActive = document.getElementById('theme-icon-active');
 
     function applyTheme(theme) {
       currentTheme = theme;
-      localStorage.setItem('md_spreadsheet_theme', theme);
+      localStorage.setItem('gist-theme', theme);
       
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
