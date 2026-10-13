@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"log"
 	"net/http"
@@ -363,6 +364,49 @@ func generateRobotsTxt() []byte {
 	return b.Bytes()
 }
 
+func generateRSSFeed(apps []AppMeta) []byte {
+	var b bytes.Buffer
+	b.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+	b.WriteString("<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n")
+	b.WriteString("  <channel>\n")
+	b.WriteString("    <title>Gist Apps</title>\n")
+	fmt.Fprintf(&b, "    <link>%s</link>\n", baseURL)
+	b.WriteString("    <description>Curated directory of interactive micro web applications and tools.</description>\n")
+	b.WriteString("    <language>en-us</language>\n")
+	fmt.Fprintf(&b, "    <atom:link href=\"%sfeed.xml\" rel=\"self\" type=\"application/rss+xml\" />\n", baseURL)
+	fmt.Fprintf(&b, "    <lastBuildDate>%s</lastBuildDate>\n", time.Now().Format(time.RFC1123Z))
+
+	for _, app := range apps {
+		b.WriteString("    <item>\n")
+		var titleEsc bytes.Buffer
+		_ = xml.EscapeText(&titleEsc, []byte(app.Title))
+		fmt.Fprintf(&b, "      <title>%s</title>\n", titleEsc.String())
+
+		appURL := baseURL + app.Path
+		fmt.Fprintf(&b, "      <link>%s</link>\n", appURL)
+		fmt.Fprintf(&b, "      <guid isPermaLink=\"true\">%s</guid>\n", appURL)
+
+		if app.Description != "" {
+			var descEsc bytes.Buffer
+			_ = xml.EscapeText(&descEsc, []byte(app.Description))
+			fmt.Fprintf(&b, "      <description>%s</description>\n", descEsc.String())
+		}
+		if app.Category != "" {
+			var catEsc bytes.Buffer
+			_ = xml.EscapeText(&catEsc, []byte(app.Category))
+			fmt.Fprintf(&b, "      <category>%s</category>\n", catEsc.String())
+		}
+		if !app.UpdatedAt.IsZero() {
+			fmt.Fprintf(&b, "      <pubDate>%s</pubDate>\n", app.UpdatedAt.Format(time.RFC1123Z))
+		}
+		b.WriteString("    </item>\n")
+	}
+
+	b.WriteString("  </channel>\n")
+	b.WriteString("</rss>\n")
+	return b.Bytes()
+}
+
 // ── Command Implementation ───────────────────────────────────────────────────
 
 func cmdBuild() {
@@ -436,6 +480,10 @@ func cmdBuild() {
 	sitemapData := generateSitemap(apps)
 	_ = os.WriteFile(filepath.Join(distDir, "sitemap.xml"), sitemapData, 0644)
 	logSuccess("  Generated: sitemap.xml (%d URLs)", len(apps)+1)
+
+	feedData := generateRSSFeed(apps)
+	_ = os.WriteFile(filepath.Join(distDir, "feed.xml"), feedData, 0644)
+	logSuccess("  Generated: feed.xml (%d items)", len(apps))
 
 	robotsData := generateRobotsTxt()
 	_ = os.WriteFile(filepath.Join(distDir, "robots.txt"), robotsData, 0644)
