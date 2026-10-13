@@ -370,31 +370,36 @@ Updated: 2026-10-12
               </div>
 
               <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
-                <button @click="metalDisplayCur = 'local'"
-                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
-                        :class="metalDisplayCur === 'local' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
-                  Local
-                </button>
                 <button @click="metalDisplayCur = 'base'"
                         class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
                         :class="metalDisplayCur === 'base' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
                   In {{ base }}
                 </button>
+                <button @click="metalDisplayCur = 'local'"
+                        class="px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'local' ? 'bg-slate-800 text-amber-300' : 'text-slate-400 hover:text-white'">
+                  Local
+                </button>
               </div>
             </template>
 
-            <!-- For Fuel Mode: Local Currency vs USD -->
+            <!-- For Fuel Mode: Base Currency vs Local Currency vs USD -->
             <template v-else-if="mapMode === 'fuel'">
               <div class="flex items-center gap-1 bg-slate-950/90 p-0.5 rounded-lg border border-slate-800 text-[10px]">
+                <button @click="metalDisplayCur = 'base'"
+                        class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'base' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
+                  In {{ base }} / L
+                </button>
+                <button @click="metalDisplayCur = 'usd'"
+                        class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
+                        :class="metalDisplayCur === 'usd' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
+                  $ USD / Liter
+                </button>
                 <button @click="metalDisplayCur = 'local'"
                         class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
                         :class="metalDisplayCur === 'local' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
                   Local / Liter
-                </button>
-                <button @click="metalDisplayCur = 'base'"
-                        class="px-2 py-0.5 rounded font-bold transition-all cursor-pointer"
-                        :class="metalDisplayCur === 'base' ? 'bg-amber-500 text-slate-950 font-extrabold shadow' : 'text-slate-400 hover:text-white'">
-                  $ USD / Liter
                 </button>
               </div>
             </template>

@@ -225,8 +225,10 @@ export function useMap(base, rates, mapMode, metalWeight, metalDisplayCur, rateO
         if (!f._fuel) return '';
         if (metalDisplayCur.value === 'local') {
           return fmt(f._fuel.localPricePerLiter);
-        } else {
+        } else if (metalDisplayCur.value === 'usd') {
           return `$${f._fuel.priceUsd.toFixed(2)}`;
+        } else {
+          return `${fmt(f._fuel.basePricePerLiter)}`;
         }
       } else if (isMetal) {
         if (!f._asset) return '';

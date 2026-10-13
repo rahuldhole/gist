@@ -26,9 +26,9 @@ export default {
     } = useRates(showToast);
 
     // Modes & Display States
-    const mapMode = ref('fx'); // 'fx', 'gold', 'silver'
+    const mapMode = ref('fx'); // 'fx', 'gold', 'silver', 'fuel'
     const metalWeight = ref('g'); // 'g', '10g', 'oz'
-    const metalDisplayCur = ref('local'); // 'local', 'base'
+    const metalDisplayCur = ref('base'); // 'base', 'local', 'usd'
 
     const raceMode = ref('strong'); // 'strong', 'nominal'
     const tableFilter = ref('all'); // 'all', 'commodities'
