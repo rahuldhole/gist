@@ -8,12 +8,10 @@
 
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
-    <!-- Primary Meta Tags -->
     <meta name="title" content="Gist Apps | App Directory" />
     <meta name="description" content="A curated directory of interactive web applications and tools built with modern web technologies." />
     <link rel="alternate" type="application/rss+xml" title="Gist Apps RSS Feed" href="feed.xml" />
 
-    <!-- Application Logic -->
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('appDirectory', () => ({
@@ -22,10 +20,17 @@
                 category: '',
                 loading: true,
                 error: null,
+                viewMode: localStorage.getItem('gist-view-mode') || 'grid',
                 theme: localStorage.getItem('gist-theme') || 'system',
 
                 async init() {
                     this.applyTheme();
+                    window.matchMedia('(prefers-color-scheme: dark)')
+                        .addEventListener('change', () => this.applyTheme());
+                    this.$watch('viewMode', (mode) => localStorage.setItem('gist-view-mode', mode));
+
+                    this.loading = true;
+                    this.error = null;
                     try {
                         let appData = /*__APPS_JSON__*/ [];
                         if (appData.length === 0) {
@@ -33,20 +38,15 @@
                             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                             appData = await response.json();
                         }
-                        this.apps = appData;
-                        
-                        // New grid spans for a dynamic masonry-like bento
-                        const spans = [
-                            'md:col-span-2 md:row-span-2',
-                            'md:col-span-1 md:row-span-1',
-                            'md:col-span-1 md:row-span-2',
-                            'md:col-span-2 md:row-span-1'
-                        ];
-                        
-                        this.apps = this.apps.map((app, idx) => ({
+
+                        const bentoSizes = ['2x2', '2x1', '1x1', '1x2', '1x1', '2x1'];
+
+                        this.apps = appData.map((app, idx) => ({
                             ...app,
+                            description: (app.description || '').trim(),
                             category: app.category && app.category.trim() !== '' ? app.category.trim() : 'Uncategorized',
-                            _span: spans[idx % spans.length]
+                            _bento: bentoSizes[idx % bentoSizes.length],
+                            _key: app.path || String(idx)
                         }));
                     } catch (e) {
                         this.error = 'Unable to load application directory. Run ./gist build first.';
@@ -55,26 +55,30 @@
                     }
                 },
 
+                setViewMode(mode) {
+                    this.viewMode = mode;
+                },
+
                 toggleTheme() {
                     if (this.theme === 'system') this.theme = 'dark';
                     else if (this.theme === 'dark') this.theme = 'light';
                     else this.theme = 'system';
-                    
+
                     localStorage.setItem('gist-theme', this.theme);
                     this.applyTheme();
                 },
 
                 applyTheme() {
-                    const isDark = this.theme === 'dark' || 
+                    const isDark = this.theme === 'dark' ||
                         (this.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                    
-                    if (isDark) {
-                        document.body.classList.remove('light-mode');
-                        document.body.classList.add('dark-mode');
-                    } else {
-                        document.body.classList.remove('dark-mode');
-                        document.body.classList.add('light-mode');
-                    }
+
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.body.classList.toggle('dark-mode', isDark);
+                    document.body.classList.toggle('light-mode', !isDark);
+                },
+
+                install(app) {
+                    window.location.href = app.path + '#install';
                 },
 
                 get uniqueCategories() {
@@ -107,11 +111,11 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         [x-cloak] { display: none !important; }
-        
+
         :root {
             --bg-base: #0f172a;
             --text-main: #f8fafc;
@@ -125,6 +129,15 @@
             --orb-2: rgba(6, 182, 212, 0.2);
             --hover-border: rgba(139, 92, 246, 0.5);
             --select-bg: #1e293b;
+
+            /* Bento tile theme */
+            --tile-bg: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(15, 23, 42, 0.95));
+            --tile-text: #ffffff;
+            --tile-muted: rgba(255, 255, 255, 0.7);
+            --tile-icon: rgba(255, 255, 255, 0.4);
+            --tile-overlay: 2, 6, 23;
+            --chip-bg: rgba(0, 0, 0, 0.5);
+            --chip-border: rgba(255, 255, 255, 0.2);
         }
 
         .light-mode {
@@ -140,8 +153,16 @@
             --orb-2: rgba(6, 182, 212, 0.1);
             --hover-border: rgba(139, 92, 246, 0.7);
             --select-bg: #ffffff;
+
+            --tile-bg: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(241, 245, 249, 0.95));
+            --tile-text: #0f172a;
+            --tile-muted: #475569;
+            --tile-icon: rgba(15, 23, 42, 0.3);
+            --tile-overlay: 248, 250, 252;
+            --chip-bg: rgba(255, 255, 255, 0.8);
+            --chip-border: rgba(0, 0, 0, 0.1);
         }
-        
+
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-base);
@@ -150,30 +171,17 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* Abstract ambient background elements */
         .ambient-orb {
             position: fixed;
             border-radius: 50%;
             filter: blur(80px);
             z-index: -1;
+            pointer-events: none;
             animation: float 20s infinite ease-in-out alternate;
             transition: background 0.3s ease;
         }
-        .orb-1 {
-            width: 40vw;
-            height: 40vw;
-            background: var(--orb-1);
-            top: -10%;
-            left: -10%;
-        }
-        .orb-2 {
-            width: 30vw;
-            height: 30vw;
-            background: var(--orb-2);
-            bottom: -10%;
-            right: -5%;
-            animation-delay: -5s;
-        }
+        .orb-1 { width: 40vw; height: 40vw; background: var(--orb-1); top: -10%; left: -10%; }
+        .orb-2 { width: 30vw; height: 30vw; background: var(--orb-2); bottom: -10%; right: -5%; animation-delay: -5s; }
 
         @keyframes float {
             0% { transform: translate(0, 0) scale(1); }
@@ -185,9 +193,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .animate-fade-in-up {
-            animation: fadeInUp 0.5s ease-out forwards;
-        }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
 
         .glass-panel {
             background: var(--bg-surface);
@@ -197,33 +203,82 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
         }
 
-        .premium-card {
+        /* Bento grid */
+        #bento-app-grid {
+            display: grid;
+            gap: 1.25rem;
+            grid-auto-flow: dense;
+            grid-auto-rows: 230px;
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 640px) {
+            #bento-app-grid { grid-template-columns: repeat(2, 1fr); }
+            #bento-app-grid [data-bento="2x2"] { grid-column: span 2; grid-row: span 2; }
+            #bento-app-grid [data-bento="2x1"] { grid-column: span 2; }
+            #bento-app-grid [data-bento="1x2"] { grid-row: span 2; }
+        }
+        @media (min-width: 1024px) {
+            #bento-app-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (min-width: 1280px) {
+            #bento-app-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        .bento-tile {
             position: relative;
-            background: var(--card-bg-gradient);
+            display: block;
             border: 1px solid var(--border-light);
             border-radius: 1.5rem;
             overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--tile-text);
+            background: var(--tile-bg);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s ease, border-color 0.35s ease;
         }
-
-        .premium-card::before {
+        .bento-tile:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: var(--hover-border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2), 0 0 20px rgba(139, 92, 246, 0.25);
+            z-index: 10;
+        }
+        .bento-tile::before {
             content: '';
             position: absolute;
             inset: 0;
             background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
             transform: translateX(-100%);
             transition: transform 0.6s;
+            pointer-events: none;
+            z-index: 5;
         }
+        .bento-tile:hover::before { transform: translateX(100%); }
 
-        .premium-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            border-color: var(--hover-border);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 0 20px rgba(139, 92, 246, 0.2);
-            z-index: 10;
+        .bento-overlay {
+            background: linear-gradient(to top,
+                rgba(var(--tile-overlay), 0.94) 0%,
+                rgba(var(--tile-overlay), 0.6) 45%,
+                rgba(var(--tile-overlay), 0) 80%);
         }
-        
-        .premium-card:hover::before {
-            transform: translateX(100%);
+        .bento-chip {
+            background: var(--chip-bg);
+            border: 1px solid var(--chip-border);
+            color: var(--tile-text);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .bento-desc { color: var(--tile-muted); }
+        .bento-cta { color: var(--tile-muted); }
+        .bento-icon { color: var(--tile-icon); }
+
+        .list-card {
+            background: var(--card-bg-gradient);
+            border: 1px solid var(--border-light);
+            border-radius: 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .list-card:hover {
+            transform: translateX(6px);
+            border-color: var(--hover-border);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12), 0 0 16px rgba(139, 92, 246, 0.18);
         }
 
         .search-glass {
@@ -237,44 +292,41 @@
             box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
         }
 
+        .toggle-btn { color: var(--text-muted); }
+        .toggle-btn:hover { color: var(--text-main); }
+        .toggle-btn.active { background: var(--color-primary); color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+
         .text-gradient {
             background: linear-gradient(to right, #c4b5fd, #f9a8d4, #67e8f9);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
         .light-mode .text-gradient {
             background: linear-gradient(to right, #8b5cf6, #ec4899, #06b6d4);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
-        /* Custom scrollbar */
+
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: var(--bg-base); }
         ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--hover-border); }
-        
-        select option {
-            background: var(--select-bg);
-            color: var(--text-main);
-        }
+
+        select option { background: var(--select-bg); color: var(--text-main); }
     </style>
 </head>
 
 <body x-data="appDirectory" class="min-h-screen flex flex-col relative selection:bg-primary selection:text-white">
 
-    <!-- Ambient Background -->
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
 
     <!-- Header -->
     <header class="sticky top-0 z-50 glass-panel py-4 px-6 lg:px-12 mt-4 mx-4 lg:mx-8 rounded-2xl mb-12">
         <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-            
-            <!-- Logo -->
+
             <div class="flex items-center gap-4 group cursor-pointer" @click="window.location.reload()">
                 <img src="favicon.svg" alt="Gist Apps Logo" class="w-12 h-12 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.3)] transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-500">
                 <h1 class="text-3xl font-extrabold tracking-tight">
@@ -282,25 +334,37 @@
                 </h1>
             </div>
 
-            <!-- Controls -->
-            <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                
-                <!-- Theme Toggle -->
-                <button @click="toggleTheme" 
-                        class="p-3 rounded-xl border search-glass hover:border-primary transition-all flex items-center justify-center gap-2 group w-full sm:w-auto">
-                    <i :class="theme === 'system' ? 'fa-solid fa-circle-half-stroke' : (theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun')" 
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+
+                <div class="search-glass rounded-xl p-1 flex items-center gap-1">
+                    <button @click="setViewMode('grid')" type="button" title="Bento Grid View" aria-label="Grid view"
+                            class="toggle-btn px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5"
+                            :class="{ 'active': viewMode === 'grid' }">
+                        <i class="fa-solid fa-table-cells-large text-xs"></i>
+                        <span class="text-xs uppercase tracking-wider">Grid</span>
+                    </button>
+                    <button @click="setViewMode('list')" type="button" title="List View" aria-label="List view"
+                            class="toggle-btn px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5"
+                            :class="{ 'active': viewMode === 'list' }">
+                        <i class="fa-solid fa-list-ul text-xs"></i>
+                        <span class="text-xs uppercase tracking-wider">List</span>
+                    </button>
+                </div>
+
+                <button @click="toggleTheme" type="button"
+                        class="p-3 rounded-xl search-glass hover:border-primary transition-all flex items-center justify-center gap-2 group w-full sm:w-auto"
+                        title="Toggle theme">
+                    <i :class="theme === 'system' ? 'fa-solid fa-circle-half-stroke' : (theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun')"
                        class="text-primary text-lg group-hover:rotate-12 transition-transform"></i>
                     <span class="text-[10px] uppercase font-bold tracking-widest sm:hidden" x-text="theme"></span>
                 </button>
 
-                <!-- Search Input -->
                 <div class="search-glass flex items-center w-full sm:w-80 rounded-xl px-4 py-2.5">
                     <i class="fa-solid fa-magnifying-glass mr-3" style="color: var(--text-muted)"></i>
                     <input type="text" x-model="search" placeholder="Discover applications..."
                         class="bg-transparent border-none outline-none w-full font-medium text-sm" style="color: var(--text-main)">
                 </div>
 
-                <!-- Category Filter -->
                 <div class="search-glass relative rounded-xl flex items-center w-full sm:w-48">
                     <i class="fa-solid fa-filter absolute left-4" style="color: var(--text-muted)"></i>
                     <select x-model="category"
@@ -312,16 +376,14 @@
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-4 pointer-events-none text-xs" style="color: var(--text-muted)"></i>
                 </div>
-                
+
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-grow w-full max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 pb-20">
 
-        <!-- Header Intro -->
-        <div class="mb-16 text-center max-w-2xl mx-auto" x-init="gsap.from($el, { opacity: 0, y: 30, duration: 1, ease: 'power3.out' })">
+        <div class="mb-14 text-center max-w-2xl mx-auto" x-init="gsap.from($el, { opacity: 0, y: 30, duration: 1, ease: 'power3.out' })">
             <h2 class="text-5xl font-extrabold mb-6">Explore the <span class="text-gradient">Universe</span> of Apps</h2>
             <p class="text-lg leading-relaxed" style="color: var(--text-muted)">A curated collection of modern, interactive web experiences built for the future. Discover, run, and get inspired.</p>
         </div>
@@ -340,65 +402,118 @@
             <i class="fa-solid fa-triangle-exclamation text-4xl text-red-400 mb-4"></i>
             <h3 class="text-xl font-bold mb-2">Connection Failed</h3>
             <p class="mb-6" style="color: var(--text-muted)" x-text="error"></p>
-            <button @click="loading = true; error = null; init()"
+            <button @click="init()" type="button"
                 class="px-6 py-3 search-glass hover:border-primary rounded-xl transition-colors font-semibold">
                 Retry Connection
             </button>
         </div>
 
-        <!-- App Grid -->
-        <!-- Added grid-flow-dense to prevent gaps from variable spans -->
-        <div x-show="!loading && !error" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 grid-flow-row-dense auto-rows-[250px] gap-6" x-cloak>
-            <template x-for="(app, index) in filteredApps" :key="app.path">
-                <a :href="app.path" 
-                   :class="app._span"
-                   class="premium-card group block h-full flex flex-col animate-fade-in-up">
-                   
-                    <!-- Media Area -->
-                    <div class="relative h-1/2 flex-shrink-0 overflow-hidden flex items-center justify-center" style="background: var(--img-fallback-bg)">
-                        <!-- We use Alpine to check if the image fails loading -->
-                        <div x-data="{ imageBroken: false }" class="w-full h-full">
-                            <template x-if="app.image && !imageBroken">
-                                <img :src="app.image" :alt="app.title" @error="imageBroken = true"
-                                     class="w-full h-full object-cover group-hover:scale-110 group-hover:rotate-2 transition-all duration-700">
-                            </template>
-                            
-                            <template x-if="(!app.image || imageBroken) && app.icon">
-                                <div class="w-full h-full flex items-center justify-center">
-                                    <i :class="app.icon + ' text-6xl group-hover:text-primary transition-colors duration-500 drop-shadow-2xl'" style="color: var(--text-muted)"></i>
-                                </div>
-                            </template>
-                            
-                            <template x-if="(!app.image || imageBroken) && !app.icon">
-                                <div class="w-full h-full flex items-center justify-center">
-                                    <div class="w-24 h-24 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-500" style="background: var(--border-light)">
-                                        <i class="fa-solid fa-rocket text-3xl group-hover:text-primary" style="color: var(--text-muted)"></i>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
+        <!-- Bento Grid View -->
+        <div x-show="!loading && !error && viewMode === 'grid'" id="bento-app-grid" class="w-full" x-cloak>
+            <template x-for="app in filteredApps" :key="app._key">
+                <a :href="app.path" :data-bento="app._bento" class="bento-tile group animate-fade-in-up">
 
-                        <!-- Category Tag -->
-                        <div class="absolute top-4 right-4 px-3 py-1 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider" 
-                             style="background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.2);" 
-                             x-text="app.category"></div>
+                    <!-- Full-bleed media -->
+                    <div x-data="{ imageBroken: false }" class="absolute inset-0">
+                        <template x-if="app.image && !imageBroken">
+                            <img :src="app.image" :alt="app.title" @error="imageBroken = true"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </template>
+                        <template x-if="(!app.image || imageBroken) && app.icon">
+                            <div class="w-full h-full flex items-start justify-center pt-[18%]">
+                                <i :class="app.icon + ' bento-icon text-6xl group-hover:text-primary transition-colors duration-500'"></i>
+                            </div>
+                        </template>
+                        <template x-if="(!app.image || imageBroken) && !app.icon">
+                            <div class="w-full h-full flex items-start justify-center pt-[18%]">
+                                <i class="fa-solid fa-rocket bento-icon text-6xl group-hover:text-primary transition-colors duration-500"></i>
+                            </div>
+                        </template>
                     </div>
 
-                    <!-- Details Area -->
-                    <!-- Removed solid background to let card-bg-gradient show through -->
-                    <div class="p-6 flex flex-col flex-grow relative z-10">
-                        <h3 class="text-2xl font-bold mb-2 group-hover:text-primary transition-colors" x-text="app.title"></h3>
-                        <p class="text-sm line-clamp-3 mb-4 flex-grow leading-relaxed" style="color: var(--text-muted)" x-text="app.description"></p>
-                        
-                        <div class="mt-auto flex items-center justify-between text-sm font-bold transition-colors z-20" style="color: var(--text-muted)">
-                            <div class="flex items-center gap-2">
-                                <span class="group-hover:text-primary transition-colors">Launch App</span>
-                                <i class="fa-solid fa-arrow-right transform group-hover:translate-x-2 group-hover:text-primary transition-all"></i>
-                            </div>
-                            <button @click.prevent="window.location.href = app.path + '#install'" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors group/install relative" title="Install App">
-                                <i class="fa-solid fa-download group-hover/install:text-primary transition-colors text-lg"></i>
-                            </button>
+                    <div class="bento-overlay absolute inset-0 pointer-events-none"></div>
+
+                    <!-- Top row -->
+                    <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
+                        <span class="bento-chip px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                              x-text="app.category"></span>
+                        <span role="button" tabindex="0" title="Install App" aria-label="Install app"
+                              @click.prevent.stop="install(app)"
+                              @keydown.enter.prevent.stop="install(app)"
+                              class="bento-chip w-9 h-9 flex items-center justify-center rounded-full hover:text-primary transition-colors cursor-pointer">
+                            <i class="fa-solid fa-download text-sm"></i>
+                        </span>
+                    </div>
+
+                    <!-- Bottom content -->
+                    <div class="absolute inset-x-0 bottom-0 p-5 sm:p-6 z-10">
+                        <h3 class="text-xl md:text-2xl font-bold leading-tight group-hover:text-primary transition-colors" x-text="app.title"></h3>
+                        <template x-if="app.description">
+                            <p class="bento-desc text-sm mt-2 leading-relaxed"
+                               :class="app._bento === '2x2' ? 'line-clamp-4' : 'line-clamp-2'"
+                               x-text="app.description"></p>
+                        </template>
+                        <div class="bento-cta mt-3 flex items-center gap-2 text-sm font-bold group-hover:text-primary transition-colors">
+                            <span>Launch App</span>
+                            <i class="fa-solid fa-arrow-right transform group-hover:translate-x-2 transition-transform"></i>
                         </div>
+                    </div>
+                </a>
+            </template>
+        </div>
+
+        <!-- List View -->
+        <div x-show="!loading && !error && viewMode === 'list'" class="flex flex-col gap-4 w-full" x-cloak>
+            <template x-for="app in filteredApps" :key="app._key">
+                <a :href="app.path" class="list-card group block p-4 sm:p-5 animate-fade-in-up">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+
+                        <div class="flex items-center gap-4 flex-grow min-w-0">
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex-shrink-0 overflow-hidden flex items-center justify-center border"
+                                 style="background: var(--img-fallback-bg); border-color: var(--border-light)">
+                                <div x-data="{ imageBroken: false }" class="w-full h-full flex items-center justify-center">
+                                    <template x-if="app.image && !imageBroken">
+                                        <img :src="app.image" :alt="app.title" @error="imageBroken = true"
+                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                    </template>
+                                    <template x-if="(!app.image || imageBroken) && app.icon">
+                                        <i :class="app.icon + ' text-2xl group-hover:text-primary transition-colors duration-300'" style="color: var(--text-muted)"></i>
+                                    </template>
+                                    <template x-if="(!app.image || imageBroken) && !app.icon">
+                                        <i class="fa-solid fa-rocket text-2xl group-hover:text-primary" style="color: var(--text-muted)"></i>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div class="min-w-0 flex-grow">
+                                <div class="flex flex-wrap items-center gap-2" :class="app.description ? 'mb-1' : ''">
+                                    <h3 class="text-lg sm:text-xl font-bold group-hover:text-primary transition-colors truncate" x-text="app.title"></h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border"
+                                          style="background: var(--search-bg); border-color: var(--border-light); color: var(--text-muted)"
+                                          x-text="app.category"></span>
+                                </div>
+                                <template x-if="app.description">
+                                    <p class="text-sm line-clamp-2 leading-relaxed" style="color: var(--text-muted)" x-text="app.description"></p>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 self-end sm:self-center flex-shrink-0">
+                            <span role="button" tabindex="0" title="Install App"
+                                  @click.prevent.stop="install(app)"
+                                  @keydown.enter.prevent.stop="install(app)"
+                                  class="px-3 py-2 rounded-xl search-glass hover:border-primary transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                  style="color: var(--text-muted)">
+                                <i class="fa-solid fa-download text-sm group-hover:text-primary"></i>
+                                <span class="hidden md:inline">Install</span>
+                            </span>
+
+                            <div class="px-4 py-2 rounded-xl bg-primary/10 border border-primary/30 group-hover:bg-primary group-hover:text-white transition-all flex items-center gap-2 text-sm font-semibold text-primary">
+                                <span>Open</span>
+                                <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+
                     </div>
                 </a>
             </template>
