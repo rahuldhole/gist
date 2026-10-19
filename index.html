@@ -87,7 +87,7 @@
                 },
 
                 formatDate(dateStr) {
-                    if (!dateStr) return '';
+                    if (!dateStr || dateStr.startsWith('0001-01-01')) return '';
                     const d = new Date(dateStr);
                     if (isNaN(d.getTime())) return '';
                     return d.toLocaleDateString(undefined, {
@@ -107,9 +107,15 @@
                             return matchesSearch && matchesCategory;
                         })
                         .sort((a, b) => {
-                            const timeA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-                            const timeB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-                            return timeB - timeA;
+                            const timeA = (a.updated_at && !a.updated_at.startsWith('0001-01-01')) ? new Date(a.updated_at).getTime() : 0;
+                            const timeB = (b.updated_at && !b.updated_at.startsWith('0001-01-01')) ? new Date(b.updated_at).getTime() : 0;
+                            if (timeA > 0 && timeB > 0) {
+                                if (timeA !== timeB) return timeB - timeA;
+                                return (a.path || '').localeCompare(b.path || '');
+                            }
+                            if (timeA > 0) return -1;
+                            if (timeB > 0) return 1;
+                            return (a.path || '').localeCompare(b.path || '');
                         });
                 }
             }));

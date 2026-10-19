@@ -194,14 +194,6 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 			}
 		}
 	}
-	
-	if updatedAt.IsZero() {
-		if info, err := os.Stat(srcIdx); err == nil {
-			updatedAt = info.ModTime()
-		} else {
-			updatedAt = time.Now()
-		}
-	}
 
 	return &AppMeta{
 		Title:       title,
@@ -461,7 +453,19 @@ func cmdBuild() {
 	wg.Wait()
 
 	sort.Slice(apps, func(i, j int) bool {
-		return apps[i].UpdatedAt.After(apps[j].UpdatedAt)
+		hasI := !apps[i].UpdatedAt.IsZero()
+		hasJ := !apps[j].UpdatedAt.IsZero()
+		if hasI && hasJ {
+			if !apps[i].UpdatedAt.Equal(apps[j].UpdatedAt) {
+				return apps[i].UpdatedAt.After(apps[j].UpdatedAt)
+			}
+			return strings.ToLower(apps[i].Path) < strings.ToLower(apps[j].Path)
+		}
+		if hasI != hasJ {
+			return hasI // apps with explicit Updated timestamp come first
+		}
+		// If neither has Updated, sort alphabetically by folder name / path
+		return strings.ToLower(apps[i].Path) < strings.ToLower(apps[j].Path)
 	})
 
 	jsonData, _ := json.Marshal(apps)
