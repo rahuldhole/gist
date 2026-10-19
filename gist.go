@@ -99,6 +99,67 @@ func extractMeta(key string, content []byte) string {
 	return ""
 }
 
+func parseUpdatedTime(raw string) time.Time {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return time.Time{}
+	}
+
+	// 1. Numeric Unix timestamp (seconds or milliseconds)
+	if ts, err := strconv.ParseInt(raw, 10, 64); err == nil && ts > 0 {
+		if ts > 1e11 { // milliseconds
+			return time.UnixMilli(ts)
+		}
+		return time.Unix(ts, 0)
+	}
+
+	// 2. Normalize single-digit month or day in ISO-like strings (e.g. 2026-10-1T... -> 2026-10-01T...)
+	normalized := raw
+	reIsoFix := regexp.MustCompile(`^(\d{4})-(\d{1,2})-(\d{1,2})`)
+	if m := reIsoFix.FindStringSubmatch(normalized); len(m) == 4 {
+		year := m[1]
+		month := m[2]
+		if len(month) == 1 {
+			month = "0" + month
+		}
+		day := m[3]
+		if len(day) == 1 {
+			day = "0" + day
+		}
+		normalized = year + "-" + month + "-" + day + normalized[len(m[0]):]
+	}
+
+	// 3. Try standard formats
+	formats := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04",
+		"2006-01-02 15:04",
+		time.RFC1123Z,
+		time.RFC1123,
+		time.RFC822Z,
+		time.RFC822,
+		"2006/01/02",
+		"02-01-2006",
+		"01/02/2006",
+	}
+
+	for _, layout := range formats {
+		if t, err := time.Parse(layout, normalized); err == nil {
+			return t
+		}
+	}
+
+	// Date-only format: treat as end of that day UTC
+	if t, err := time.Parse("2006-01-02", normalized); err == nil {
+		return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, time.UTC)
+	}
+
+	return time.Time{}
+}
+
 // ── Concurrency Safe App Processor ───────────────────────────────────────────
 
 func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMeta, error) {
@@ -179,21 +240,7 @@ func processApp(ctx context.Context, bCtx *BuildCtx, appDir os.DirEntry) (*AppMe
 		return nil, nil
 	}
 
-	// Parse custom "Updated" field from meta block
-	updatedStr := extractMeta("Updated", content)
-	var updatedAt time.Time
-	if ts, err := strconv.ParseInt(updatedStr, 10, 64); err == nil && ts > 0 {
-		updatedAt = time.Unix(ts, 0)
-	} else {
-		var parseErr error
-		updatedAt, parseErr = time.Parse(time.RFC3339, updatedStr)
-		if parseErr != nil {
-			updatedAt, parseErr = time.Parse("2006-01-02", updatedStr)
-			if parseErr == nil {
-				updatedAt = time.Date(updatedAt.Year(), updatedAt.Month(), updatedAt.Day(), 23, 59, 59, 0, time.UTC)
-			}
-		}
-	}
+	updatedAt := parseUpdatedTime(extractMeta("Updated", content))
 
 	return &AppMeta{
 		Title:       title,
