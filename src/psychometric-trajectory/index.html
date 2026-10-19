@@ -1,0 +1,1449 @@
+<!-- APP-META
+Title: CHC Psychometric Lab
+Description: Fluid vs Crystallized Intelligence Lifespan Trajectory & Investment Simulator
+Category: Simulation
+Icon: fa-solid fa-brain
+Image: https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&q=80&w=800
+Status: published
+Disable-Footer: false
+Disable-PWA: false
+Updated: 2026-10-19T11:20:19+00:00
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHC Psychometric Lab — Fluid vs. Crystallized Intelligence Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: #e2e8f0;
+      height: 6px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -5px;
+      background-color: #0284c7;
+      height: 15px;
+      width: 15px;
+      border-radius: 999px;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
+      transition: transform 0.12s ease, background-color 0.12s ease;
+    }
+    input[type="range"]:hover::-webkit-slider-thumb {
+      transform: scale(1.18);
+      background-color: #0369a1;
+    }
+    .grid-bg {
+      background-image: radial-gradient(rgba(15, 23, 42, 0.07) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-screen selection:bg-sky-500/20 selection:text-sky-900">
+  <div id="app" class="min-h-screen flex flex-col">
+    
+    <!-- Top Bar -->
+    <header class="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-30 shadow-sm">
+      <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-100 to-amber-100 border border-slate-300 flex items-center justify-center font-mono font-bold text-xs text-sky-700 shadow-sm">
+            g∫dt
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-sm sm:text-base font-bold tracking-tight text-slate-900">
+                CHC Psychometric Investment &amp; Senescence Lab
+              </h1>
+              <span class="hidden md:inline-block text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-semibold">
+                Cattell–Horn–Carroll Engine v2.5
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">
+              Empirical simulation of <span class="text-sky-700 font-mono font-semibold">G<sub>f</sub>(t)</span> hardware decay vs. <span class="text-amber-700 font-mono font-semibold">G<sub>c</sub>(t)</span> structural compounding
+            </p>
+          </div>
+        </div>
+
+        <!-- Preset, Ghost Compare, Share & Guide Modal Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 shadow-sm">
+            <label for="presetSelect" class="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-semibold">Archetype:</label>
+            <select
+              id="presetSelect"
+              v-model="selectedPresetId"
+              @change="applyPreset(selectedPresetId)"
+              class="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-2"
+            >
+              <option v-for="p in presets" :key="p.id" :value="p.id" class="bg-white text-slate-900">
+                {{ p.name }}
+              </option>
+            </select>
+          </div>
+
+          <button
+            @click="toggleComparisonGhost"
+            :class="ghostProfile ? 'bg-violet-50 border-violet-300 text-violet-800' : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+            class="px-3 py-1.5 rounded-lg border text-xs font-mono font-medium flex items-center gap-1.5 transition shadow-sm"
+            title="Pin current curve as a reference ghost to compare against another preset or parameter tweak"
+          >
+            <span class="w-2 h-2 rounded-full" :class="ghostProfile ? 'bg-violet-600 animate-pulse' : 'bg-slate-400'"></span>
+            {{ ghostProfile ? 'Clear Ghost (' + ghostProfile.label + ')' : 'Pin Baseline Ghost' }}
+          </button>
+
+          <button
+            @click="copyShareLink"
+            class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-xs font-mono font-medium text-slate-700 flex items-center gap-1.5 transition shadow-sm"
+          >
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span>{{ copyStateText }}</span>
+          </button>
+
+          <!-- Guide & Symbols Help Button -->
+          <button
+            @click="showHelpModal = true"
+            class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-mono font-semibold flex items-center gap-1.5 transition shadow-sm"
+            title="Open User Guide & Mathematical Symbol Glossary"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Guide &amp; Symbols</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- LEFT PANEL: PARAMETER CONTROLS (4 COLS) -->
+      <aside class="lg:col-span-4 space-y-4">
+        
+        <!-- Quick Compact Mode Toggle Bar -->
+        <div class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 flex items-center justify-between shadow-sm">
+          <span class="text-xs font-medium text-slate-600">Parameter Control Panel</span>
+          <button
+            @click="showSliderDetails = !showSliderDetails"
+            class="text-[11px] font-mono text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1 rounded-md transition flex items-center gap-1"
+          >
+            <span>{{ showSliderDetails ? 'Hide Scale Notes' : 'Show Scale Notes' }}</span>
+            <svg class="w-3 h-3 transition-transform" :class="showSliderDetails ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Group 1: Genetic & Developmental Baseline -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div>
+              <h2 class="text-xs font-mono uppercase tracking-wider text-sky-700 font-bold">1. Biological Ceiling (Hardware)</h2>
+              <p class="text-[11px] text-slate-500">Polygenic loading &amp; neurobiological senescence</p>
+            </div>
+            <button
+              @click="showHelpModal = true"
+              class="text-[11px] font-mono px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 transition"
+              title="Click to learn what h² ≈ 0.75 means"
+            >
+              h² ≈ 0.75 ?
+            </button>
+          </div>
+
+          <!-- Peak Genetic Gf -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700 font-medium">Genetic Peak <span class="font-mono text-sky-700 font-semibold">G<sub>f0</sub></span> (Age 22)</span>
+              <span class="font-mono font-bold text-sky-700">{{ params.gf0 }} IQ <span class="text-slate-400 font-normal">({{ formatPercentile(params.gf0) }})</span></span>
+            </div>
+            <input type="range" min="75" max="160" step="1" v-model.number="params.gf0" @input="markCustom" class="w-full" />
+            <div v-if="showSliderDetails" class="flex justify-between text-[10px] font-mono text-slate-400 pt-0.5">
+              <span>75 (Borderline)</span>
+              <span>100 (Pop. Mean)</span>
+              <span>130 (+2 SD)</span>
+              <span>160 (+4 SD)</span>
+            </div>
+          </div>
+
+          <!-- Neural Senescence Rate -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700 font-medium">Prefrontal Senescence Slope (<span class="font-mono text-sky-700 font-semibold">δ</span>)</span>
+              <span class="font-mono font-semibold text-slate-800">{{ params.senescenceRate.toFixed(2) }}x</span>
+            </div>
+            <input type="range" min="0.5" max="2.0" step="0.05" v-model.number="params.senescenceRate" @input="markCustom" class="w-full" />
+            <p v-if="showSliderDetails" class="text-[11px] text-slate-500 leading-relaxed pt-0.5">
+              Rate of white-matter tract demyelination &amp; prefrontal dopamine D1 receptor density loss post-24.
+            </p>
+          </div>
+        </div>
+
+        <!-- Group 2: Physiological Throttles -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div>
+              <h2 class="text-xs font-mono uppercase tracking-wider text-rose-600 font-bold">2. Biological Throttles (Depressors)</h2>
+              <p class="text-[11px] text-slate-500">You cannot raise ceiling, only stop self-sabotage</p>
+            </div>
+            <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+              -{{ currentBioPenalty.toFixed(1) }} IQ pts
+            </span>
+          </div>
+
+          <!-- Sleep Debt -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700 font-medium">Chronic Sleep Restriction / Debt</span>
+              <span class="font-mono font-semibold text-rose-600">{{ (params.sleepDebt * 100).toFixed(0) }}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" v-model.number="params.sleepDebt" @input="markCustom" class="w-full" />
+            <div v-if="showSliderDetails" class="flex justify-between text-[10px] font-mono text-slate-400 pt-0.5">
+              <span>0% (8h Glymphatic)</span>
+              <span>50% (6h / Cortisol)</span>
+              <span>100% (Severe Debt)</span>
+            </div>
+          </div>
+
+          <!-- Cardio / Metabolic Health -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700 font-medium">VO₂ Max &amp; Glycemic Integrity</span>
+              <span class="font-mono font-semibold text-emerald-600">{{ (params.cardioHealth * 100).toFixed(0) }}%</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.05" v-model.number="params.cardioHealth" @input="markCustom" class="w-full" />
+            <div v-if="showSliderDetails" class="flex justify-between text-[10px] font-mono text-slate-400 pt-0.5">
+              <span>0% (Insulin Resist)</span>
+              <span>50% (Sedentary)</span>
+              <span>100% (High BDNF)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 3: Cattell Investment Engine -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div>
+              <h2 class="text-xs font-mono uppercase tracking-wider text-amber-600 font-bold">3. Cattell Investment Parameters</h2>
+              <p class="text-[11px] text-slate-500">How <span class="font-mono">G<sub>f</sub></span> converts into durable <span class="font-mono">G<sub>c</sub></span> schemas</p>
+            </div>
+            <button
+              @click="showHelpModal = true"
+              class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition"
+            >
+              ∫ Gf·E·M dt ?
+            </button>
+          </div>
+
+          <!-- Epistemic Quality -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700 font-medium">Epistemic Rigor &amp; Schema Density (<span class="font-mono text-amber-600 font-semibold">E</span>)</span>
+              <span class="font-mono font-semibold text-amber-600">{{ (params.epistemicQuality * 100).toFixed(0) }}%</span>
+            </div>
+            <input type="range" min="0.05" max="1" step="0.05" v-model.number="params.epistemicQuality" @input="markCustom" class="w-full" />
+            <div v-if="showSliderDetails" class="flex justify-between text-[10px] font-mono text-slate-400 pt-0.5">
+              <span>5% (Doomscrolling)</span>
+              <span>50% (Standard Ed)</span>
+              <span>100% (First-Principles)</span>
+            </div>
+          </div>
+
+          <!-- Deliberate Practice Intensity -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700 font-medium">Deliberate Practice Intensity (<span class="font-mono text-amber-600 font-semibold">M</span>)</span>
+              <span class="font-mono font-semibold text-amber-600">{{ (params.practiceIntensity * 100).toFixed(0) }}%</span>
+            </div>
+            <input type="range" min="0.05" max="1" step="0.05" v-model.number="params.practiceIntensity" @input="markCustom" class="w-full" />
+            <div v-if="showSliderDetails" class="flex justify-between text-[10px] font-mono text-slate-400 pt-0.5">
+              <span>5% (Passive Coasting)</span>
+              <span>50% (Routine Career)</span>
+              <span>100% (Effortful Strain)</span>
+            </div>
+          </div>
+
+          <!-- Knowledge Entropy / Obsolescence -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700 font-medium">Domain Decay / Dogma Ossification (<span class="font-mono text-amber-600 font-semibold">μ</span>)</span>
+              <span class="font-mono font-semibold text-slate-700">{{ (params.entropyRate * 100).toFixed(0) }}%</span>
+            </div>
+            <input type="range" min="0.05" max="0.80" step="0.05" v-model.number="params.entropyRate" @input="markCustom" class="w-full" />
+            <p v-if="showSliderDetails" class="text-[11px] text-slate-500 pt-0.5">
+              High if memorizing volatile tool syntax; low if learning invariant structural models (probability, physics, logic).
+            </p>
+          </div>
+        </div>
+
+        <!-- Group 4: Extended Cognition & Sham Training (Collapsible Card) -->
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <button
+            @click="showAdvancedControls = !showAdvancedControls"
+            class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 transition"
+          >
+            <div>
+              <h2 class="text-xs font-mono uppercase tracking-wider text-emerald-700 font-bold">4. Extended Scaffolding &amp; Brain-App Illusions</h2>
+              <p class="text-[11px] text-slate-500">Click to {{ showAdvancedControls ? 'collapse' : 'reveal' }} Exocortex &amp; Dual N-Back controls</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200">
+              {{ showAdvancedControls ? 'Hide ▲' : 'Reveal ▼' }}
+            </span>
+          </button>
+
+          <div v-if="showAdvancedControls" class="px-4 pb-4 pt-2 border-t border-slate-100 space-y-4">
+            <!-- Externalized Tooling -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-700 font-medium">Exocortex &amp; Epistemic Tooling Leverage (<span class="font-mono text-emerald-600 font-semibold">λ</span>)</span>
+                <span class="font-mono font-semibold text-emerald-600">{{ (params.exocortexLeverage * 100).toFixed(0) }}%</span>
+              </div>
+              <input type="range" min="0" max="1" step="0.05" v-model.number="params.exocortexLeverage" @input="markCustom" class="w-full" />
+              <p class="text-[11px] text-slate-500">
+                Offloading working memory via formal notation, code, Zettelkasten, &amp; AI verification. (Requires <span class="font-mono">G<sub>c</sub></span> to steer).
+              </p>
+            </div>
+
+            <!-- Brain Training App Delusion Toggle -->
+            <div class="pt-2 border-t border-slate-100">
+              <label class="flex items-start gap-3 cursor-pointer select-none">
+                <input type="checkbox" v-model="params.brainAppsActive" @change="markCustom" class="mt-1 rounded border-slate-300 text-fuchsia-600 focus:ring-0" />
+                <div class="text-xs">
+                  <span class="font-semibold text-fuchsia-700">Grind "Brain-Training" Apps (Dual N-Back / Lumosity)</span>
+                  <p class="text-[11px] text-slate-500 mt-0.5">
+                    Plot the empirical divergence between <span class="text-fuchsia-700 font-mono font-medium">Near-Transfer Game Score</span> (+26 pts) and actual <span class="text-sky-700 font-mono font-medium">Latent G<sub>f</sub> Far-Transfer</span> (0.0 pts) while cannibalizing 18% of study time.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- RIGHT PANEL: TELEMETRY, SVG LIFESPAN CHART, AND BRUTAL AUDIT (8 COLS) -->
+      <section class="lg:col-span-8 flex flex-col gap-6">
+        
+        <!-- Top KPI Telemetry Bar at Inspected Age -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-3 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-mono uppercase tracking-wider text-slate-500 font-semibold">Inspecting Chronological Age:</span>
+              <span class="text-lg font-mono font-bold text-slate-900 bg-slate-100 px-3 py-0.5 rounded-lg border border-slate-300">
+                {{ inspectAge }} yrs
+              </span>
+            </div>
+            <div class="flex-1 min-w-[200px] max-w-md flex items-center gap-3">
+              <span class="text-[11px] font-mono text-slate-400 font-medium">12y</span>
+              <input type="range" min="12" max="80" step="1" v-model.number="inspectAge" class="w-full" />
+              <span class="text-[11px] font-mono text-slate-400 font-medium">80y</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <!-- Card 1: Realized Fluid Gf -->
+            <div class="bg-slate-50/80 border border-slate-200/90 rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono text-sky-700 font-semibold uppercase">Realized G<sub>f</sub>(t)</span>
+                <span class="text-[10px] font-mono text-slate-500">{{ formatPercentile(currentSnapshot.gfRealized) }}</span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-mono font-bold text-slate-900">{{ currentSnapshot.gfRealized.toFixed(1) }}</span>
+                <span class="text-xs font-mono font-medium text-rose-600" v-if="currentSnapshot.bioPenalty > 0.5">
+                  (-{{ currentSnapshot.bioPenalty.toFixed(1) }} bio)
+                </span>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-1">
+                Genetic ceiling at {{ inspectAge }}: <span class="font-mono font-semibold text-slate-700">{{ currentSnapshot.gfCeiling.toFixed(1) }}</span>
+              </p>
+            </div>
+
+            <!-- Card 2: Crystallized Gc -->
+            <div class="bg-slate-50/80 border border-slate-200/90 rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono text-amber-700 font-semibold uppercase">Crystallized G<sub>c</sub>(t)</span>
+                <span class="text-[10px] font-mono text-slate-500">{{ formatPercentile(currentSnapshot.gc) }}</span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-mono font-bold text-slate-900">{{ currentSnapshot.gc.toFixed(1) }}</span>
+                <span class="text-xs font-mono font-semibold" :class="currentSnapshot.deltaGc >= 0 ? 'text-emerald-600' : 'text-rose-600'">
+                  {{ currentSnapshot.deltaGc >= 0 ? '+' : '' }}{{ currentSnapshot.deltaGc.toFixed(2) }}/yr
+                </span>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-1">
+                Compounded mental models &amp; heuristics
+              </p>
+            </div>
+
+            <!-- Card 3: Functional Output Index -->
+            <div class="bg-slate-50/80 border border-slate-200/90 rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono text-emerald-700 font-semibold uppercase">Effective Output</span>
+                <span class="text-[10px] font-mono text-slate-500">{{ formatPercentile(currentSnapshot.effectiveOutput) }}</span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <span class="text-2xl font-mono font-bold text-emerald-700">{{ currentSnapshot.effectiveOutput.toFixed(1) }}</span>
+                <span class="text-[10px] font-mono text-slate-500">IQ-Eq</span>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-1">
+                Real-world complex problem-solving yield
+              </p>
+            </div>
+
+            <!-- Card 4: Working Memory Slots & Bottleneck -->
+            <div class="bg-slate-50/80 border border-slate-200/90 rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono text-purple-700 font-semibold uppercase">Working Memory</span>
+                <button @click="showHelpModal = true" class="text-[10px] font-mono text-purple-600 underline hover:text-purple-800">Cowan's K ?</button>
+              </div>
+              <div class="mt-1 flex items-baseline gap-1.5">
+                <span class="text-xl font-mono font-bold text-slate-900">{{ currentSnapshot.wmChunks.toFixed(1) }}</span>
+                <span class="text-xs text-slate-500">slots ×</span>
+                <span class="text-xl font-mono font-bold text-amber-600">{{ currentSnapshot.chunkComplexity.toFixed(1) }}x</span>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-1">
+                Hardware slots × Schema abstraction depth
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive SVG Trajectory Graph -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-xs font-mono uppercase tracking-wider text-slate-800 font-bold">
+                Lifespan Psychometric Trajectory (Age 12 → 80)
+              </h3>
+              <p class="text-[11px] text-slate-500">
+                Click or drag anywhere on the graph to scrub chronological age and inspect differential rates
+              </p>
+            </div>
+            <!-- Legend -->
+            <div class="flex flex-wrap items-center gap-3 text-[11px] font-mono font-medium">
+              <span class="flex items-center gap-1.5 text-sky-600">
+                <span class="w-3 h-0.5 border-b-2 border-dashed border-sky-500"></span> Genetic G<sub>f</sub> Ceiling
+              </span>
+              <span class="flex items-center gap-1.5 text-sky-700">
+                <span class="w-3 h-1 bg-sky-600 rounded-full"></span> Realized G<sub>f</sub>(t)
+              </span>
+              <span class="flex items-center gap-1.5 text-amber-700">
+                <span class="w-3 h-1 bg-amber-500 rounded-full"></span> Crystallized G<sub>c</sub>(t)
+              </span>
+              <span class="flex items-center gap-1.5 text-emerald-700">
+                <span class="w-3 h-1 bg-emerald-600 rounded-full"></span> Effective Output
+              </span>
+              <span v-if="params.brainAppsActive" class="flex items-center gap-1.5 text-fuchsia-700">
+                <span class="w-3 h-0.5 border-b-2 border-dotted border-fuchsia-600"></span> App Game Score (Fake IQ)
+              </span>
+              <span v-if="ghostProfile" class="flex items-center gap-1.5 text-violet-700">
+                <span class="w-3 h-0.5 border-b-2 border-dashed border-violet-600"></span> Ghost ({{ ghostProfile.label }})
+              </span>
+            </div>
+          </div>
+
+          <!-- SVG Chart Container (Light Academic Paper Style) -->
+          <div class="relative w-full aspect-[16/9] sm:aspect-[21/9] bg-slate-50/70 rounded-lg border border-slate-200 overflow-hidden grid-bg select-none">
+            <svg
+              ref="chartSvg"
+              viewBox="0 0 800 360"
+              class="w-full h-full cursor-crosshair"
+              @mousedown="startScrub"
+              @mousemove="onScrub"
+              @mouseup="stopScrub"
+              @mouseleave="stopScrub"
+              @touchstart.prevent="startTouchScrub"
+              @touchmove.prevent="onTouchScrub"
+              @touchend="stopScrub"
+            >
+              <defs>
+                <linearGradient id="penaltyFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.24" />
+                  <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.05" />
+                </linearGradient>
+                <linearGradient id="outputGlow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.16" />
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Horizontal IQ Grid Lines -->
+              <g v-for="iqTick in [60, 80, 100, 120, 140, 160, 180]" :key="iqTick">
+                <line
+                  :x1="pad.left"
+                  :x2="800 - pad.right"
+                  :y1="yScale(iqTick)"
+                  :y2="yScale(iqTick)"
+                  :stroke="iqTick === 100 ? '#94a3b8' : '#e2e8f0'"
+                  :stroke-dasharray="iqTick === 100 ? '4 4' : ''"
+                  stroke-width="1"
+                />
+                <text
+                  :x="pad.left - 8"
+                  :y="yScale(iqTick) + 4"
+                  text-anchor="end"
+                  class="fill-slate-500 font-mono text-[10px]"
+                >
+                  {{ iqTick }}
+                </text>
+              </g>
+
+              <!-- Vertical Age Grid Lines -->
+              <g v-for="ageTick in [15, 25, 35, 45, 55, 65, 75]" :key="ageTick">
+                <line
+                  :x1="xScale(ageTick)"
+                  :x2="xScale(ageTick)"
+                  :y1="pad.top"
+                  :y2="360 - pad.bottom"
+                  stroke="#e2e8f0"
+                  stroke-width="1"
+                />
+                <text
+                  :x="xScale(ageTick)"
+                  :y="360 - pad.bottom + 16"
+                  text-anchor="middle"
+                  class="fill-slate-500 font-mono text-[10px]"
+                >
+                  {{ ageTick }}y
+                </text>
+              </g>
+
+              <!-- Population Mean Label -->
+              <text :x="800 - pad.right - 6" :y="yScale(100) - 5" text-anchor="end" class="fill-slate-500 font-mono text-[9px] font-semibold">
+                POPULATION MEAN (100 IQ)
+              </text>
+
+              <!-- Shaded Biological Penalty Area (Gap between Genetic Ceiling and Realized Gf) -->
+              <path :d="bioPenaltyAreaPath" fill="url(#penaltyFill)" />
+
+              <!-- Effective Output Area Fill -->
+              <path :d="effectiveOutputAreaPath" fill="url(#outputGlow)" />
+
+              <!-- Pinned Ghost Reference Curve (if active) -->
+              <g v-if="ghostProfile">
+                <path
+                  :d="ghostProfile.outputPath"
+                  fill="none"
+                  stroke="#7c3aed"
+                  stroke-width="2.2"
+                  stroke-dasharray="5 4"
+                  opacity="0.85"
+                />
+                <path
+                  :d="ghostProfile.gcPath"
+                  fill="none"
+                  stroke="#7c3aed"
+                  stroke-width="1.3"
+                  stroke-dasharray="2 3"
+                  opacity="0.55"
+                />
+              </g>
+
+              <!-- Genetic Unthrottled Gf Ceiling Curve -->
+              <path
+                :d="gfCeilingPath"
+                fill="none"
+                stroke="#0284c7"
+                stroke-width="1.6"
+                stroke-dasharray="4 4"
+                opacity="0.65"
+              />
+
+              <!-- Realized Gf Curve -->
+              <path
+                :d="gfRealizedPath"
+                fill="none"
+                stroke="#0284c7"
+                stroke-width="2.6"
+              />
+
+              <!-- Crystallized Gc Curve -->
+              <path
+                :d="gcPath"
+                fill="none"
+                stroke="#d97706"
+                stroke-width="2.6"
+              />
+
+              <!-- Effective Real-World Output Curve -->
+              <path
+                :d="effectiveOutputPath"
+                fill="none"
+                stroke="#059669"
+                stroke-width="2.8"
+              />
+
+              <!-- Brain Training App Score Curve (Near-Transfer Illusion) -->
+              <path
+                v-if="params.brainAppsActive"
+                :d="brainAppScorePath"
+                fill="none"
+                stroke="#c026d3"
+                stroke-width="2.2"
+                stroke-dasharray="2 4"
+              />
+
+              <!-- Crossover Marker (where Gc surpasses Realized Gf) -->
+              <g v-if="crossoverPoint">
+                <circle
+                  :cx="xScale(crossoverPoint.age)"
+                  :cy="yScale(crossoverPoint.val)"
+                  r="4.5"
+                  fill="#ffffff"
+                  stroke="#d97706"
+                  stroke-width="2.2"
+                />
+              </g>
+
+              <!-- Interactive Age Scrubber Line -->
+              <g>
+                <line
+                  :x1="xScale(inspectAge)"
+                  :x2="xScale(inspectAge)"
+                  :y1="pad.top"
+                  :y2="360 - pad.bottom"
+                  stroke="#334155"
+                  stroke-width="1.3"
+                  stroke-dasharray="3 3"
+                />
+                <!-- Points on curves at inspected age -->
+                <circle :cx="xScale(inspectAge)" :cy="yScale(currentSnapshot.gfCeiling)" r="3.5" fill="#0284c7" />
+                <circle :cx="xScale(inspectAge)" :cy="yScale(currentSnapshot.gfRealized)" r="4.5" fill="#0284c7" stroke="#ffffff" stroke-width="1.5" />
+                <circle :cx="xScale(inspectAge)" :cy="yScale(currentSnapshot.gc)" r="4.5" fill="#d97706" stroke="#ffffff" stroke-width="1.5" />
+                <circle :cx="xScale(inspectAge)" :cy="yScale(currentSnapshot.effectiveOutput)" r="5" fill="#059669" stroke="#ffffff" stroke-width="1.5" />
+              </g>
+            </svg>
+          </div>
+
+          <!-- Mathematical State Bar under Chart -->
+          <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-600">
+            <div>
+              <span class="text-slate-400">Differential Rates at t={{ inspectAge }}:</span>
+              dG<sub>f</sub>/dt = <span class="text-sky-700 font-semibold">{{ currentSnapshot.deltaGf >= 0 ? '+' : '' }}{{ currentSnapshot.deltaGf.toFixed(2) }}/yr</span>
+              <span class="mx-2 text-slate-300">|</span>
+              dG<sub>c</sub>/dt = <span class="font-semibold" :class="currentSnapshot.deltaGc >= 0 ? 'text-amber-700' : 'text-rose-600'">{{ currentSnapshot.deltaGc >= 0 ? '+' : '' }}{{ currentSnapshot.deltaGc.toFixed(2) }}/yr</span>
+            </div>
+            <div>
+              <span class="text-slate-400">Peak Output Age:</span>
+              <span class="text-emerald-700 font-bold ml-1">{{ lifecycleSummary.peakOutputAge }} yrs ({{ lifecycleSummary.peakOutputVal.toFixed(1) }})</span>
+              <span class="mx-2 text-slate-300">|</span>
+              <span class="text-slate-400">Wasted Genetic Potential:</span>
+              <span class="text-rose-600 font-bold ml-1">{{ lifecycleSummary.wastedPotentialPct.toFixed(0) }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Brutally Honest Diagnostic & Collapsible Mathematical Drawer -->
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-mono font-bold uppercase tracking-widest px-2.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300">
+                Unvarnished Psychometric Audit
+              </span>
+              <span class="text-xs font-mono text-slate-500">
+                Archetype: <strong class="text-slate-800">{{ currentPresetObj.name }}</strong>
+              </span>
+            </div>
+
+            <!-- Click to Reveal Formal Math & Variance Attribution -->
+            <button
+              @click="showMathDrawer = !showMathDrawer"
+              class="text-xs font-mono font-medium px-3 py-1 rounded-lg border transition flex items-center gap-1.5"
+              :class="showMathDrawer ? 'bg-slate-800 text-white border-slate-800' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'"
+            >
+              <span>{{ showMathDrawer ? 'Hide Equations & Attribution ▲' : 'Reveal Equations & Attribution ▼' }}</span>
+            </button>
+          </div>
+
+          <div>
+            <h3 class="text-base font-bold text-slate-900">
+              {{ dynamicAudit.headline }}
+            </h3>
+            <p class="text-xs text-slate-600 leading-relaxed mt-1.5">
+              {{ currentPresetObj.brutalConclusion }}
+            </p>
+          </div>
+
+          <!-- Live Diagnostic Warnings triggered by current sliders -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+            <div
+              v-for="(diag, idx) in dynamicAudit.flags"
+              :key="idx"
+              class="flex items-start gap-2.5 text-xs p-3 rounded-lg border"
+              :class="diag.type === 'critical' ? 'bg-rose-50/70 border-rose-200 text-rose-900' : diag.type === 'warning' ? 'bg-amber-50/70 border-amber-200 text-amber-900' : 'bg-emerald-50/70 border-emerald-200 text-emerald-900'"
+            >
+              <span class="font-mono font-bold text-xs mt-0.5">
+                {{ diag.type === 'critical' ? '[!]' : diag.type === 'warning' ? '[~]' : '[✓]' }}
+              </span>
+              <div class="leading-relaxed">
+                <span class="font-bold">{{ diag.title }}:</span> {{ diag.body }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Click-to-Reveal Mathematical Equations & Variance Breakdown Drawer -->
+          <div v-if="showMathDrawer" class="pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-6 bg-slate-50/60 p-4 rounded-xl">
+            <div class="md:col-span-6 space-y-2.5">
+              <h4 class="text-xs font-mono uppercase tracking-wider text-slate-700 font-bold">
+                Governing Differential Equations
+              </h4>
+              <div class="bg-white border border-slate-200 rounded-lg p-3 font-mono text-[11px] space-y-2 shadow-inner">
+                <div class="text-sky-800">
+                  <span class="text-slate-400">// 1. Realized Fluid Hardware</span><br/>
+                  G<sub>f</sub>(t) = G<sub>f,gen</sub>(t) - Δ<sub>sleep</sub> - Δ<sub>metabolic</sub>
+                </div>
+                <div class="text-amber-800">
+                  <span class="text-slate-400">// 2. Cattell Investment Integral</span><br/>
+                  dG<sub>c</sub>/dt = κ·[G<sub>f</sub>(t)^α · E · M] - μ·G<sub>c</sub>(t)
+                </div>
+                <div class="text-emerald-800">
+                  <span class="text-slate-400">// 3. Effective Real-World Yield</span><br/>
+                  Y(t) = (w<sub>f</sub>G<sub>f</sub> + w<sub>c</sub>G<sub>c</sub>) · (1 + λ<sub>tool</sub>·Φ(G<sub>c</sub>)) - Ψ<sub>bias</sub>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-6 space-y-3 flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="text-xs font-mono uppercase tracking-wider text-slate-700 font-bold">
+                  Bottleneck Attribution (Age {{ inspectAge }})
+                </div>
+
+                <!-- Genetic Factor -->
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] font-mono">
+                    <span class="text-slate-600">Raw Hardware Ceiling (G<sub>f0</sub> + Age)</span>
+                    <span class="text-sky-700 font-bold">{{ bottleneckBreakdown.hardwareShare }}%</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-sky-600 rounded-full" :style="{ width: bottleneckBreakdown.hardwareShare + '%' }"></div>
+                  </div>
+                </div>
+
+                <!-- Epistemic & Practice Investment -->
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] font-mono">
+                    <span class="text-slate-600">Schema Compounding (E × M)</span>
+                    <span class="text-amber-700 font-bold">{{ bottleneckBreakdown.investmentShare }}%</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full" :style="{ width: bottleneckBreakdown.investmentShare + '%' }"></div>
+                  </div>
+                </div>
+
+                <!-- Self-Inflicted Physiological Drag -->
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] font-mono">
+                    <span class="text-slate-600">Self-Inflicted Bio Drag (Sleep/VO₂)</span>
+                    <span class="text-rose-600 font-bold">{{ bottleneckBreakdown.bioDragShare }}%</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-rose-500 rounded-full" :style="{ width: bottleneckBreakdown.bioDragShare + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
+                <strong class="text-slate-800 font-mono">Twin Study Note:</strong> Plomin et al. demonstrate that <span class="font-mono text-sky-700 font-semibold">h²</span> of <span class="font-mono">g</span> rises from ~40% in childhood to ~80% in adulthood via active gene-environment correlation (<span class="font-mono">rGE</span>).
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- GUIDE & SYMBOLS GLOSSARY MODAL -->
+    <div
+      v-if="showHelpModal"
+      class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      @click.self="showHelpModal = false"
+    >
+      <div class="bg-white border border-slate-200 rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 font-mono font-bold text-xs flex items-center justify-center">?</span>
+            <div>
+              <h2 class="text-base font-bold text-slate-900">How to Use This Lab &amp; Symbol Glossary</h2>
+              <p class="text-xs text-slate-500">Decoding the Cattell–Horn–Carroll (CHC) differential equations and telemetry</p>
+            </div>
+          </div>
+          <button
+            @click="showHelpModal = false"
+            class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-mono font-semibold"
+          >
+            Close ✕
+          </button>
+        </div>
+
+        <!-- Quick 3-Step Workflow Guide -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+          <h3 class="text-xs font-mono uppercase tracking-wider text-slate-700 font-bold">Quick 3-Step Experiment Workflow</h3>
+          <ol class="text-xs text-slate-600 space-y-1.5 list-decimal list-inside leading-relaxed">
+            <li><strong>Pick an Archetype Preset:</strong> Use the top dropdown to load a realistic cognitive profile (e.g., <em>"1. The Coasting Former Gifted Kid"</em>).</li>
+            <li><strong>Pin a Baseline Ghost:</strong> Click <strong>"Pin Baseline Ghost"</strong> in the header to freeze that curve in purple on the chart, then switch to <em>"2. The Disciplined 112-IQ Compounder"</em> to see the exact age where disciplined schema building overtakes raw uninvested talent.</li>
+            <li><strong>Scrub Chronological Age:</strong> Drag horizontally across the graph (or use the age slider) to inspect how fluid decay and crystallized compounding trade off from age 12 to 80.</li>
+          </ol>
+        </div>
+
+        <!-- Complete Symbols & Abbreviations Table -->
+        <div class="space-y-2">
+          <h3 class="text-xs font-mono uppercase tracking-wider text-slate-700 font-bold">Complete Mathematical &amp; Psychometric Symbol Glossary</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-sky-700">G<sub>f</sub>(t) &amp; G<sub>f0</sub> — Fluid Intelligence</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                Raw biological compute power: working memory capacity, abstract pattern speed, and novel reasoning. Peaks around age 22–24 (<span class="font-mono">G<sub>f0</sub></span>) and declines monotonically due to prefrontal senescence.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-amber-700">G<sub>c</sub>(t) — Crystallized Intelligence</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                Accumulated mental models, domain abstractions, vocabulary, and compressed problem-solving heuristics. Built by investing <span class="font-mono">G<sub>f</sub></span> over time; can compound into your 60s.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-slate-800">h² ≈ 0.75 — Narrow-Sense Heritability</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                Proportion of population variance in adult general intelligence (<span class="font-mono">g</span>) attributable to additive genetic variance in twin and polygenic studies.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-sky-700">δ (Delta) — Prefrontal Senescence Slope</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                Speed of biological brain aging after age 24 (white-matter demyelination &amp; synaptic pruning). Accelerated by vascular disease; slowed by aerobic Zone-2/VO₂ max fitness.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-amber-700">E &amp; M — Epistemic Rigor &amp; Practice</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                In Cattell's integral <span class="font-mono">∫ G<sub>f</sub>·E·M dt</span>, <strong>E</strong> is the structural depth of what you study (math/logic vs. trivia), and <strong>M</strong> is deliberate practice strain.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-rose-700">μ (Mu) — Entropy / Dogma Ossification</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                Rate at which your acquired <span class="font-mono">G<sub>c</sub></span> becomes obsolete or rigidified by ideological dogma. High if you memorize fleeting tool syntax; low if you master first principles.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-purple-700">Cowan's K — Working Memory Slots</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                Nelson Cowan's constant (~4 ± 1 chunks in an average adult). You cannot add more hardware slots, but high <span class="font-mono">G<sub>c</sub></span> packs exponentially more meaning into each slot.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+              <div class="font-mono font-bold text-emerald-700">dG<sub>f</sub>/dt &amp; dG<sub>c</sub>/dt — Yearly Velocity</div>
+              <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+                Instantaneous rate of change (in IQ points per year) at the inspected age. Notice the yellow circle on the chart where <span class="font-mono">G<sub>c</sub></span> crosses above <span class="font-mono">G<sub>f</sub></span>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2 border-t border-slate-200">
+          <button
+            @click="showHelpModal = false"
+            class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-mono font-semibold shadow-sm"
+          >
+            Got It — Return to Simulator
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const { createApp, ref, reactive, computed } = Vue;
+
+    createApp({
+      setup() {
+        const inspectAge = ref(34);
+        const isScrubbing = ref(false);
+        const chartSvg = ref(null);
+        const copyStateText = ref('Share State');
+        const selectedPresetId = ref('coastal_gifted');
+        const ghostProfile = ref(null);
+
+        // UI Cleanliness & Click-to-Reveal Toggles
+        const showHelpModal = ref(false);
+        const showSliderDetails = ref(false);
+        const showAdvancedControls = ref(false);
+        const showMathDrawer = ref(false);
+
+        const pad = { top: 24, right: 28, bottom: 32, left: 44 };
+
+        // Preset Archetypes with hyper-realistic, unsugarcoated psychometric conclusions
+        const presets = [
+          {
+            id: 'coastal_gifted',
+            name: '1. The Coasting "Former Gifted Kid" (135 Gf, Low Effort)',
+            params: {
+              gf0: 135,
+              senescenceRate: 1.15,
+              sleepDebt: 0.55,
+              cardioHealth: 0.30,
+              epistemicQuality: 0.25,
+              practiceIntensity: 0.20,
+              entropyRate: 0.45,
+              exocortexLeverage: 0.15,
+              brainAppsActive: false
+            },
+            brutalConclusion:
+              'High raw fluid horsepower (99th percentile at age 20) masks complete lack of disciplined study habits early in life. Because high school and introductory tasks require zero effort, you never build tolerance for cognitive friction. By age 32, chronic sleep debt, sedentary decay, and zero deep schema investment cause a disciplined 112-IQ practitioner to utterly lap you in real-world output. You become a bitter midwit with fast pattern-matching for internet arguments and zero durable domain mastery.'
+          },
+          {
+            id: 'disciplined_comp',
+            name: '2. The Disciplined 112-IQ Compounder (Modest Gf, Elite Gc)',
+            params: {
+              gf0: 112,
+              senescenceRate: 0.80,
+              sleepDebt: 0.10,
+              cardioHealth: 0.85,
+              epistemicQuality: 0.90,
+              practiceIntensity: 0.85,
+              entropyRate: 0.15,
+              exocortexLeverage: 0.85,
+              brainAppsActive: false
+            },
+            brutalConclusion:
+              'You will never win a raw IMO math olympiad at age 19 because your native working memory ceiling is modest (~79th percentile). However, by protecting your biological baseline (zero sleep debt, high VO2 max preserving white matter) and relentlessly compounding invariant mental models (probability, systems architecture, externalized tooling), your Crystallized Intelligence (Gc) and Effective Output cross the 135-IQ coaster by age 28 and peak near 152 IQ-equivalent in your late 40s.'
+          },
+          {
+            id: 'burnout_quant',
+            name: '3. The Sleep-Deprived Hustler / Burnout Quant (142 Gf, Bio-Ruined)',
+            params: {
+              gf0: 142,
+              senescenceRate: 1.55,
+              sleepDebt: 0.85,
+              cardioHealth: 0.15,
+              epistemicQuality: 0.75,
+              practiceIntensity: 0.95,
+              entropyRate: 0.35,
+              exocortexLeverage: 0.60,
+              brainAppsActive: false
+            },
+            brutalConclusion:
+              'You were born with a Ferrari engine (142 Gf) and poured sand into the crankcase. Sleeping 4.5 hours a night with chronic sympathetic cortisol elevation and metabolic neglect immediately shaves 15–18 points off your realized prefrontal working memory. Worse, impaired glymphatic clearance accelerates age-related senescence (1.55x slope). By age 42, your functional fluid intelligence operates like an unthrottled 108-IQ brain.'
+          },
+          {
+            id: 'nootropic_bro',
+            name: '4. The "Biohacker" Dual N-Back Grinder (Near-Transfer Delusion)',
+            params: {
+              gf0: 105,
+              senescenceRate: 1.0,
+              sleepDebt: 0.25,
+              cardioHealth: 0.65,
+              epistemicQuality: 0.15,
+              practiceIntensity: 0.20,
+              entropyRate: 0.55,
+              exocortexLeverage: 0.20,
+              brainAppsActive: true
+            },
+            brutalConclusion:
+              'The classic psychometric trap. You spend hours grinding Dual N-Back, Lumosity, and reading reddit threads on exotic racetams instead of doing hard domain math or engineering. Notice the magenta dotted line: your app score shoots to 135 ("Near-Transfer"), giving you a dopamine hit of feeling smarter, while your actual latent Gf remains flat and your Gc stagnates because you cannibalized real study time for parlor games.'
+          },
+          {
+            id: 'polymath_peak',
+            name: '5. The von Neumann / Elite Polymath Ceiling (150 Gf + Full Investment)',
+            params: {
+              gf0: 150,
+              senescenceRate: 0.75,
+              sleepDebt: 0.05,
+              cardioHealth: 0.90,
+              epistemicQuality: 0.95,
+              practiceIntensity: 0.95,
+              entropyRate: 0.10,
+              exocortexLeverage: 0.95,
+              brainAppsActive: false
+            },
+            brutalConclusion:
+              'The brutal truth of Cattell’s Investment Equation (dGc = Gf × E × M) is that Gf is a multiplier on learning rate. When a 99.9th-percentile genetic ceiling combines with pristine physiology, first-principles epistemic rigor, and ruthless deliberate practice, the gap becomes unbridgeable. They extract 3x more structural schema per hour of reading than an average brain, compounding into an insurmountable epistemic monopoly.'
+          },
+          {
+            id: 'dogma_ossified',
+            name: '6. The High-IQ Ideologue / Ossified Expert (High Gf, High Entropy)',
+            params: {
+              gf0: 130,
+              senescenceRate: 1.10,
+              sleepDebt: 0.30,
+              cardioHealth: 0.50,
+              epistemicQuality: 0.30,
+              practiceIntensity: 0.35,
+              entropyRate: 0.75,
+              exocortexLeverage: 0.10,
+              brainAppsActive: false
+            },
+            brutalConclusion:
+              'High fluid intelligence without epistemic humility acts as a high-powered lawyer defending pre-existing biases (dysrationalia). After age 35, practice drops and domain obsolescence/dogma (μ = 75%) takes over. Because raw Gf is declining and new schemas are rejected, functional intelligence experiences a steep mid-life collapse despite impressive verbal fluency.'
+          }
+        ];
+
+        const params = reactive({ ...presets[0].params });
+
+        function applyPreset(id) {
+          const found = presets.find(p => p.id === id);
+          if (found) {
+            Object.assign(params, found.params);
+            if (found.params.brainAppsActive) {
+              showAdvancedControls.value = true;
+            }
+          }
+        }
+
+        function markCustom() {
+          // Keep current preset label if close, or allow seamless tweaking
+        }
+
+        // Convert IQ (mean 100, SD 15) to normal percentile using Abramowitz & Stegun approximation
+        function formatPercentile(iq) {
+          const z = (iq - 100) / 15;
+          const t = 1 / (1 + 0.2316419 * Math.abs(z));
+          const d = 0.3989423 * Math.exp((-z * z) / 2);
+          let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+          if (z > 0) prob = 1 - prob;
+          const pct = Math.min(99.99, Math.max(0.01, prob * 100));
+          if (pct >= 99.9) return '99.9th %ile';
+          if (pct >= 99) return pct.toFixed(1) + 'th %ile';
+          return Math.round(pct) + 'th %ile';
+        }
+
+        // Core longitudinal simulation function (Ages 12 to 80, Δt = 1 year)
+        function simulateTrajectory(p) {
+          const rows = [];
+          // Initial Gc at age 12 scales partially with genetic Gf0
+          let gc = 72 + (p.gf0 - 100) * 0.38;
+
+          for (let age = 12; age <= 80; age++) {
+            // 1. Genetic Fluid Ceiling Trajectory Gf_ceiling(t)
+            let gfCeiling;
+            if (age <= 23) {
+              // Adolescent maturation curve peaking at age 23
+              const norm = (23 - age) / 11;
+              gfCeiling = p.gf0 - 11 * Math.pow(norm, 1.75);
+            } else {
+              // Post-23 linear + quadratic neurobiological senescence
+              // Cardio health (BDNF, vascular integrity) mitigates senescence slope by up to 32%
+              const effectiveDecay = p.senescenceRate * (1.16 - 0.36 * p.cardioHealth);
+              const dt = age - 23;
+              gfCeiling = p.gf0 - effectiveDecay * (0.34 * dt + 0.0046 * dt * dt);
+            }
+            gfCeiling = Math.max(55, gfCeiling);
+
+            // 2. Biological Throttles (Sleep debt & metabolic/vascular drag)
+            // Chronic sleep restriction impairs prefrontal working memory immediately
+            const sleepPenalty = p.sleepDebt * 14.5;
+            // Metabolic/vascular neglect penalty increases with age
+            const metabolicPenalty = (1 - p.cardioHealth) * (3.5 + Math.max(0, age - 25) * 0.14);
+            const bioPenalty = sleepPenalty + metabolicPenalty;
+
+            const gfRealized = Math.max(55, gfCeiling - bioPenalty);
+
+            // 3. Cattell Investment Differential Equation for Gc(t)
+            // If brain-training apps are active, they cannibalize 18% of deliberate practice time
+            const effectivePractice = p.brainAppsActive ? Math.max(0.05, p.practiceIntensity * 0.82) : p.practiceIntensity;
+
+            // Learning absorption rate scales with realized Gf (normalized to 100), Epistemic Rigor E, and Practice M
+            const gfFactor = Math.pow(Math.max(0.5, gfRealized / 100), 1.25);
+            // Age plasticity factor: slight natural tapering of raw encoding speed with age
+            const plasticity = Math.max(0.42, 1 - Math.max(0, age - 26) * 0.0075);
+
+            const grossGain = 4.65 * gfFactor * (0.18 + 0.82 * p.epistemicQuality) * (0.15 + 0.85 * effectivePractice) * plasticity;
+
+            // Entropy / Schema decay / Dogma ossification
+            const excessGc = Math.max(0, gc - 68);
+            const senilePenalty = age > 64 ? (age - 64) * 0.24 * p.senescenceRate : 0;
+            const decayLoss = excessGc * (0.024 + p.entropyRate * 0.062) + senilePenalty;
+
+            const deltaGc = age === 12 ? 0 : (grossGain - decayLoss);
+            if (age > 12) {
+              gc = Math.min(185, Math.max(60, gc + deltaGc));
+            }
+
+            // 4. Functional Real-World Cognitive Output Index
+            // Base combination of realized fluid hardware and crystallized schemas
+            const baseComposite = 0.36 * gfRealized + 0.64 * gc;
+
+            // Exocortex / External Tooling multiplier:
+            // Requires high Gc and Epistemic Rigor to act as a force multiplier; otherwise amplifies noise
+            const schemaCompetence = Math.max(0, (gc - 92) / 50) * p.epistemicQuality;
+            const exocortexBonus = p.exocortexLeverage * 19.5 * schemaCompetence;
+
+            // Dysrationalia penalty: High Gf paired with low epistemic rigor produces overconfident rationalization
+            const dysrationaliaPenalty = (gfRealized > 115 && p.epistemicQuality < 0.35)
+              ? (gfRealized - 115) * (0.35 - p.epistemicQuality) * 0.65
+              : 0;
+
+            const effectiveOutput = Math.min(190, Math.max(55, baseComposite + exocortexBonus - dysrationaliaPenalty));
+
+            // 5. Working Memory Slots (Cowan's K ≈ 4 at 100 IQ) & Chunk Complexity
+            const wmChunks = Math.max(2.0, Math.min(6.5, 4.0 + ((gfRealized - 100) / 15) * 0.75));
+            const chunkComplexity = Math.max(0.8, Math.pow(gc / 100, 1.65) * (0.7 + 0.6 * p.epistemicQuality));
+
+            // 6. Sham Brain-Training App Score (Near-Transfer Illusion)
+            const brainAppScore = p.brainAppsActive
+              ? Math.min(180, gfRealized + 26 * (1 - Math.exp(-(age - 11) / 3.5)))
+              : gfRealized;
+
+            rows.push({
+              age,
+              gfCeiling,
+              gfRealized,
+              bioPenalty,
+              gc,
+              deltaGc,
+              deltaGf: 0,
+              effectiveOutput,
+              wmChunks,
+              chunkComplexity,
+              brainAppScore
+            });
+          }
+
+          // Compute dGf/dt
+          for (let i = 0; i < rows.length; i++) {
+            rows[i].deltaGf = i === 0 ? 0 : rows[i].gfRealized - rows[i - 1].gfRealized;
+          }
+          return rows;
+        }
+
+        const trajectory = computed(() => simulateTrajectory(params));
+
+        const currentSnapshot = computed(() => {
+          const found = trajectory.value.find(r => r.age === inspectAge.value);
+          return found || trajectory.value[0];
+        });
+
+        const currentBioPenalty = computed(() => currentSnapshot.value.bioPenalty);
+
+        // SVG Coordinate Scaling
+        function xScale(age) {
+          const minAge = 12, maxAge = 80;
+          const plotW = 800 - pad.left - pad.right;
+          return pad.left + ((age - minAge) / (maxAge - minAge)) * plotW;
+        }
+
+        function yScale(iq) {
+          const minIq = 55, maxIq = 185;
+          const plotH = 360 - pad.top - pad.bottom;
+          const clamped = Math.max(minIq, Math.min(maxIq, iq));
+          return pad.top + (1 - (clamped - minIq) / (maxIq - minIq)) * plotH;
+        }
+
+        function buildSvgPath(rows, key) {
+          return rows
+            .map((r, i) => `${i === 0 ? 'M' : 'L'} ${xScale(r.age).toFixed(1)} ${yScale(r[key]).toFixed(1)}`)
+            .join(' ');
+        }
+
+        const gfCeilingPath = computed(() => buildSvgPath(trajectory.value, 'gfCeiling'));
+        const gfRealizedPath = computed(() => buildSvgPath(trajectory.value, 'gfRealized'));
+        const gcPath = computed(() => buildSvgPath(trajectory.value, 'gc'));
+        const effectiveOutputPath = computed(() => buildSvgPath(trajectory.value, 'effectiveOutput'));
+        const brainAppScorePath = computed(() => buildSvgPath(trajectory.value, 'brainAppScore'));
+
+        const bioPenaltyAreaPath = computed(() => {
+          const top = trajectory.value.map((r, i) => `${i === 0 ? 'M' : 'L'} ${xScale(r.age).toFixed(1)} ${yScale(r.gfCeiling).toFixed(1)}`).join(' ');
+          const bottom = [...trajectory.value].reverse().map(r => `L ${xScale(r.age).toFixed(1)} ${yScale(r.gfRealized).toFixed(1)}`).join(' ');
+          return `${top} ${bottom} Z`;
+        });
+
+        const effectiveOutputAreaPath = computed(() => {
+          const line = effectiveOutputPath.value;
+          const lastX = xScale(80).toFixed(1);
+          const firstX = xScale(12).toFixed(1);
+          const baseY = (360 - pad.bottom).toFixed(1);
+          return `${line} L ${lastX} ${baseY} L ${firstX} ${baseY} Z`;
+        });
+
+        // Find where Crystallized Gc overtakes Realized Gf
+        const crossoverPoint = computed(() => {
+          for (let i = 1; i < trajectory.value.length; i++) {
+            const prev = trajectory.value[i - 1];
+            const curr = trajectory.value[i];
+            if (prev.gc < prev.gfRealized && curr.gc >= curr.gfRealized) {
+              return { age: curr.age, val: curr.gc };
+            }
+          }
+          return null;
+        });
+
+        // Lifecycle Summary Metrics
+        const lifecycleSummary = computed(() => {
+          let peakOutputVal = -Infinity;
+          let peakOutputAge = 25;
+          let totalCeilingArea = 0;
+          let totalRealizedOutputArea = 0;
+
+          // Theoretical optimal trajectory for this same genetic Gf0
+          const optimalRows = simulateTrajectory({
+            gf0: params.gf0,
+            senescenceRate: 0.75,
+            sleepDebt: 0.0,
+            cardioHealth: 0.95,
+            epistemicQuality: 0.95,
+            practiceIntensity: 0.90,
+            entropyRate: 0.10,
+            exocortexLeverage: 0.90,
+            brainAppsActive: false
+          });
+
+          trajectory.value.forEach((r, idx) => {
+            if (r.effectiveOutput > peakOutputVal) {
+              peakOutputVal = r.effectiveOutput;
+              peakOutputAge = r.age;
+            }
+            if (r.age >= 20 && r.age <= 70) {
+              totalCeilingArea += Math.max(0, optimalRows[idx].effectiveOutput - 70);
+              totalRealizedOutputArea += Math.max(0, r.effectiveOutput - 70);
+            }
+          });
+
+          const wastedPotentialPct = Math.max(0, Math.min(95, (1 - totalRealizedOutputArea / Math.max(1, totalCeilingArea)) * 100));
+
+          return {
+            peakOutputAge,
+            peakOutputVal,
+            wastedPotentialPct
+          };
+        });
+
+        // Pin or clear a comparison Ghost Curve
+        function toggleComparisonGhost() {
+          if (ghostProfile.value) {
+            ghostProfile.value = null;
+          } else {
+            const presetName = currentPresetObj.value.name.split('(')[0].replace(/^\d+\.\s*/, '').trim();
+            ghostProfile.value = {
+              label: presetName,
+              outputPath: effectiveOutputPath.value,
+              gcPath: gcPath.value
+            };
+          }
+        }
+
+        const currentPresetObj = computed(() => {
+          return presets.find(p => p.id === selectedPresetId.value) || presets[0];
+        });
+
+        // Dynamic Hyper-Critical Diagnostic Engine
+        const dynamicAudit = computed(() => {
+          const flags = [];
+          const snap = currentSnapshot.value;
+
+          if (params.sleepDebt >= 0.45) {
+            flags.push({
+              type: 'critical',
+              title: 'Acute Prefrontal Lobotomy via Sleep Debt',
+              body: `You are voluntarily throwing away ${snap.bioPenalty.toFixed(1)} fluid IQ points at age ${inspectAge.value}. No nootropic or study routine compensates for impaired glymphatic beta-amyloid clearance.`
+            });
+          }
+
+          if (params.gf0 >= 125 && (params.practiceIntensity < 0.35 || params.epistemicQuality < 0.35)) {
+            flags.push({
+              type: 'critical',
+              title: 'The "Gifted Coaster" Trap',
+              body: `High genetic Gf (${params.gf0}) paired with low deliberate practice (${Math.round(params.practiceIntensity * 100)}%) means your Gc plateaus early. A disciplined 110-IQ peer with high schema density overtakes your functional output before age 30.`
+            });
+          }
+
+          if (params.brainAppsActive) {
+            flags.push({
+              type: 'warning',
+              title: 'Near-Transfer Delusion Active',
+              body: `Grinding Dual N-Back inflated your task-specific score to ${snap.brainAppScore.toFixed(0)} (magenta line), but your latent Gf remained ${snap.gfRealized.toFixed(1)} while robbing 18% of your deliberate practice bandwidth.`
+            });
+          }
+
+          if (params.gf0 >= 120 && params.epistemicQuality < 0.35) {
+            flags.push({
+              type: 'warning',
+              title: 'Dysrationalia & High-Speed Bias',
+              body: `High fluid compute running corrupted mental models (E = ${Math.round(params.epistemicQuality * 100)}%) actively penalizes real-world output because you rationalize bad premises with higher verbal sophistication.`
+            });
+          }
+
+          if (params.epistemicQuality >= 0.75 && params.practiceIntensity >= 0.75 && params.sleepDebt <= 0.25) {
+            flags.push({
+              type: 'good',
+              title: 'High-Leverage Cattell Compounding',
+              body: `By feeding unthrottled fluid capacity into invariant mental models and externalized tooling, your Effective Output (${snap.effectiveOutput.toFixed(1)}) vastly exceeds your raw biological hardware (${snap.gfRealized.toFixed(1)}).`
+            });
+          }
+
+          if (flags.length === 0) {
+            flags.push({
+              type: 'warning',
+              title: 'Sub-Optimal Equilibrium',
+              body: `At age ${inspectAge.value}, your crystallized growth rate is ${snap.deltaGc >= 0 ? '+' : ''}${snap.deltaGc.toFixed(2)} pts/yr. Increase Epistemic Rigor (E) and Exocortex Leverage to escape mediocre linear output.`
+            });
+          }
+
+          let headline = '';
+          if (snap.effectiveOutput - snap.gfCeiling >= 12) {
+            headline = `Epistemic Leverage: Outperforming Genetic Hardware by +${(snap.effectiveOutput - snap.gfCeiling).toFixed(1)} pts`;
+          } else if (snap.gfCeiling - snap.effectiveOutput >= 10) {
+            headline = `Cognitive Deficit: Operating ${(snap.gfCeiling - snap.effectiveOutput).toFixed(1)} pts Below Genetic Baseline`;
+          } else {
+            headline = `Treading Water: Functional Output Matches Raw Hardware (${snap.effectiveOutput.toFixed(1)} IQ-Eq)`;
+          }
+
+          return { headline, flags };
+        });
+
+        // Bottleneck Attribution Bars
+        const bottleneckBreakdown = computed(() => {
+          const hw = Math.abs(params.gf0 - 100) + 15;
+          const inv = (params.epistemicQuality * params.practiceIntensity) * 45 + params.exocortexLeverage * 15;
+          const bio = currentSnapshot.value.bioPenalty * 1.8;
+          const total = Math.max(1, hw + inv + bio);
+          return {
+            hardwareShare: Math.round((hw / total) * 100),
+            investmentShare: Math.round((inv / total) * 100),
+            bioDragShare: Math.round((bio / total) * 100)
+          };
+        });
+
+        // Mouse & Touch Scrubbing on SVG Chart
+        function updateAgeFromClientX(clientX) {
+          if (!chartSvg.value) return;
+          const rect = chartSvg.value.getBoundingClientRect();
+          const relX = ((clientX - rect.left) / rect.width) * 800;
+          const plotW = 800 - pad.left - pad.right;
+          const ratio = Math.max(0, Math.min(1, (relX - pad.left) / plotW));
+          inspectAge.value = Math.round(12 + ratio * (80 - 12));
+        }
+
+        function startScrub(e) {
+          isScrubbing.value = true;
+          updateAgeFromClientX(e.clientX);
+        }
+        function onScrub(e) {
+          if (!isScrubbing.value) return;
+          updateAgeFromClientX(e.clientX);
+        }
+        function startTouchScrub(e) {
+          isScrubbing.value = true;
+          if (e.touches && e.touches[0]) updateAgeFromClientX(e.touches[0].clientX);
+        }
+        function onTouchScrub(e) {
+          if (!isScrubbing.value) return;
+          if (e.touches && e.touches[0]) updateAgeFromClientX(e.touches[0].clientX);
+        }
+        function stopScrub() {
+          isScrubbing.value = false;
+        }
+
+        // Copy current simulation summary to clipboard
+        function copyShareLink() {
+          const snap = currentSnapshot.value;
+          const summary = `CHC Psychometric Lab [Age ${inspectAge.value}] — Genetic Peak Gf0: ${params.gf0} | Realized Gf: ${snap.gfRealized.toFixed(1)} | Crystallized Gc: ${snap.gc.toFixed(1)} | Effective Output: ${snap.effectiveOutput.toFixed(1)} IQ-Eq (Wasted Potential: ${lifecycleSummary.value.wastedPotentialPct.toFixed(0)}%)`;
+          const el = document.createElement('textarea');
+          el.value = summary;
+          document.body.appendChild(el);
+          el.select();
+          document.execCommand('copy');
+          document.body.removeChild(el);
+          copyStateText.value = 'Copied Summary!';
+          setTimeout(() => {
+            copyStateText.value = 'Share State';
+          }, 2000);
+        }
+
+        return {
+          inspectAge,
+          chartSvg,
+          pad,
+          presets,
+          selectedPresetId,
+          params,
+          ghostProfile,
+          copyStateText,
+          showHelpModal,
+          showSliderDetails,
+          showAdvancedControls,
+          showMathDrawer,
+          applyPreset,
+          markCustom,
+          formatPercentile,
+          currentSnapshot,
+          currentBioPenalty,
+          xScale,
+          yScale,
+          gfCeilingPath,
+          gfRealizedPath,
+          gcPath,
+          effectiveOutputPath,
+          brainAppScorePath,
+          bioPenaltyAreaPath,
+          effectiveOutputAreaPath,
+          crossoverPoint,
+          lifecycleSummary,
+          toggleComparisonGhost,
+          currentPresetObj,
+          dynamicAudit,
+          bottleneckBreakdown,
+          startScrub,
+          onScrub,
+          startTouchScrub,
+          onTouchScrub,
+          stopScrub,
+          copyShareLink
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
