@@ -3,9 +3,6 @@ version: '3'
 env:
   PATH: '/usr/local/go/bin:{{.HOME}}/.local/bin:{{.PATH}}'
 
-includes:
-  devcontainer: .devcontainer/Taskfile.yaml
-
 tasks:
   default:
     desc: List available tasks as ordered by importance
