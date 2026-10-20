@@ -3,7 +3,6 @@ dist/
 gist-tool
 gist
 out/
-bin/
 
 # Dependencies
 vendor/

@@ -22,9 +22,10 @@ Disable-Footer: true // if you don't want to add footer
 
 ## Usage
 Requires Go.
-- `go run gist.go build`: Generate `dist/`.
-- `go run gist.go preview`: Start local server.
-- `go run gist.go update-metadata`: Update timestamps.
+- `go run ./bin build`: Generate `dist/`.
+- `go run ./bin preview`: Start local server.
+- `go run ./bin update-metadata`: Update timestamps.
+- Or use `task build`, `task dev`, `task preview`.
 
 ## Deployment
 Automated via GitHub Actions.
