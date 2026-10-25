@@ -1,0 +1,905 @@
+<!-- APP-META
+Title: Reels Retention Visualizer
+Description: Interactive Facebook Reels audience retention simulator with real-time drop-off curves, viewer estimates, and watch-time analytics.
+Category: Analytics
+Icon: fa-solid fa-chart-line
+Image: https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800
+Status: published
+Disable-Footer: false
+Disable-PWA: false
+Updated: 2026-10-25T19:16:39+02:00
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facebook Reels Audience Retention Simulator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#1d4ed8',
+              meta: '#0866ff'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Clean custom range sliders */
+    input[type=range] {
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 9999px;
+      background: #e2e8f0;
+      outline: none;
+      transition: background 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0866ff;
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s ease, background-color 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: #0052cc;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0866ff;
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+    .dark input[type=range] {
+      background: #334155;
+    }
+    .dark input[type=range]::-webkit-slider-thumb {
+      border-color: #1e293b;
+    }
+    .dark input[type=range]::-moz-range-thumb {
+      border-color: #1e293b;
+    }
+    /* Subtle canvas container aspect sizing */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 380px;
+    }
+    @media (max-width: 640px) {
+      .chart-container {
+        height: 290px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100 transition-colors duration-200">
+
+  <!-- Minimal Header -->
+  <header class="bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 backdrop-blur-md transition-colors duration-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-semibold text-slate-900 dark:text-white leading-tight">Reels Retention Simulator</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Facebook & Instagram Insights Visualizer</p>
+        </div>
+      </div>
+      
+      <!-- Preset Quick Actions & Theme Toggle -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">Presets:</span>
+        <button id="presetViral" class="px-2.5 py-1 text-xs font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition">
+          Viral Hit
+        </button>
+        <button id="presetAverage" class="px-2.5 py-1 text-xs font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition">
+          Average Reel
+        </button>
+        <button id="presetWeakHook" class="px-2.5 py-1 text-xs font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition">
+          Weak Hook
+        </button>
+
+        <div class="h-4 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1"></div>
+
+        <!-- Light / Dark Mode Toggle Button -->
+        <button id="themeToggle" type="button" aria-label="Toggle Dark Mode" class="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition-colors">
+          <!-- Sun Icon (shown in dark mode) -->
+          <svg id="themeIconSun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <!-- Moon Icon (shown in light mode) -->
+          <svg id="themeIconMoon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT: Control / Parameter Configuration Panel (4 cols) -->
+      <section class="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm p-5 sm:p-6 space-y-6 transition-colors duration-200">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-white tracking-wide uppercase">Retention Curve Parameters</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tune key milestones to model audience fall-off</p>
+        </div>
+
+        <div class="space-y-5">
+          <!-- Total Views Input -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label for="totalViews" class="text-xs font-medium text-slate-700 dark:text-slate-300">Total Video Plays / Impressions</label>
+              <span class="text-xs font-mono font-semibold text-slate-900 dark:text-slate-100" id="viewsDisplay">25,000</span>
+            </div>
+            <div class="relative">
+              <input 
+                type="number" 
+                id="totalViews" 
+                min="100" 
+                max="5000000" 
+                step="500" 
+                value="25000"
+                class="w-full text-sm font-medium border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" 
+              />
+            </div>
+          </div>
+
+          <!-- Video Duration Slider -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label for="videoLength" class="text-xs font-medium text-slate-700 dark:text-slate-300">Video Duration</label>
+              <span class="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full" id="lengthDisplay">30s</span>
+            </div>
+            <input type="range" id="videoLength" min="15" max="90" step="1" value="30" class="w-full" />
+            <div class="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-mono">
+              <span>15s</span>
+              <span>45s</span>
+              <span>90s</span>
+            </div>
+          </div>
+
+          <!-- 3-Second Hook Slider -->
+          <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div class="flex justify-between items-center mb-1.5">
+              <div>
+                <label for="hookRetention" class="text-xs font-medium text-slate-700 dark:text-slate-300 block">3-Second Hook Retention</label>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">First impressions & swipe-away defense</span>
+              </div>
+              <span class="text-xs font-mono font-semibold text-slate-900 dark:text-slate-100" id="hookDisplay">72%</span>
+            </div>
+            <input type="range" id="hookRetention" min="5" max="100" step="1" value="72" class="w-full" />
+          </div>
+
+          <!-- Mid-Point Retention Slider -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <div>
+                <label for="midRetention" class="text-xs font-medium text-slate-700 dark:text-slate-300 block">Mid-Point Retention</label>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Body pacing & content delivery</span>
+              </div>
+              <span class="text-xs font-mono font-semibold text-slate-900 dark:text-slate-100" id="midDisplay">48%</span>
+            </div>
+            <input type="range" id="midRetention" min="1" max="100" step="1" value="48" class="w-full" />
+          </div>
+
+          <!-- End Completion Slider -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <div>
+                <label for="endRetention" class="text-xs font-medium text-slate-700 dark:text-slate-300 block">End Completion Rate</label>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Viewers watching until the last second</span>
+              </div>
+              <span class="text-xs font-mono font-semibold text-slate-900 dark:text-slate-100" id="endDisplay">34%</span>
+            </div>
+            <input type="range" id="endRetention" min="0" max="100" step="1" value="34" class="w-full" />
+          </div>
+
+          <!-- Loop Factor / Re-watch Spike -->
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <label for="loopFactor" class="text-xs font-medium text-slate-700 dark:text-slate-300 block">Loop Spike / Seamless Re-watch</label>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500 block">Terminal surge from looping audio or payoff</span>
+              </div>
+              <span class="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full" id="loopDisplay">+12%</span>
+            </div>
+            <input type="range" id="loopFactor" min="0" max="40" step="1" value="12" class="w-full mt-2" />
+          </div>
+        </div>
+
+        <!-- Help Info note -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 flex gap-2.5 items-start">
+          <svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            FB Reels algorithm favors hooks exceeding <strong>70%</strong> and video completion above <strong>35%</strong>. Seamless loops push watch times past 100%.
+          </p>
+        </div>
+      </section>
+
+      <!-- RIGHT: Interactive Chart & Performance Analytics (8 cols) -->
+      <section class="lg:col-span-8 space-y-6">
+
+        <!-- Chart Container Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm p-5 sm:p-6 transition-colors duration-200">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                <h2 class="text-base font-semibold text-slate-900 dark:text-white">Audience Retention Curve</h2>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Visual representation of viewer drop-off across the video duration</p>
+            </div>
+            
+            <div class="flex items-center gap-4 text-xs font-medium text-slate-600 dark:text-slate-400">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-0.5 bg-blue-600 rounded"></span>
+                <span>Retention %</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-sm bg-slate-300 dark:bg-slate-700"></span>
+                <span class="text-slate-400 dark:text-slate-500">Concurrent viewers</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Canvas wrapper -->
+          <div class="chart-container mt-4">
+            <canvas id="retentionChart"></canvas>
+          </div>
+
+          <!-- Milestone Timeline Tags -->
+          <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100 dark:border-slate-800 mt-2 text-center">
+            <div class="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg">
+              <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold block">0:03 Hook Rate</span>
+              <span class="text-sm font-mono font-bold text-slate-800 dark:text-slate-100" id="tagHook">72%</span>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg">
+              <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold block">Midpoint Retention</span>
+              <span class="text-sm font-mono font-bold text-slate-800 dark:text-slate-100" id="tagMid">48%</span>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg">
+              <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold block">Final Watch Rate</span>
+              <span class="text-sm font-mono font-bold text-slate-800 dark:text-slate-100" id="tagEnd">46%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Breakdown Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- Avg Watch Time Card -->
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Avg Watch Time</span>
+              <span class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </span>
+            </div>
+            <div>
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-3xl font-bold font-mono text-slate-900 dark:text-white" id="avgWatchTime">16.4</span>
+                <span class="text-sm font-medium text-slate-500 dark:text-slate-400">sec</span>
+              </div>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1" id="watchTimeRatio">54.7% of total video</p>
+            </div>
+          </div>
+
+          <!-- Average Retention Rate Card -->
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Avg Retention Rate</span>
+              <span class="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </span>
+            </div>
+            <div>
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-3xl font-bold font-mono text-slate-900 dark:text-white" id="avgRetentionRate">54.7%</span>
+              </div>
+              <p class="text-xs text-slate-400 dark:text-slate-500 mt-1" id="totalWatchedHours">113.9 total hours watched</p>
+            </div>
+          </div>
+
+          <!-- Active End Viewers -->
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-colors duration-200">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Final Viewers</span>
+              <span class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </span>
+            </div>
+            <div>
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-3xl font-bold font-mono text-slate-900 dark:text-white" id="finalViewersDisplay">11,500</span>
+              </div>
+              <p class="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1" id="completedLabel">Finished full reel</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Dynamic Algorithmic Assessment Card -->
+        <div id="assessmentCard" class="p-5 rounded-2xl border transition-all duration-300">
+          <div class="flex items-start gap-4">
+            <div id="assessmentBadge" class="p-2.5 rounded-xl shrink-0 mt-0.5">
+              <!-- Dynamic Icon inserted via JS -->
+            </div>
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h3 id="assessmentTitle" class="text-base font-semibold leading-snug">Evaluating Curve...</h3>
+                <span id="tierTag" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"></span>
+              </div>
+              <p id="assessmentDesc" class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">Analysis description</p>
+              
+              <!-- Actionable Tips -->
+              <div class="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <span class="text-slate-400 dark:text-slate-500">Algorithmic Recommendation:</span>
+                <span id="assessmentTip" class="text-slate-700 dark:text-slate-300 font-normal">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- Interactive Simulator Engine JS -->
+  <script>
+    // State references
+    const elements = {
+      totalViews: document.getElementById('totalViews'),
+      viewsDisplay: document.getElementById('viewsDisplay'),
+      videoLength: document.getElementById('videoLength'),
+      lengthDisplay: document.getElementById('lengthDisplay'),
+      hookRetention: document.getElementById('hookRetention'),
+      hookDisplay: document.getElementById('hookDisplay'),
+      midRetention: document.getElementById('midRetention'),
+      midDisplay: document.getElementById('midDisplay'),
+      endRetention: document.getElementById('endRetention'),
+      endDisplay: document.getElementById('endDisplay'),
+      loopFactor: document.getElementById('loopFactor'),
+      loopDisplay: document.getElementById('loopDisplay'),
+
+      // Metric Outputs
+      avgWatchTime: document.getElementById('avgWatchTime'),
+      watchTimeRatio: document.getElementById('watchTimeRatio'),
+      avgRetentionRate: document.getElementById('avgRetentionRate'),
+      totalWatchedHours: document.getElementById('totalWatchedHours'),
+      finalViewersDisplay: document.getElementById('finalViewersDisplay'),
+      completedLabel: document.getElementById('completedLabel'),
+
+      // Milestone tags
+      tagHook: document.getElementById('tagHook'),
+      tagMid: document.getElementById('tagMid'),
+      tagEnd: document.getElementById('tagEnd'),
+
+      // Assessment Elements
+      assessmentCard: document.getElementById('assessmentCard'),
+      assessmentBadge: document.getElementById('assessmentBadge'),
+      assessmentTitle: document.getElementById('assessmentTitle'),
+      assessmentDesc: document.getElementById('assessmentDesc'),
+      assessmentTip: document.getElementById('assessmentTip'),
+      tierTag: document.getElementById('tierTag'),
+
+      // Presets
+      presetViral: document.getElementById('presetViral'),
+      presetAverage: document.getElementById('presetAverage'),
+      presetWeakHook: document.getElementById('presetWeakHook'),
+
+      // Theme toggle elements
+      themeToggle: document.getElementById('themeToggle'),
+      themeIconSun: document.getElementById('themeIconSun'),
+      themeIconMoon: document.getElementById('themeIconMoon')
+    };
+
+    let chartInstance = null;
+
+    // Theme Management with localStorage ('gist-theme')
+    const THEME_STORAGE_KEY = 'gist-theme';
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+      applyTheme(initialTheme);
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        elements.themeIconSun.classList.remove('hidden');
+        elements.themeIconMoon.classList.add('hidden');
+      } else {
+        document.documentElement.classList.remove('dark');
+        elements.themeIconSun.classList.add('hidden');
+        elements.themeIconMoon.classList.remove('hidden');
+      }
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+      
+      // Re-render chart to adapt colors if it exists
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+        updateSimulation();
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      applyTheme(isDark ? 'light' : 'dark');
+    }
+
+    elements.themeToggle.addEventListener('click', toggleTheme);
+
+    // Helper: Formats numbers with commas
+    function formatNumber(num) {
+      return new Intl.NumberFormat('en-US').format(Math.round(num));
+    }
+
+    // Helper: Format seconds to mm:ss
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    // Mathematical Curve Construction
+    // Builds a realistic retention decay curve through key anchor points:
+    // 0s: 100%
+    // 3s: Hook rate
+    // L/2: Midpoint
+    // L: End rate + optional Loop spike surge
+    function calculateRetentionCurve(duration, hookPct, midPct, endPct, loopBoost) {
+      const points = [];
+      const midTime = duration / 2;
+      
+      // Effective terminal value considering loop rewatch boost
+      const terminalPct = Math.min(100, endPct + loopBoost);
+
+      for (let t = 0; t <= duration; t++) {
+        let ret = 100;
+
+        if (t <= 3) {
+          // Rapid initial drop from 100 down to Hook percentage at t=3
+          const progress = t / 3;
+          // Cubic ease-out drop representation
+          ret = 100 - (100 - hookPct) * Math.pow(progress, 0.85);
+        } else if (t <= midTime) {
+          // Mid falloff from Hook down to Midpoint
+          const range = midTime - 3;
+          const progress = (t - 3) / range;
+          ret = hookPct - (hookPct - midPct) * Math.pow(progress, 1.05);
+        } else {
+          // Falloff from Midpoint to video end, plus loop surge near the conclusion
+          const range = duration - midTime;
+          const progress = (t - midTime) / range;
+          
+          // Base natural drop
+          const baseDecay = midPct - (midPct - endPct) * progress;
+          
+          // Terminal loop spike occurs during the last 15-20% of duration
+          let spike = 0;
+          if (loopBoost > 0 && progress > 0.7) {
+            const spikeProgress = (progress - 0.7) / 0.3;
+            spike = loopBoost * Math.pow(spikeProgress, 2);
+          }
+          
+          ret = Math.min(100, Math.max(0, baseDecay + spike));
+        }
+
+        // Clamp within realistic retention boundaries
+        ret = Math.max(0, Math.min(100, ret));
+        points.push({
+          second: t,
+          retention: parseFloat(ret.toFixed(2))
+        });
+      }
+
+      return points;
+    }
+
+    // Calculate integrated metrics (Area under curve -> Average Watch Time)
+    function computeMetrics(curveData, duration, totalViews) {
+      // Numerical integration using trapezoidal rule for accurate mean
+      let totalArea = 0;
+      for (let i = 0; i < curveData.length - 1; i++) {
+        const y1 = curveData[i].retention / 100;
+        const y2 = curveData[i + 1].retention / 100;
+        totalArea += (y1 + y2) / 2; // delta-t is 1 second
+      }
+
+      const avgWatchTimeSeconds = totalArea;
+      const avgRetentionRatio = (avgWatchTimeSeconds / duration) * 100;
+      const totalWatchedHours = (avgWatchTimeSeconds * totalViews) / 3600;
+      
+      const lastPoint = curveData[curveData.length - 1];
+      const finalActiveViewers = Math.round((lastPoint.retention / 100) * totalViews);
+
+      return {
+        avgWatchTime: avgWatchTimeSeconds,
+        avgRetentionRate: avgRetentionRatio,
+        totalHours: totalWatchedHours,
+        finalViewers: finalActiveViewers,
+        finalRetention: lastPoint.retention
+      };
+    }
+
+    // Assess retention potential according to Meta Reels recommendation patterns
+    function evaluateRetentionQuality(hook, mid, end, loopBoost, avgRate) {
+      const isDark = document.documentElement.classList.contains('dark');
+
+      // Condition 1: Viral Class
+      if (hook >= 75 && end >= 35 && avgRate >= 50) {
+        return {
+          title: "Viral Distribution Candidate",
+          tier: "Tier 1: High Reach",
+          badgeBg: isDark ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800" : "bg-emerald-50 text-emerald-600 border border-emerald-200",
+          cardBorder: isDark ? "border-emerald-800 bg-emerald-950/20" : "border-emerald-200 bg-emerald-50/30",
+          tagClass: isDark ? "bg-emerald-900/60 text-emerald-300" : "bg-emerald-100 text-emerald-800",
+          icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>`,
+          desc: "Exceptional hook retention paired with strong completion metrics. Facebook's algorithm aggressively pushes videos with >70% 3-sec retention and completion rates above 35% into general Explore & recommended feeds.",
+          tip: "Replicate this hook framework across future videos; test subtle cliffhanger loops to maximize re-watch rate."
+        };
+      }
+      
+      // Condition 2: Weak Hook, good retention if they stay
+      if (hook < 55 && end >= 25) {
+        return {
+          title: "Severe Swipe-Away (Weak Hook)",
+          tier: "Optimization Required",
+          badgeBg: isDark ? "bg-amber-950/60 text-amber-400 border border-amber-800" : "bg-amber-50 text-amber-600 border border-amber-200",
+          cardBorder: isDark ? "border-amber-800 bg-amber-950/20" : "border-amber-200 bg-amber-50/30",
+          tagClass: isDark ? "bg-amber-900/60 text-amber-300" : "bg-amber-100 text-amber-800",
+          icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`,
+          desc: "Heavy viewer bleed occurs in the first 3 seconds. However, those who stay remain engaged. Your content quality is solid, but the initial premise fails to halt the mindless scroll.",
+          tip: "Add dynamic on-screen text in frame 1, remove slow intro greetings ('Hey guys'), and introduce instant movement or stakes."
+        };
+      }
+
+      // Condition 3: Good Hook, mid/late dropoff
+      if (hook >= 70 && end < 20) {
+        return {
+          title: "Pacing Plateau / Clickbait Fallout",
+          tier: "Drop-off Risk",
+          badgeBg: isDark ? "bg-orange-950/60 text-orange-400 border border-orange-800" : "bg-orange-50 text-orange-600 border border-orange-200",
+          cardBorder: isDark ? "border-orange-800 bg-orange-950/20" : "border-orange-200 bg-orange-50/30",
+          tagClass: isDark ? "bg-orange-900/60 text-orange-300" : "bg-orange-100 text-orange-800",
+          icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>`,
+          desc: "You successfully captured attention in the first 3 seconds, but experienced a sharp drop in the middle. The payoff took too long or the pacing stalled.",
+          tip: "Trim narrative fat in the middle; insert visual pattern interrupts (b-roll, zoom cuts, sound effects) every 3-4 seconds."
+        };
+      }
+
+      // Condition 4: Loop Master
+      if (loopBoost >= 15 && end >= 30) {
+        return {
+          title: "High Loop Multiplier",
+          tier: "Algorithmic Leverage",
+          badgeBg: isDark ? "bg-indigo-950/60 text-indigo-400 border border-indigo-800" : "bg-indigo-50 text-indigo-600 border border-indigo-200",
+          cardBorder: isDark ? "border-indigo-800 bg-indigo-950/20" : "border-indigo-200 bg-indigo-50/30",
+          tagClass: isDark ? "bg-indigo-900/60 text-indigo-300" : "bg-indigo-100 text-indigo-800",
+          icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>`,
+          desc: "The video generates noticeable re-watch loops at the conclusion. Loops dramatically raise the average watch time metric past baseline expectations.",
+          tip: "Design transitions where the closing sentence syntactically links directly to the opening sentence for endless re-watching."
+        };
+      }
+
+      // Condition 5: Average Benchmark
+      return {
+        title: "Standard Algorithmic Trajectory",
+        tier: "Standard Distribution",
+        badgeBg: isDark ? "bg-slate-800 text-slate-300 border border-slate-700" : "bg-slate-100 text-slate-700 border border-slate-200",
+        cardBorder: isDark ? "border-slate-800 bg-slate-900/60" : "border-slate-200 bg-slate-50/60",
+        tagClass: isDark ? "bg-slate-800 text-slate-300" : "bg-slate-200 text-slate-700",
+        icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
+        desc: "Engagement tracks within normative expectations for organic Reels. While it delivers steady reach to core followers, it will need a sharper hook to hit the secondary recommendation wave.",
+        tip: "Experiment with controversial questions, unexpected visual setups, or shorter total duration (15s-20s) to boost completion."
+      };
+    }
+
+    // Initialize or Update Chart.js Instance
+    function renderChart(curveData, totalViews, duration) {
+      const labels = curveData.map(d => `${d.second}s`);
+      const retentionData = curveData.map(d => d.retention);
+      const viewersData = curveData.map(d => Math.round((d.retention / 100) * totalViews));
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? '#334155' : '#f1f5f9';
+      const tickColor = isDark ? '#94a3b8' : '#64748b';
+      const secondaryTickColor = isDark ? '#64748b' : '#94a3b8';
+
+      const ctx = document.getElementById('retentionChart').getContext('2d');
+
+      // Create gradient fill for the retention line
+      const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+      gradient.addColorStop(0, isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(8, 102, 255, 0.22)');
+      gradient.addColorStop(0.7, isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(8, 102, 255, 0.04)');
+      gradient.addColorStop(1, 'rgba(8, 102, 255, 0)');
+
+      if (chartInstance) {
+        chartInstance.data.labels = labels;
+        chartInstance.data.datasets[0].data = retentionData;
+        chartInstance.data.datasets[1].data = viewersData;
+        chartInstance.options.scales.y1.max = totalViews;
+        chartInstance.update('none'); // Update smoothly without full reset
+        return;
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Audience Retention %',
+              data: retentionData,
+              borderColor: '#0866ff',
+              borderWidth: 2.8,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              pointHoverBackgroundColor: '#0866ff',
+              pointHoverBorderColor: '#ffffff',
+              pointHoverBorderWidth: 2,
+              tension: 0.35,
+              fill: true,
+              backgroundColor: gradient,
+              yAxisID: 'y',
+              order: 1
+            },
+            {
+              label: 'Remaining Viewers',
+              data: viewersData,
+              borderColor: 'transparent',
+              backgroundColor: 'transparent',
+              pointRadius: 0,
+              yAxisID: 'y1',
+              order: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(15, 23, 42, 0.92)',
+              titleColor: '#f8fafc',
+              bodyColor: '#e2e8f0',
+              padding: 10,
+              cornerRadius: 8,
+              boxPadding: 4,
+              usePointStyle: true,
+              callbacks: {
+                title: function(items) {
+                  return `Timeline: ${items[0].label} (${formatTime(parseInt(items[0].label))})`;
+                },
+                label: function(context) {
+                  if (context.datasetIndex === 0) {
+                    return ` Retention: ${context.parsed.y.toFixed(1)}%`;
+                  }
+                  if (context.datasetIndex === 1) {
+                    return ` Active Viewers: ${formatNumber(context.parsed.y)}`;
+                  }
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: gridColor,
+                drawBorder: false
+              },
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                color: tickColor,
+                maxTicksLimit: 10,
+                callback: function(val, index) {
+                  return `${this.getLabelForValue(val)}`;
+                }
+              }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              min: 0,
+              max: 100,
+              grid: {
+                color: gridColor,
+                drawBorder: false
+              },
+              ticks: {
+                font: { family: 'Inter', size: 11 },
+                color: tickColor,
+                stepSize: 20,
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              min: 0,
+              max: totalViews,
+              grid: {
+                drawOnChartArea: false,
+                drawBorder: false
+              },
+              ticks: {
+                font: { family: 'Inter', size: 10 },
+                color: secondaryTickColor,
+                callback: function(value) {
+                  if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                  if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                  return value;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Main Update Orchestrator
+    function updateSimulation() {
+      // 1. Read input values
+      const views = Math.max(10, parseInt(elements.totalViews.value) || 10000);
+      const duration = parseInt(elements.videoLength.value);
+      const hook = parseInt(elements.hookRetention.value);
+      const mid = parseInt(elements.midRetention.value);
+      const end = parseInt(elements.endRetention.value);
+      const loop = parseInt(elements.loopFactor.value);
+
+      // 2. Update Label Texts
+      elements.viewsDisplay.textContent = formatNumber(views);
+      elements.lengthDisplay.textContent = `${duration}s`;
+      elements.hookDisplay.textContent = `${hook}%`;
+      elements.midDisplay.textContent = `${mid}%`;
+      elements.endDisplay.textContent = `${end}%`;
+      elements.loopDisplay.textContent = loop > 0 ? `+${loop}%` : '0%';
+
+      // 3. Generate Mathematical Curve Data
+      const curve = calculateRetentionCurve(duration, hook, mid, end, loop);
+
+      // 4. Update Milestone Badges
+      elements.tagHook.textContent = `${hook}%`;
+      elements.tagMid.textContent = `${mid}%`;
+      const finalActualRetention = curve[curve.length - 1].retention;
+      elements.tagEnd.textContent = `${Math.round(finalActualRetention)}%`;
+
+      // 5. Calculate Metrics
+      const metrics = computeMetrics(curve, duration, views);
+
+      elements.avgWatchTime.textContent = metrics.avgWatchTime.toFixed(1);
+      elements.watchTimeRatio.textContent = `${metrics.avgRetentionRate.toFixed(1)}% of duration`;
+      elements.avgRetentionRate.textContent = `${metrics.avgRetentionRate.toFixed(1)}%`;
+      elements.totalWatchedHours.textContent = `${formatNumber(metrics.totalHours)} total hours watched`;
+      elements.finalViewersDisplay.textContent = formatNumber(metrics.finalViewers);
+      elements.completedLabel.textContent = `${((metrics.finalViewers / views) * 100).toFixed(0)}% reached the finale`;
+
+      // 6. Update Algorithmic Evaluation
+      const assessment = evaluateRetentionQuality(hook, mid, end, loop, metrics.avgRetentionRate);
+      
+      elements.assessmentCard.className = `p-5 rounded-2xl border transition-all duration-300 ${assessment.cardBorder}`;
+      elements.assessmentBadge.className = `p-2.5 rounded-xl shrink-0 mt-0.5 ${assessment.badgeBg}`;
+      elements.assessmentBadge.innerHTML = assessment.icon;
+      elements.assessmentTitle.textContent = assessment.title;
+      elements.tierTag.className = `text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${assessment.tagClass}`;
+      elements.tierTag.textContent = assessment.tier;
+      elements.assessmentDesc.textContent = assessment.desc;
+      elements.assessmentTip.textContent = assessment.tip;
+
+      // 7. Render or update Chart
+      renderChart(curve, views, duration);
+    }
+
+    // Attach Event Listeners to all reactive controls
+    [
+      elements.totalViews,
+      elements.videoLength,
+      elements.hookRetention,
+      elements.midRetention,
+      elements.endRetention,
+      elements.loopFactor
+    ].forEach(input => {
+      input.addEventListener('input', updateSimulation);
+    });
+
+    // Preset Handlers
+    elements.presetViral.addEventListener('click', () => {
+      elements.videoLength.value = 24;
+      elements.hookRetention.value = 82;
+      elements.midRetention.value = 60;
+      elements.endRetention.value = 45;
+      elements.loopFactor.value = 18;
+      updateSimulation();
+    });
+
+    elements.presetAverage.addEventListener('click', () => {
+      elements.videoLength.value = 35;
+      elements.hookRetention.value = 62;
+      elements.midRetention.value = 38;
+      elements.endRetention.value = 22;
+      elements.loopFactor.value = 5;
+      updateSimulation();
+    });
+
+    elements.presetWeakHook.addEventListener('click', () => {
+      elements.videoLength.value = 45;
+      elements.hookRetention.value = 35;
+      elements.midRetention.value = 25;
+      elements.endRetention.value = 16;
+      elements.loopFactor.value = 0;
+      updateSimulation();
+    });
+
+    // Initial Execution
+    window.onload = function () {
+      initTheme();
+      updateSimulation();
+    };
+
+    // Responsive Canvas Resize Observer
+    window.addEventListener('resize', () => {
+      if (chartInstance) {
+        chartInstance.resize();
+      }
+    });
+  </script>
+</body>
+</html>
