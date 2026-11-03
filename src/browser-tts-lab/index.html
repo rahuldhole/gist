@@ -17,12 +17,13 @@ Updated: 2026-11-03T12:00:00+01:00
   <title>Browser TTS Lab (Web Speech API)</title>
 
   <script>
-    // Apply theme before paint (no flash)
+    // Apply theme before paint. Stored value: 'system' | 'light' | 'dark'
     (function () {
       try {
         const saved = localStorage.getItem('gist-theme');
-        const dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
       } catch (e) {}
     })();
   </script>
@@ -83,19 +84,24 @@ Updated: 2026-11-03T12:00:00+01:00
             </span>
           </div>
 
-          <button
-            @click="toggleTheme"
-            class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-colors"
-            :title="isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'"
-            :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
-          >
-            <app-icon :name="isDark ? 'sun' : 'moon'" class="w-5 h-5"></app-icon>
-          </button>
+          <!-- Theme: System / Light / Dark -->
+          <div class="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60" role="group" aria-label="Theme">
+            <button
+              v-for="t in themeOptions" :key="t.value"
+              @click="setTheme(t.value)"
+              :title="t.label" :aria-label="t.label" :aria-pressed="themeMode === t.value"
+              class="p-1.5 rounded-lg transition-colors"
+              :class="themeMode === t.value
+                ? 'bg-white dark:bg-slate-950 text-indigo-600 dark:text-indigo-400 shadow'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+            >
+              <app-icon :name="t.icon" class="w-4 h-4"></app-icon>
+            </button>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- Unsupported banner -->
     <div v-if="!isSupported" class="bg-red-500/10 border-b border-red-500/30 text-red-600 dark:text-red-300 text-sm text-center py-2 px-4">
       Your browser doesn't support speech synthesis. Try Chrome, Edge, Safari or Firefox.
     </div>
@@ -112,31 +118,67 @@ Updated: 2026-11-03T12:00:00+01:00
               <app-icon name="mic" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></app-icon>
               Voice Selection
             </label>
-            <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">{{ filteredVoices.length }} available</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">{{ filteredVoices.length }} / {{ voices.length }}</span>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search voices..."
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-400 dark:placeholder-slate-500"
-            />
-            <select
-              v-model="selectedLang"
-              class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="">All Languages</option>
-              <option v-for="lang in availableLangs" :key="lang" :value="lang">{{ lang }}</option>
-            </select>
+          <!-- Filters -->
+          <div class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search voices..."
+                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-400 dark:placeholder-slate-500"
+              />
+              <select
+                v-model="selectedLang"
+                class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="">All Languages</option>
+                <option v-for="lang in availableLangs" :key="lang" :value="lang">{{ lang }}</option>
+              </select>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span class="w-14 text-slate-500 dark:text-slate-400">Type</span>
+              <button v-for="o in typeOptions" :key="o.value" @click="typeFilter = o.value"
+                class="px-2.5 py-1 rounded-full border transition-colors" :class="chipClass(typeFilter === o.value)">
+                {{ o.label }} <span class="opacity-70 font-mono">{{ counts[o.value] }}</span>
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span class="w-14 text-slate-500 dark:text-slate-400">Quality</span>
+              <button v-for="o in qualityOptions" :key="o.value" @click="qualityFilter = o.value"
+                class="px-2.5 py-1 rounded-full border transition-colors" :class="chipClass(qualityFilter === o.value)">
+                {{ o.label }} <span class="opacity-70 font-mono">{{ counts[o.value] }}</span>
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+              <label class="flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-300">
+                <input type="checkbox" v-model="myLangOnly" class="accent-indigo-500" />
+                My language only
+              </label>
+              <button @click="naturalLocalOnly" class="ml-auto px-2.5 py-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors">
+                ★ Natural + Local
+              </button>
+              <button @click="resetFilters" class="px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                Clear
+              </button>
+            </div>
           </div>
 
           <div>
             <div v-if="voices.length === 0" class="text-xs text-slate-500 py-4 text-center">
               Loading voices…
             </div>
-            <div v-else-if="filteredVoices.length === 0" class="text-xs text-slate-500 py-4 text-center">
-              No voices match your filters.
+            <div v-else-if="filteredVoices.length === 0" class="text-xs text-slate-500 py-4 text-center space-y-1">
+              <p>No voices match your filters.</p>
+              <p v-if="typeFilter === 'local' && qualityFilter === 'natural'" class="text-[11px] leading-relaxed">
+                No natural offline voices are installed. Install Enhanced/Premium voices in your OS
+                (macOS: Settings → Accessibility → Spoken Content → System Voice → Manage Voices), then reload.
+              </p>
             </div>
             <select
               v-else
@@ -147,7 +189,7 @@ Updated: 2026-11-03T12:00:00+01:00
               class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-1 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-indigo-500 font-mono"
             >
               <option v-for="voice in filteredVoices" :key="voice.voiceURI" :value="voice.voiceURI" class="px-2 py-1.5">
-                {{ voice.name }} ({{ voice.lang }}){{ voice.default ? ' [Default]' : '' }}{{ voice.localService ? ' [Local]' : ' [Network]' }}
+                {{ isNatural(voice) ? '★ ' : '' }}{{ voice.name }} ({{ voice.lang }}){{ voice.default ? ' [Default]' : '' }}{{ voice.localService ? ' [Local]' : ' [Network]' }}
               </option>
             </select>
           </div>
@@ -161,6 +203,12 @@ Updated: 2026-11-03T12:00:00+01:00
               <span class="text-slate-500 dark:text-slate-400">Type:</span>
               <span class="font-semibold" :class="currentVoice.localService ? 'text-amber-600 dark:text-amber-400' : 'text-cyan-600 dark:text-cyan-400'">
                 {{ currentVoice.localService ? 'Local (Offline Safe)' : 'Network / High Quality' }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Quality:</span>
+              <span class="font-semibold" :class="isNatural(currentVoice) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'">
+                {{ isNatural(currentVoice) ? '★ Natural (detected)' : 'Standard' }}
               </span>
             </div>
           </div>
@@ -247,12 +295,10 @@ Updated: 2026-11-03T12:00:00+01:00
             </div>
           </div>
 
-          <!-- Progress -->
           <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
             <div class="h-full bg-indigo-500 transition-all duration-150" :style="{ width: progress + '%' }"></div>
           </div>
 
-          <!-- Controls -->
           <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 flex-wrap gap-3">
             <div class="flex items-center gap-2">
               <button
@@ -319,6 +365,7 @@ Updated: 2026-11-03T12:00:00+01:00
             <li><strong class="text-slate-800 dark:text-slate-300">Autoplay:</strong> browsers require a user gesture (click/tap) before speaking.</li>
             <li><strong class="text-slate-800 dark:text-slate-300">Long text:</strong> Chrome can cut off after ~15s. This app (and the snippet) splits text into sentences.</li>
             <li><strong class="text-slate-800 dark:text-slate-300">Highlighting:</strong> network voices and some mobile browsers don't emit word events, so the current sentence is highlighted instead.</li>
+            <li><strong class="text-slate-800 dark:text-slate-300">Natural detection:</strong> the API has no quality flag. ★ is guessed from the voice name (Natural, Neural, Premium, Enhanced, Siri, Online, Google).</li>
           </ul>
         </div>
       </section>
@@ -334,6 +381,7 @@ Updated: 2026-11-03T12:00:00+01:00
       'shield-check': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
       'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
       'moon': '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+      'monitor': '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
       'mic': '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',
       'sliders': '<line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/>',
       'rotate-ccw': '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
@@ -348,8 +396,13 @@ Updated: 2026-11-03T12:00:00+01:00
     };
 
     const STORE_KEY = 'tts-lab-v2';
+    const THEME_KEY = 'gist-theme'; // 'system' | 'light' | 'dark'
     const MAX_CHUNK = 180;
     const DEFAULT_PARAMS = { rate: 1, pitch: 1, volume: 1 };
+
+    // The Web Speech API has no quality flag, so detect by name
+    const NATURAL_RE = /natural|neural|premium|enhanced|siri|wavenet|studio|journey|online|google/i;
+    const isNatural = (v) => NATURAL_RE.test(v.name) || NATURAL_RE.test(v.voiceURI);
 
     const loadSaved = () => {
       try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
@@ -386,7 +439,34 @@ Updated: 2026-11-03T12:00:00+01:00
         const selectedVoiceURI = ref(saved.voiceURI || '');
         const searchQuery = ref('');
         const selectedLang = ref('');
-        const isDark = ref(document.documentElement.classList.contains('dark'));
+
+        /* ---------- Filters ---------- */
+        const typeFilter = ref(saved.typeFilter || 'all');       // all | local | network
+        const qualityFilter = ref(saved.qualityFilter || 'all'); // all | natural | standard
+        const myLangOnly = ref(!!saved.myLangOnly);
+
+        const typeOptions = [
+          { value: 'all', label: 'All' },
+          { value: 'local', label: 'Local' },
+          { value: 'network', label: 'Network' },
+        ];
+        const qualityOptions = [
+          { value: 'all', label: 'Any' },
+          { value: 'natural', label: '★ Natural' },
+          { value: 'standard', label: 'Standard' },
+        ];
+
+        const chipClass = (active) => active
+          ? 'bg-indigo-600 text-white border-indigo-500'
+          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700';
+
+        const resetFilters = () => {
+          searchQuery.value = '';
+          selectedLang.value = '';
+          typeFilter.value = 'all';
+          qualityFilter.value = 'all';
+          myLangOnly.value = false;
+        };
 
         const samplePresets = {
           welcome: "Welcome to the Browser Text to Speech Studio. This application uses the native Web Speech API available in modern web browsers. It runs entirely client-side without cloud API keys, cost limits, or terms of service violations.",
@@ -413,12 +493,34 @@ Updated: 2026-11-03T12:00:00+01:00
         let currentUtterance = null; // keep reference (prevents GC bug in Chrome)
         let restartTimer = null;
 
-        /* ---------- Theme ---------- */
-        const toggleTheme = () => {
-          isDark.value = !isDark.value;
-          document.documentElement.classList.toggle('dark', isDark.value);
-          try { localStorage.setItem('gist-theme', isDark.value ? 'dark' : 'light'); } catch (e) {}
+        /* ---------- Theme (system / light / dark) ---------- */
+        const themeOptions = [
+          { value: 'system', label: 'System', icon: 'monitor' },
+          { value: 'light', label: 'Light', icon: 'sun' },
+          { value: 'dark', label: 'Dark', icon: 'moon' },
+        ];
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const readTheme = () => {
+          try {
+            const v = localStorage.getItem(THEME_KEY);
+            return ['system', 'light', 'dark'].includes(v) ? v : 'system';
+          } catch (e) { return 'system'; }
         };
+        const themeMode = ref(readTheme());
+        const isDark = ref(document.documentElement.classList.contains('dark'));
+
+        const applyTheme = () => {
+          const dark = themeMode.value === 'dark' || (themeMode.value === 'system' && mq.matches);
+          isDark.value = dark;
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        };
+        const setTheme = (mode) => {
+          themeMode.value = mode;
+          try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+          applyTheme();
+        };
+        const onSystemThemeChange = () => { if (themeMode.value === 'system') applyTheme(); };
 
         /* ---------- Persistence ---------- */
         const persist = () => {
@@ -427,26 +529,30 @@ Updated: 2026-11-03T12:00:00+01:00
               voiceURI: selectedVoiceURI.value,
               params: params.value,
               text: inputText.value,
+              typeFilter: typeFilter.value,
+              qualityFilter: qualityFilter.value,
+              myLangOnly: myLangOnly.value,
             }));
           } catch (e) {}
         };
 
         /* ---------- Voices ---------- */
+        const userPref = (navigator.language || 'en').toLowerCase();
+        const userBase = userPref.split('-')[0];
+
         const loadVoices = () => {
           if (!synth) return;
           const list = synth.getVoices();
           if (!list.length) return;
-          const pref = (navigator.language || 'en').toLowerCase();
-          const base = pref.split('-')[0];
           const rank = v => {
-            const l = v.lang.toLowerCase();
-            return l === pref ? 0 : l.startsWith(base) ? 1 : 2;
+            const l = v.lang.toLowerCase().replace('_', '-');
+            return l === userPref ? 0 : l.startsWith(userBase) ? 1 : 2;
           };
           voices.value = [...list].sort((a, b) => rank(a) - rank(b) || a.lang.localeCompare(b.lang) || a.name.localeCompare(b.name));
 
           const stillExists = voices.value.some(v => v.voiceURI === selectedVoiceURI.value);
           if (!stillExists) {
-            const def = voices.value.find(v => v.default) || voices.value.find(v => v.lang.toLowerCase().startsWith(base)) || voices.value[0];
+            const def = voices.value.find(v => v.default) || voices.value.find(v => v.lang.toLowerCase().startsWith(userBase)) || voices.value[0];
             selectedVoiceURI.value = def ? def.voiceURI : '';
           }
         };
@@ -455,13 +561,45 @@ Updated: 2026-11-03T12:00:00+01:00
 
         const filteredVoices = computed(() => {
           const q = searchQuery.value.toLowerCase();
-          return voices.value.filter(v =>
-            (!q || v.name.toLowerCase().includes(q) || v.lang.toLowerCase().includes(q)) &&
-            (!selectedLang.value || v.lang === selectedLang.value)
-          );
+          return voices.value
+            .filter(v => {
+              const lang = v.lang.toLowerCase().replace('_', '-');
+              if (q && !v.name.toLowerCase().includes(q) && !lang.includes(q)) return false;
+              if (selectedLang.value && v.lang !== selectedLang.value) return false;
+              if (typeFilter.value === 'local' && !v.localService) return false;
+              if (typeFilter.value === 'network' && v.localService) return false;
+              if (qualityFilter.value === 'natural' && !isNatural(v)) return false;
+              if (qualityFilter.value === 'standard' && isNatural(v)) return false;
+              if (myLangOnly.value && !lang.startsWith(userBase)) return false;
+              return true;
+            })
+            .sort((a, b) => Number(isNatural(b)) - Number(isNatural(a))); // natural first (stable)
+        });
+
+        const counts = computed(() => {
+          const all = voices.value;
+          return {
+            all: all.length,
+            local: all.filter(v => v.localService).length,
+            network: all.filter(v => !v.localService).length,
+            natural: all.filter(isNatural).length,
+            standard: all.filter(v => !isNatural(v)).length,
+          };
         });
 
         const currentVoice = computed(() => voices.value.find(v => v.voiceURI === selectedVoiceURI.value) || null);
+
+        const naturalLocalOnly = () => {
+          resetFilters();
+          typeFilter.value = 'local';
+          qualityFilter.value = 'natural';
+          nextTick(() => {
+            const first = filteredVoices.value[0];
+            if (first && !filteredVoices.value.some(v => v.voiceURI === selectedVoiceURI.value)) {
+              selectedVoiceURI.value = first.voiceURI;
+            }
+          });
+        };
 
         /* ---------- Derived ---------- */
         const wordCount = computed(() => inputText.value.trim() ? inputText.value.trim().split(/\s+/).length : 0);
@@ -639,7 +777,7 @@ function speakText(text) {
           }
         );
 
-        watch(inputText, persist);
+        watch([inputText, typeFilter, qualityFilter, myLangOnly], persist);
 
         watch(hlStart, () => {
           nextTick(() => {
@@ -656,10 +794,12 @@ function speakText(text) {
         const onUnload = () => { if (synth) synth.cancel(); };
 
         onMounted(() => {
+          applyTheme();
+          mq.addEventListener('change', onSystemThemeChange);
+
           loadVoices();
           if (synth) {
             synth.addEventListener('voiceschanged', loadVoices);
-            // Some browsers populate voices late without firing the event
             let tries = 0;
             const poll = setInterval(() => {
               if (voices.value.length || ++tries > 10) return clearInterval(poll);
@@ -671,6 +811,7 @@ function speakText(text) {
         });
 
         onBeforeUnmount(() => {
+          mq.removeEventListener('change', onSystemThemeChange);
           if (synth) synth.removeEventListener('voiceschanged', loadVoices);
           window.removeEventListener('keydown', onKey);
           window.removeEventListener('beforeunload', onUnload);
@@ -679,10 +820,13 @@ function speakText(text) {
         return {
           isSupported, voices, selectedVoiceURI, searchQuery, selectedLang,
           availableLangs, filteredVoices, currentVoice,
+          typeFilter, qualityFilter, myLangOnly, typeOptions, qualityOptions,
+          counts, isNatural, chipClass, resetFilters, naturalLocalOnly,
           inputText, wordCount, params, samplePresets,
           isPlaying, isPaused, currentStatus, statusColorClass,
-          hl, progress, snippet, copied, isDark,
-          toggleTheme, togglePlay, play, stop, setPreset, resetParameters, copyCode,
+          hl, progress, snippet, copied,
+          isDark, themeMode, themeOptions, setTheme,
+          togglePlay, play, stop, setPreset, resetParameters, copyCode,
         };
       }
     })
