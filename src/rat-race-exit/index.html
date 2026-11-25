@@ -238,18 +238,32 @@ Updated: 2026-11-25T14:35:00+00:00
                     </div>
 
                     <div class="space-y-5">
-                        <!-- Initial Investment -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label for="initialInvestment" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                    Initial Investment
-                                </label>
-                                <div class="relative w-36">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ currencySymbol }}</span>
+                        <!-- Initial Investment (Supports Cross-Border Asset Currency + FX Drift) -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center gap-2 mb-1">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <label for="initialInvestment" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        Initial Investment
+                                    </label>
+                                    <select :value="investmentCurrency"
+                                        @change="onInvestmentCurrencyChanged($event.target.value, investmentCurrency)"
+                                        aria-label="Investment Asset Currency"
+                                        title="Currency of your invested portfolio (can differ from your local withdrawal currency)"
+                                        :class="isCrossCurrency
+                                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700'"
+                                        class="px-1.5 py-0.5 rounded-lg border text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-colors">
+                                        <option v-for="c in currencies" :key="c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                            {{ c.code }} ({{ c.symbol }})
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="relative w-36 shrink-0">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ investmentCurrencySymbol }}</span>
                                     <input v-model="inputs.initialInvestment" 
                                         @blur="formatOnBlur('initialInvestment')"
                                         type="text" id="initialInvestment" inputmode="decimal"
-                                        class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                        class="w-full pl-8 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
                             <input type="range" min="0" max="1000" step="1"
@@ -258,6 +272,110 @@ Updated: 2026-11-25T14:35:00+00:00
                                 @input="onInvestmentSlider($event.target.value)"
                                 aria-label="Initial Investment Slider"
                                 class="exit-slider">
+
+                            <!-- Cross-Border Toggle Prompt (when domestic) -->
+                            <div v-if="!isCrossCurrency" class="flex items-center justify-end">
+                                <button @click="toggleCrossCurrencyMode" type="button"
+                                    class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                    title="Invest in a foreign market currency while spending in your local currency with annual FX depreciation">
+                                    <span>+ Foreign Market &amp; FX Depreciation</span>
+                                </button>
+                            </div>
+
+                            <!-- Cross-Border FX & Currency Depreciation Panel -->
+                            <div v-else class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-emerald-500/25 dark:border-emerald-500/20 space-y-2.5">
+                                <!-- Row 1: Local Value & Spot FX Rate -->
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                                    <span class="text-slate-600 dark:text-slate-300">
+                                        Local Value: <strong class="text-slate-900 dark:text-white">{{ currencySymbol }}{{ formatCompact(initialInvestment) }}</strong>
+                                    </span>
+                                    <div class="flex items-center gap-1 text-[11px]">
+                                        <span class="text-slate-500 dark:text-slate-400 font-medium">1 {{ investmentCurrency }} =</span>
+                                        <input :value="inputs.spotFxRate !== '' ? inputs.spotFxRate : formatFxRateEditable(liveSpotFxRate)"
+                                            @input="inputs.spotFxRate = $event.target.value"
+                                            @blur="onSpotFxBlur"
+                                            type="text" inputmode="decimal" aria-label="Spot Exchange Rate"
+                                            class="w-16 px-1.5 py-0.5 text-right font-semibold text-[11px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                        <span class="text-slate-600 dark:text-slate-300 font-semibold">{{ selectedCurrency }}</span>
+                                        <button v-if="inputs.spotFxRate !== ''" @click="inputs.spotFxRate = ''" type="button"
+                                            title="Reset to live FX rate"
+                                            class="ml-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">
+                                            Live
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Row 2: Currency Depreciation / FX Drift Rate -->
+                                <div class="pt-2 border-t border-slate-200/70 dark:border-slate-700/60 space-y-1.5">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-1 min-w-0">
+                                            <label for="fxDepreciationRate" class="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                                                {{ selectedCurrency }} Depreciation vs {{ investmentCurrency }}
+                                            </label>
+                                            <span class="group relative inline-flex items-center cursor-help shrink-0">
+                                                <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 bottom-full mb-2 w-64 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                                    Annual change in <strong>1 {{ investmentCurrency }} &rarr; {{ selectedCurrency }}</strong>. Positive (+) means {{ selectedCurrency }} weakens vs {{ investmentCurrency }} (FX tailwind for {{ investmentCurrency }} assets). Negative (&minus;) means {{ selectedCurrency }} strengthens (FX headwind). PPP estimates long-run drift from inflation differentials.
+                                                </span>
+                                            </span>
+                                        </div>
+                                        <div class="relative w-24 shrink-0">
+                                            <input v-model="inputs.fxDepreciationRate"
+                                                @input="userEditedFxDrift = true"
+                                                @blur="formatSignedOnBlur('fxDepreciationRate')"
+                                                type="text" id="fxDepreciationRate" inputmode="decimal"
+                                                aria-label="Annual Currency Depreciation Rate"
+                                                class="w-full pl-2 pr-8 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">%/yr</span>
+                                        </div>
+                                    </div>
+
+                                    <input type="range" min="-10" max="15" step="0.1"
+                                        :value="Math.min(Math.max(fxDepreciationRate, -10), 15)"
+                                        :style="{ '--fill': sliderFill(fxDepreciationRate, -10, 15) }"
+                                        @input="userEditedFxDrift = true; updateFromSlider('fxDepreciationRate', $event.target.value)"
+                                        aria-label="Currency Depreciation Rate Slider"
+                                        class="exit-slider">
+
+                                    <div class="flex flex-wrap items-center justify-between gap-1.5">
+                                        <div class="flex flex-wrap items-center gap-1">
+                                            <button v-for="preset in fxPresets" :key="preset.id"
+                                                @click="userEditedFxDrift = true; inputs.fxDepreciationRate = String(preset.rate)"
+                                                type="button"
+                                                :title="preset.desc"
+                                                :class="Math.abs(fxDepreciationRate - preset.rate) < 0.05
+                                                    ? 'bg-emerald-600 text-white font-semibold'
+                                                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 hover:border-emerald-400'"
+                                                class="px-1.5 py-0.5 rounded text-[10px] transition-colors cursor-pointer">
+                                                {{ preset.label }}
+                                            </button>
+                                        </div>
+                                        <button @click="toggleCrossCurrencyMode" type="button"
+                                            class="text-[10px] font-medium text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                                            title="Switch investment back to local currency">
+                                            Use {{ selectedCurrency }} only
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Row 3: FX Trajectory & Effective Local Return Strip -->
+                                <div class="px-2.5 py-1.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/60 text-[11px] space-y-0.5">
+                                    <div class="flex flex-wrap items-center justify-between gap-1 text-slate-600 dark:text-slate-300">
+                                        <span>1 {{ investmentCurrency }}: <strong>{{ formatFxRate(spotFxRate) }}</strong> &rarr; <strong>{{ formatFxRate(simulation.endingFxRate) }} {{ selectedCurrency }}</strong> in Yr {{ withdrawalDuration }}</span>
+                                        <span class="font-mono text-[10px]" :class="simulation.cumulativeFxFactor >= 1 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'">
+                                            {{ simulation.cumulativeFxFactor.toFixed(2) }}&times; FX
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-wrap items-center justify-between gap-1 text-slate-500 dark:text-slate-400">
+                                        <span>Eff. {{ selectedCurrency }} Return: <strong :class="effectiveLocalAnnualReturn >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'">{{ effectiveLocalAnnualReturn.toFixed(1) }}%/yr</strong></span>
+                                        <span :class="effectiveLocalRealReturn >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'" class="font-medium">
+                                            ({{ effectiveLocalRealReturn >= 0 ? '+' : '' }}{{ effectiveLocalRealReturn.toFixed(1) }}% real vs {{ inflationRate }}% CPI)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Monthly Withdrawal (Clean Mode Switch + Dynamic Multi-Layer Phases) -->
@@ -268,6 +386,10 @@ Updated: 2026-11-25T14:35:00+00:00
                                         class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                         Monthly Withdrawal
                                     </label>
+                                    <span v-if="isCrossCurrency"
+                                        class="px-1.5 py-0.5 rounded bg-sky-500/15 text-[10px] font-semibold text-sky-700 dark:text-sky-300">
+                                        in {{ selectedCurrency }}
+                                    </span>
                                     <span v-if="withdrawalPhases.length > 0"
                                         class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                                         Yr 1+
@@ -282,7 +404,7 @@ Updated: 2026-11-25T14:35:00+00:00
                                                 <strong>Inflation-Adjusted ({{ currencySymbol }}):</strong> Fixed phases step up by {{ inflationRate }}%/yr every year to preserve real buying power.
                                             </template>
                                             <template v-else>
-                                                <strong>Live Balance (%):</strong> Scales purely with live balance ({{ withdrawalPercent }}%/yr), with no extra inflation step-up. Beats {{ inflationRate }}% inflation when net growth ({{ (annualReturn - withdrawalPercent).toFixed(1) }}%) &ge; {{ inflationRate }}%.
+                                                <strong>Live Balance (%):</strong> Scales purely with live balance ({{ withdrawalPercent }}%/yr), with no extra inflation step-up. Beats {{ inflationRate }}% inflation when net growth ({{ (effectiveLocalAnnualReturn - withdrawalPercent).toFixed(1) }}%) &ge; {{ inflationRate }}%.
                                             </template>
                                         </span>
                                     </span>
@@ -339,10 +461,10 @@ Updated: 2026-11-25T14:35:00+00:00
                             <!-- Single Concise Sub-line + Progressive Actions -->
                             <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
                                 <button v-if="withdrawalMode === 'fixed'" @click="setSustainableWithdrawal" type="button"
-                                    :class="annualReturn > inflationRate ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
+                                    :class="effectiveLocalAnnualReturn > inflationRate ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
                                     class="hover:underline font-medium cursor-pointer"
-                                    :title="annualReturn > inflationRate ? 'Set to exact Fisher real monthly return so principal preserves buying power' : 'Return does not beat inflation — clicking sets nominal yield only (real principal will erode)'">
-                                    <template v-if="annualReturn > inflationRate">
+                                    :title="effectiveLocalAnnualReturn > inflationRate ? 'Set to exact Fisher real monthly return so principal preserves buying power' : 'Effective local return does not beat inflation — clicking sets nominal yield only (real principal will erode)'">
+                                    <template v-if="effectiveLocalAnnualReturn > inflationRate">
                                         Inflation-Proof Max: {{ currencySymbol }}{{ formatCompact(realMonthlyReturnAmount) }}/mo
                                     </template>
                                     <template v-else>
@@ -442,6 +564,10 @@ Updated: 2026-11-25T14:35:00+00:00
                                     <label for="annualReturn" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                         Expected Annual Return
                                     </label>
+                                    <span v-if="isCrossCurrency"
+                                        class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                                        in {{ investmentCurrency }}
+                                    </span>
                                     <span v-if="returnPhases.length > 0"
                                         class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                                         Yr 1+
@@ -511,6 +637,10 @@ Updated: 2026-11-25T14:35:00+00:00
                                     <label for="inflationRate" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                         Annual Inflation
                                     </label>
+                                    <span v-if="isCrossCurrency"
+                                        class="px-1.5 py-0.5 rounded bg-amber-500/15 text-[10px] font-semibold text-amber-700 dark:text-amber-300 truncate">
+                                        {{ activeCurrency.region }} ({{ selectedCurrency }})
+                                    </span>
                                     <span v-if="inflationPhases.length > 0"
                                         class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
                                         Yr 1+
@@ -816,9 +946,19 @@ Updated: 2026-11-25T14:35:00+00:00
                     <!-- Card 1: Initial Corpus -->
                     <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
                         <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Invested</span>
-                        <div class="mt-1.5 font-display text-2xl font-bold text-slate-900 dark:text-white truncate" :title="currencySymbol + formatCurrency(initialInvestment)">
-                            {{ currencySymbol }}{{ formatCompact(initialInvestment) }}
+                        <div class="mt-1.5 font-display text-2xl font-bold text-slate-900 dark:text-white truncate"
+                            :title="isCrossCurrency ? (investmentCurrencySymbol + formatCurrency(foreignInitialInvestment, 2, investmentCurrency) + ' = ' + currencySymbol + formatCurrency(initialInvestment)) : (currencySymbol + formatCurrency(initialInvestment))">
+                            <template v-if="isCrossCurrency">
+                                {{ investmentCurrencySymbol }}{{ formatCompact(foreignInitialInvestment, investmentCurrency) }}
+                                <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">({{ investmentCurrency }})</span>
+                            </template>
+                            <template v-else>
+                                {{ currencySymbol }}{{ formatCompact(initialInvestment) }}
+                            </template>
                         </div>
+                        <span v-if="isCrossCurrency" class="text-xs text-slate-600 dark:text-slate-300 mt-0.5 block font-medium">
+                            = {{ currencySymbol }}{{ formatCompact(initialInvestment) }} today (@ {{ formatFxRate(spotFxRate) }})
+                        </span>
                         <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block" :title="'To match today\'s purchasing power in Year ' + withdrawalDuration">
                             Needs {{ currencySymbol }}{{ formatCompact(simulation.breakEvenBalance) }} in Yr {{ withdrawalDuration }} ({{ simulation.cumulativeInflationFactor.toFixed(2) }}&times; CPI)
                         </span>
@@ -845,6 +985,9 @@ Updated: 2026-11-25T14:35:00+00:00
                             :title="currencySymbol + formatCurrency(finalBalance)">
                             {{ currencySymbol }}{{ formatCompact(finalBalance) }}
                         </div>
+                        <span v-if="isCrossCurrency" class="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 mt-0.5 block">
+                            {{ investmentCurrencySymbol }}{{ formatCompact(simulation.finalForeignBalance, investmentCurrency) }} @ {{ formatFxRate(simulation.endingFxRate) }} {{ selectedCurrency }}/{{ investmentCurrency }}
+                        </span>
                         <div class="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs">
                             <span class="font-semibold"
                                 :class="simulation.realFinalBalance >= initialInvestment * 0.995 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
@@ -955,10 +1098,13 @@ Updated: 2026-11-25T14:35:00+00:00
                                     </td>
                                     <td class="py-2.5 px-4 text-right font-semibold"
                                         :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'"
-                                        :title="'Nominal: ' + currencySymbol + formatCurrency(row.endingBalance, 0) + ' | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realEndingBalance, 0)">
+                                        :title="'Nominal: ' + currencySymbol + formatCurrency(row.endingBalance, 0) + ' | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realEndingBalance, 0) + (isCrossCurrency ? (' | Foreign: ' + investmentCurrencySymbol + formatCurrency(row.foreignEndingBalance, 0, investmentCurrency)) : '')">
                                         <div>{{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realEndingBalance : row.endingBalance) }}</div>
                                         <div v-if="valueDisplayMode === 'nominal' && row.inflationFactor > 1.01 && row.endingBalance > 0" class="text-[10px] text-amber-600 dark:text-amber-400 font-normal">
                                             Today's {{ currencySymbol }}: {{ currencySymbol }}{{ formatCompact(row.realEndingBalance) }}
+                                        </div>
+                                        <div v-if="isCrossCurrency && row.endingBalance > 0" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal">
+                                            {{ investmentCurrencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realForeignEndingBalance : row.foreignEndingBalance, investmentCurrency) }} @ {{ formatFxRate(row.fxRate) }}
                                         </div>
                                     </td>
                                 </tr>
@@ -1124,6 +1270,9 @@ Updated: 2026-11-25T14:35:00+00:00
                 };
 
                 const initialCurr = currencies.find(c => c.code === initialCurrency) || currencies[0];
+                const initialInvCurrency = savedPlan && savedPlan.ic && currencies.some(c => c.code === savedPlan.ic)
+                    ? savedPlan.ic
+                    : initialCurr.code;
                 const defaultInputs = {
                     initialInvestment: formatInitSpaces(initialCurr.defaultCorpus),
                     annualReturn: '6',
@@ -1131,7 +1280,9 @@ Updated: 2026-11-25T14:35:00+00:00
                     monthlyWithdrawal: formatInitSpaces(initialCurr.defaultMonthly),
                     withdrawalPercent: '2',
                     inflationRate: String(initialCurr.defaultRate),
-                    taxRate: '0'
+                    taxRate: '0',
+                    fxDepreciationRate: '0',
+                    spotFxRate: ''
                 };
                 const restoredInputs = savedPlan && savedPlan.i && typeof savedPlan.i === 'object'
                     ? {
@@ -1162,6 +1313,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     activeTab: 'chart',
                     valueDisplayMode: savedPlan && savedPlan.v === 'real' ? 'real' : 'nominal', // 'nominal' | 'real'
                     selectedCurrency: initialCurr.code,
+                    investmentCurrency: initialInvCurrency,
                     currencyAutoDetected,
                     currencies,
                     withdrawalMode: savedPlan && (savedPlan.m === 'fixed' || savedPlan.m === 'percent') ? savedPlan.m : 'percent',
@@ -1172,6 +1324,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     stressScenario: savedPlan && (savedPlan.s === 'crash30' || savedPlan.s === 'crash45') ? savedPlan.s : 'none',
                     shareCopied: false,
                     userEditedInflation: Boolean(savedPlan),
+                    userEditedFxDrift: Boolean(savedPlan && savedPlan.ic && savedPlan.ic !== initialCurr.code && savedPlan.i && savedPlan.i.fxDepreciationRate !== undefined),
                     swrPresets: [
                         { label: '2% Ultra-Safe', rate: 2, desc: 'Ultra-conservative 2% endowment draw — maximum capital growth' },
                         { label: '3% Safe', rate: 3, desc: 'Ultra-safe 3% perpetual rule — strong capital compounding' },
@@ -1347,8 +1500,79 @@ Updated: 2026-11-25T14:35:00+00:00
                             };
                         });
                 },
-                initialInvestment() {
+                activeInvestmentCurrency() {
+                    return this.currencies.find(c => c.code === this.investmentCurrency) || this.activeCurrency;
+                },
+                investmentCurrencySymbol() {
+                    return this.activeInvestmentCurrency.symbol;
+                },
+                isCrossCurrency() {
+                    return this.investmentCurrency !== this.selectedCurrency;
+                },
+                liveSpotFxRate() {
+                    const _ratesReady = this.exchangeRates;
+                    if (!this.isCrossCurrency) return 1;
+                    if (window.CurrencyExchangeSDK) {
+                        const r = window.CurrencyExchangeSDK.getExchangeRate(this.investmentCurrency, this.selectedCurrency);
+                        if (r && r > 0) return r;
+                    }
+                    return 1;
+                },
+                spotFxRate() {
+                    if (!this.isCrossCurrency) return 1;
+                    const custom = this.parseNumber(this.inputs.spotFxRate);
+                    if (this.inputs.spotFxRate !== '' && custom > 0) return custom;
+                    return this.liveSpotFxRate;
+                },
+                investmentCountryInflationAvg() {
+                    const code = this.activeInvestmentCurrency.countryCode || 'USA';
+                    if (this.countryProfiles[code]) {
+                        return this.countryProfiles[code].avg10Y ?? this.activeInvestmentCurrency.defaultRate;
+                    }
+                    if (window.InflationSDK && typeof window.InflationSDK.getSyncCountryProfile === 'function') {
+                        const prof = window.InflationSDK.getSyncCountryProfile(code);
+                        if (prof && prof.avg10Y !== undefined) return prof.avg10Y;
+                    }
+                    return this.activeInvestmentCurrency.defaultRate ?? 3.0;
+                },
+                pppImpliedDrift() {
+                    const localInf = this.currentCountryInflationAvg || 0;
+                    const foreignInf = this.investmentCountryInflationAvg || 0;
+                    const drift = (((1 + localInf / 100) / (1 + foreignInf / 100)) - 1) * 100;
+                    return Math.round(drift * 10) / 10;
+                },
+                fxDepreciationRate() {
+                    if (!this.isCrossCurrency) return 0;
+                    return this.parseSignedNumber(this.inputs.fxDepreciationRate, -30, 50);
+                },
+                fxPresets() {
+                    const ppp = this.pppImpliedDrift;
+                    return [
+                        {
+                            id: 'ppp',
+                            label: 'PPP ' + (ppp >= 0 ? '+' : '') + ppp + '%',
+                            rate: ppp,
+                            desc: `Relative Purchasing Power Parity drift implied by ${this.activeCurrency.region} (${this.currentCountryInflationAvg}%) vs ${this.activeInvestmentCurrency.region} (${this.investmentCountryInflationAvg}%) 10Y inflation`
+                        },
+                        { id: 'flat', label: '0% Flat', rate: 0, desc: 'Constant exchange rate over the entire horizon' },
+                        { id: 'mild', label: '+2%/yr', rate: 2, desc: 'Moderate local currency depreciation (+2%/yr FX tailwind)' },
+                        { id: 'em', label: '+3.5%/yr', rate: 3.5, desc: 'Historical emerging-market currency depreciation vs major reserve currency' },
+                        { id: 'headwind', label: '-2% Stress', rate: -2, desc: 'FX headwind stress test: foreign investment currency depreciates 2%/yr against local currency' }
+                    ];
+                },
+                foreignInitialInvestment() {
                     return this.parseNumber(this.inputs.initialInvestment);
+                },
+                initialInvestment() {
+                    return this.isCrossCurrency
+                        ? this.foreignInitialInvestment * this.spotFxRate
+                        : this.foreignInitialInvestment;
+                },
+                effectiveLocalAnnualReturn() {
+                    return (((1 + this.annualReturn / 100) * (1 + this.fxDepreciationRate / 100)) - 1) * 100;
+                },
+                effectiveLocalRealReturn() {
+                    return (((1 + this.effectiveLocalAnnualReturn / 100) / (1 + this.inflationRate / 100)) - 1) * 100;
                 },
                 annualReturn() {
                     return this.parseNumber(this.inputs.annualReturn);
@@ -1446,13 +1670,13 @@ Updated: 2026-11-25T14:35:00+00:00
                 },
                 // Non-linear (power-curve) slider mappings for smooth feel across small & HNI amounts
                 investmentSliderCap() {
-                    if (this.initialInvestment < 5000000) return 10000000;
-                    return Math.pow(10, Math.floor(Math.log10(this.initialInvestment)) + 1);
+                    if (this.foreignInitialInvestment < 5000000) return 10000000;
+                    return Math.pow(10, Math.floor(Math.log10(this.foreignInitialInvestment)) + 1);
                 },
                 investmentSliderPos() {
                     const min = 1000;
                     const max = this.investmentSliderCap;
-                    const val = Math.min(Math.max(this.initialInvestment, min), max);
+                    const val = Math.min(Math.max(this.foreignInitialInvestment, min), max);
                     const norm = Math.pow((val - min) / (max - min), 1 / 2.6);
                     return Math.round(norm * 1000);
                 },
@@ -1477,11 +1701,12 @@ Updated: 2026-11-25T14:35:00+00:00
                     return (Math.pow(1 + this.annualReturn / 100, 1 / 12) - 1) * 100;
                 },
                 monthlyReturnAmount() {
-                    return (Math.pow(1 + this.annualReturn / 100, 1 / 12) - 1) * this.initialInvestment;
+                    const effFactor = Math.max(0.0001, 1 + this.effectiveLocalAnnualReturn / 100);
+                    return Math.max(0, (Math.pow(effFactor, 1 / 12) - 1) * this.initialInvestment);
                 },
                 realMonthlyReturnAmount() {
-                    if (this.annualReturn <= this.inflationRate) return 0;
-                    const effRealMonthlyRate = Math.pow((1 + this.annualReturn / 100) / (1 + this.inflationRate / 100), 1 / 12) - 1;
+                    if (this.effectiveLocalAnnualReturn <= this.inflationRate) return 0;
+                    const effRealMonthlyRate = Math.pow((1 + this.effectiveLocalAnnualReturn / 100) / (1 + this.inflationRate / 100), 1 / 12) - 1;
                     return effRealMonthlyRate * this.initialInvestment;
                 },
                 // Complete month-by-month simulation engine (supports Multi-Layer Withdrawal, Return & Inflation Phases)
@@ -1515,7 +1740,13 @@ Updated: 2026-11-25T14:35:00+00:00
                         value: this.parseNumber(p.value)
                     }));
 
+                    let foreignBalance = this.foreignInitialInvestment;
+                    let fxRate = this.spotFxRate;
                     let balance = this.initialInvestment;
+                    let cumulativeFxFactor = 1;
+                    const monthlyFxFactor = this.isCrossCurrency && this.fxDepreciationRate !== 0
+                        ? Math.pow(Math.max(0.0001, 1 + this.fxDepreciationRate / 100), 1 / 12)
+                        : 1;
                     let activeMonthlyRate = Math.pow(1 + this.annualReturn / 100, 1 / 12) - 1;
                     let activeInflationRate = this.inflationRate;
                     let activeMode = this.withdrawalMode;
@@ -1546,6 +1777,9 @@ Updated: 2026-11-25T14:35:00+00:00
                     let yearPhaseTags = [];
 
                     for (let m = 1; m <= totalMonths; m++) {
+                        cumulativeFxFactor *= monthlyFxFactor;
+                        fxRate = this.spotFxRate * cumulativeFxFactor;
+
                         if (returnPhaseByMonth.has(m)) {
                             const rp = returnPhaseByMonth.get(m);
                             activeMonthlyRate = Math.pow(1 + rp.value / 100, 1 / 12) - 1;
@@ -1589,8 +1823,10 @@ Updated: 2026-11-25T14:35:00+00:00
                         }
 
                         if (balance > 0) {
-                            const interestEarned = balance * effectiveMonthlyRate;
-                            balance = Math.max(0, balance + interestEarned);
+                            const prevLocalBalance = balance;
+                            foreignBalance = Math.max(0, foreignBalance * (1 + effectiveMonthlyRate));
+                            balance = foreignBalance * fxRate;
+                            const interestEarned = balance - prevLocalBalance;
                             totalInterest += interestEarned;
                             yearInterest += interestEarned;
 
@@ -1604,6 +1840,7 @@ Updated: 2026-11-25T14:35:00+00:00
                             const realNetWithdrawal = actualNetWithdrawal / cumulativeInflationFactor;
 
                             balance = Math.max(0, balance - actualGrossWithdrawal);
+                            foreignBalance = fxRate > 0 ? balance / fxRate : 0;
                             totalWithdrawn += actualNetWithdrawal;
                             totalRealWithdrawn += realNetWithdrawal;
                             totalTaxesPaid += taxPaid;
@@ -1617,6 +1854,7 @@ Updated: 2026-11-25T14:35:00+00:00
 
                             if (balance <= 0.01) {
                                 balance = 0;
+                                foreignBalance = 0;
                                 if (depletedMonth === null) depletedMonth = m;
                                 endingMonthlyWithdrawal = 0;
                             }
@@ -1630,6 +1868,8 @@ Updated: 2026-11-25T14:35:00+00:00
                             yearlyData.push({
                                 year: Math.ceil(m / 12),
                                 inflationFactor: cumulativeInflationFactor,
+                                fxRate,
+                                cumulativeFxFactor,
                                 avgMonthlyPayout: yearMonthsCount > 0 ? yearWithdrawn / yearMonthsCount : 0,
                                 realAvgMonthlyPayout: yearMonthsCount > 0 ? yearRealWithdrawn / yearMonthsCount : 0,
                                 withdrawn: yearWithdrawn,
@@ -1639,6 +1879,8 @@ Updated: 2026-11-25T14:35:00+00:00
                                 realGain,
                                 endingBalance: balance,
                                 realEndingBalance,
+                                foreignEndingBalance: foreignBalance,
+                                realForeignEndingBalance: foreignBalance / cumulativeInflationFactor,
                                 cumulativeWithdrawn: totalWithdrawn,
                                 realCumulativeWithdrawn: totalRealWithdrawn,
                                 breakEvenBalance: this.initialInvestment * cumulativeInflationFactor,
@@ -1659,6 +1901,9 @@ Updated: 2026-11-25T14:35:00+00:00
                     return {
                         finalBalance: balance,
                         realFinalBalance: balance / cumulativeInflationFactor,
+                        finalForeignBalance: foreignBalance,
+                        endingFxRate: fxRate,
+                        cumulativeFxFactor,
                         breakEvenBalance: this.initialInvestment * cumulativeInflationFactor,
                         cumulativeInflationFactor,
                         purchasingPowerRetainedPct: (1 / cumulativeInflationFactor) * 100,
@@ -1716,13 +1961,31 @@ Updated: 2026-11-25T14:35:00+00:00
                 isDarkMode() {
                     this.updateChart();
                 },
-                selectedCurrency(newVal) {
+                selectedCurrency(newVal, oldVal) {
                     this.currencyAutoDetected = false;
                     try {
                         localStorage.setItem('rre_preferred_currency', newVal);
                     } catch (e) {}
+                    if (this.investmentCurrency === oldVal) {
+                        this.investmentCurrency = newVal;
+                        this.inputs.spotFxRate = '';
+                        this.inputs.fxDepreciationRate = '0';
+                        this.userEditedFxDrift = false;
+                    } else if (this.investmentCurrency === newVal) {
+                        this.inputs.spotFxRate = '';
+                        this.inputs.fxDepreciationRate = '0';
+                        this.userEditedFxDrift = false;
+                    } else {
+                        this.inputs.spotFxRate = '';
+                        if (!this.userEditedFxDrift) {
+                            this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                        }
+                    }
                     this.updateChart();
                     this.onCurrencyChanged(newVal);
+                    this.savePlanToStorage();
+                },
+                investmentCurrency() {
                     this.savePlanToStorage();
                 }
             },
@@ -1755,23 +2018,50 @@ Updated: 2026-11-25T14:35:00+00:00
                     const parsed = parseFloat(cleaned);
                     return isNaN(parsed) ? 0 : Math.max(0, parsed);
                 },
-                formatCurrency(value, decimals = 2) {
+                parseSignedNumber(val, min = -50, max = 100) {
+                    if (val === null || val === undefined || val === '') return 0;
+                    const cleaned = this.normalizeNumericString(val);
+                    const parsed = parseFloat(cleaned);
+                    if (isNaN(parsed)) return 0;
+                    return Math.min(max, Math.max(min, parsed));
+                },
+                formatFxRate(rate) {
+                    const num = Number(rate);
+                    if (!isFinite(num) || num <= 0) return '1.00';
+                    if (num < 0.01) return num.toFixed(5);
+                    if (num < 0.1) return num.toFixed(4);
+                    if (num < 10) return num.toFixed(3);
+                    if (num < 1000) return num.toFixed(2);
+                    return Math.round(num).toLocaleString('en-US');
+                },
+                formatFxRateEditable(rate) {
+                    const num = Number(rate);
+                    if (!isFinite(num) || num <= 0) return '1';
+                    if (num < 0.01) return num.toFixed(5);
+                    if (num < 0.1) return num.toFixed(4);
+                    if (num < 10) return num.toFixed(3);
+                    if (num < 1000) return num.toFixed(2);
+                    return String(Math.round(num));
+                },
+                formatCurrency(value, decimals = 2, currencyCodeOverride = null) {
                     const num = Number(value) || 0;
-                    const locale = this.selectedCurrency === 'INR' ? 'en-IN' : 'en-US';
+                    const curCode = currencyCodeOverride || this.selectedCurrency;
+                    const locale = curCode === 'INR' ? 'en-IN' : 'en-US';
                     return num.toLocaleString(locale, {
                         minimumFractionDigits: decimals,
                         maximumFractionDigits: decimals
                     });
                 },
-                formatCompact(input) {
+                formatCompact(input, currencyCodeOverride = null) {
                     const num = Number(input);
                     if (isNaN(num)) return input;
                     if (!isFinite(num)) return "∞";
+                    const curCode = currencyCodeOverride || this.selectedCurrency;
                     const absNum = Math.abs(num);
                     const sign = num < 0 ? "-" : "";
 
                     if (absNum < 100000) {
-                        return sign + this.formatCurrency(absNum, absNum % 1 === 0 ? 0 : 2);
+                        return sign + this.formatCurrency(absNum, absNum % 1 === 0 ? 0 : 2, curCode);
                     }
 
                     const formatDec = (val) => {
@@ -1780,7 +2070,7 @@ Updated: 2026-11-25T14:35:00+00:00
                         return val.toFixed(2);
                     };
 
-                    if (this.selectedCurrency === 'INR') {
+                    if (curCode === 'INR') {
                         if (absNum >= 1.0e7) return sign + formatDec(absNum / 1.0e7) + ' Cr';
                         return sign + formatDec(absNum / 1.0e5) + ' L';
                     }
@@ -1826,6 +2116,28 @@ Updated: 2026-11-25T14:35:00+00:00
                             }
                         }
                     }
+                },
+                formatSignedOnBlur(key, min = -30, max = 50) {
+                    const val = this.inputs[key];
+                    if (val === '' || val === null || val === undefined) {
+                        this.inputs[key] = '0';
+                        return;
+                    }
+                    const parsed = this.parseSignedNumber(val, min, max);
+                    this.inputs[key] = String(Math.round(parsed * 100) / 100);
+                },
+                onSpotFxBlur() {
+                    const val = this.inputs.spotFxRate;
+                    if (val === '' || val === null || val === undefined) {
+                        this.inputs.spotFxRate = '';
+                        return;
+                    }
+                    const parsed = this.parseNumber(val);
+                    if (parsed <= 0) {
+                        this.inputs.spotFxRate = '';
+                        return;
+                    }
+                    this.inputs.spotFxRate = this.normalizeNumericString(val);
                 },
                 updateFromSlider(key, value) {
                     this.inputs[key] = String(value);
@@ -1986,10 +2298,10 @@ Updated: 2026-11-25T14:35:00+00:00
                     }
                 },
                 setSustainableWithdrawal() {
-                    const target = this.annualReturn > this.inflationRate
+                    const target = this.effectiveLocalAnnualReturn > this.inflationRate
                         ? this.realMonthlyReturnAmount
                         : this.monthlyReturnAmount;
-                    this.inputs.monthlyWithdrawal = String(Math.floor(target));
+                    this.inputs.monthlyWithdrawal = this.formatWithSpaces(Math.max(0, Math.floor(target)));
                 },
                 setMaxDuration() {
                     this.inputs.withdrawalDuration = String(Math.max(1, Math.floor(this.yearsLastingFunds)));
@@ -2001,6 +2313,22 @@ Updated: 2026-11-25T14:35:00+00:00
                 applyCountryInflationRate() {
                     this.userEditedInflation = true;
                     this.inputs.inflationRate = String(this.currentCountryInflationAvg);
+                },
+                async loadCountryProfile(countryCode) {
+                    if (!countryCode || !window.InflationSDK || !window.InflationSDK.getCountryProfile) return null;
+                    try {
+                        const prof = await window.InflationSDK.getCountryProfile(countryCode);
+                        if (prof) {
+                            this.countryProfiles = { ...this.countryProfiles, [countryCode]: prof };
+                            const matchCurr = this.currencies.find(c => c.countryCode === countryCode);
+                            if (matchCurr) matchCurr.defaultRate = prof.avg10Y;
+                            this.inflationDataSource = prof.source || 'World Bank API';
+                        }
+                        return prof;
+                    } catch (e) {
+                        console.warn('Could not fetch country inflation profile live:', e);
+                        return null;
+                    }
                 },
                 async onCurrencyChanged(newCurrencyCode, options = {}) {
                     const curr = this.currencies.find(c => c.code === newCurrencyCode);
@@ -2018,27 +2346,65 @@ Updated: 2026-11-25T14:35:00+00:00
                     if (!this.userEditedInflation) {
                         this.inputs.inflationRate = String(initialRate);
                     }
+                    if (this.isCrossCurrency && !this.userEditedFxDrift && !options.initialLoad) {
+                        this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                    }
 
                     // Fetch live 30-year multi-horizon profile from World Bank Open API for this country
                     if (window.InflationSDK && curr.countryCode) {
                         this.isLoadingInflation = true;
                         try {
-                            const prof = window.InflationSDK.getCountryProfile
-                                ? await window.InflationSDK.getCountryProfile(curr.countryCode)
-                                : null;
-                            if (prof) {
-                                this.countryProfiles = { ...this.countryProfiles, [curr.countryCode]: prof };
-                                curr.defaultRate = prof.avg10Y;
-                                if (this.selectedCurrency === newCurrencyCode && !this.userEditedInflation) {
-                                    this.inputs.inflationRate = String(prof.avg10Y);
-                                }
-                                this.inflationDataSource = prof.source || 'World Bank API';
+                            const prof = await this.loadCountryProfile(curr.countryCode);
+                            if (prof && this.selectedCurrency === newCurrencyCode && !this.userEditedInflation) {
+                                this.inputs.inflationRate = String(prof.avg10Y);
                             }
-                        } catch (e) {
-                            console.warn('Could not fetch country inflation profile live:', e);
+                            if (prof && this.isCrossCurrency && !this.userEditedFxDrift && !options.initialLoad) {
+                                this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                            }
                         } finally {
                             this.isLoadingInflation = false;
                         }
+                    }
+                },
+                async onInvestmentCurrencyChanged(newInvCode, oldInvCode) {
+                    const prevCode = oldInvCode || this.investmentCurrency;
+                    if (!newInvCode || newInvCode === prevCode) return;
+
+                    const rate = window.CurrencyExchangeSDK
+                        ? window.CurrencyExchangeSDK.getExchangeRate(prevCode, newInvCode)
+                        : null;
+                    if (rate && rate > 0 && this.foreignInitialInvestment > 0) {
+                        const converted = this.foreignInitialInvestment * rate;
+                        const rounded = converted >= 1000 ? this.smartRound(converted) : Math.round(converted);
+                        this.inputs.initialInvestment = this.formatWithSpaces(Math.max(1, rounded));
+                    }
+
+                    this.investmentCurrency = newInvCode;
+                    this.inputs.spotFxRate = '';
+
+                    if (newInvCode === this.selectedCurrency) {
+                        this.inputs.fxDepreciationRate = '0';
+                        this.userEditedFxDrift = false;
+                    } else {
+                        if (!this.userEditedFxDrift) {
+                            this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                        }
+                        const invCurr = this.currencies.find(c => c.code === newInvCode);
+                        if (invCurr && invCurr.countryCode && !this.countryProfiles[invCurr.countryCode]) {
+                            await this.loadCountryProfile(invCurr.countryCode);
+                            if (!this.userEditedFxDrift && this.investmentCurrency === newInvCode && this.isCrossCurrency) {
+                                this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                            }
+                        }
+                    }
+                    this.savePlanToStorage();
+                },
+                toggleCrossCurrencyMode() {
+                    if (this.isCrossCurrency) {
+                        this.onInvestmentCurrencyChanged(this.selectedCurrency, this.investmentCurrency);
+                    } else {
+                        const defaultForeign = this.selectedCurrency === 'USD' ? 'EUR' : 'USD';
+                        this.onInvestmentCurrencyChanged(defaultForeign, this.investmentCurrency);
                     }
                 },
                 openExchangeModal() {
@@ -2068,6 +2434,10 @@ Updated: 2026-11-25T14:35:00+00:00
                             }
                         }
                     }
+                    this.investmentCurrency = targetCode;
+                    this.inputs.spotFxRate = '';
+                    this.inputs.fxDepreciationRate = '0';
+                    this.userEditedFxDrift = false;
                     this.selectedCurrency = targetCode;
                     this.showExchangeModal = false;
                 },
@@ -2102,6 +2472,7 @@ Updated: 2026-11-25T14:35:00+00:00
                 serializePlan() {
                     return {
                         c: this.selectedCurrency,
+                        ic: this.investmentCurrency,
                         m: this.withdrawalMode,
                         i: { ...this.inputs },
                         wp: this.withdrawalPhases.map(p => ({ ...p })),
@@ -2154,9 +2525,11 @@ Updated: 2026-11-25T14:35:00+00:00
                             window.history.replaceState(null, '', window.location.pathname + window.location.search);
                         }
                     } catch (e) {}
+                    this.investmentCurrency = this.selectedCurrency;
                     this.withdrawalMode = 'percent';
                     this.stressScenario = 'none';
                     this.userEditedInflation = false;
+                    this.userEditedFxDrift = false;
                     this.withdrawalPhases = [];
                     this.returnPhases = [];
                     this.inflationPhases = [];
@@ -2167,7 +2540,9 @@ Updated: 2026-11-25T14:35:00+00:00
                         monthlyWithdrawal: this.formatWithSpaces(this.activeCurrency.defaultMonthly || '2500'),
                         withdrawalPercent: '2',
                         inflationRate: String(defaultRate),
-                        taxRate: '0'
+                        taxRate: '0',
+                        fxDepreciationRate: '0',
+                        spotFxRate: ''
                     };
                 },
                 applyTheme() {
@@ -2262,6 +2637,11 @@ Updated: 2026-11-25T14:35:00+00:00
                                                 ` Monthly Payout: ${this.currencySymbol}${Math.round(row.avgMonthlyPayout).toLocaleString('en-US')}/mo (${this.currencySymbol}${Math.round(row.realAvgMonthlyPayout).toLocaleString('en-US')} in today's ${this.currencySymbol})`,
                                                 ` Cumulative Inflation: ${row.inflationFactor.toFixed(2)}× prices (-${Math.round((1 - 1 / row.inflationFactor) * 100)}% buying power)`
                                             ];
+                                            if (this.isCrossCurrency) {
+                                                const fBal = this.valueDisplayMode === 'real' ? row.realForeignEndingBalance : row.foreignEndingBalance;
+                                                const fLocale = this.investmentCurrency === 'INR' ? 'en-IN' : 'en-US';
+                                                extra.push(` Foreign Balance (${this.investmentCurrency}): ${this.investmentCurrencySymbol}${Math.round(fBal).toLocaleString(fLocale)} (1 ${this.investmentCurrency} = ${this.formatFxRate(row.fxRate)} ${this.selectedCurrency})`);
+                                            }
                                             if (row.phaseTag) {
                                                 extra.push(` Phase Starts: ${row.phaseTag}`);
                                             }
@@ -2349,6 +2729,9 @@ Updated: 2026-11-25T14:35:00+00:00
                     // Load live data for the active currency's country without clobbering restored/edited inflation
                     if (this.activeCurrency && this.activeCurrency.countryCode) {
                         this.onCurrencyChanged(this.selectedCurrency, { initialLoad: true });
+                    }
+                    if (this.isCrossCurrency && this.activeInvestmentCurrency && this.activeInvestmentCurrency.countryCode) {
+                        this.loadCountryProfile(this.activeInvestmentCurrency.countryCode);
                     }
                 });
             }
