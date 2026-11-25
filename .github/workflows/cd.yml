@@ -24,45 +24,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+          cache: false
+      - run: go build -o gist-tool ./bin && chmod +x gist-tool
+      - run: ./gist-tool build
+      - run: |
+          find dist -type f -name "Taskfile*" -delete
+          find dist -type d -name ".task*" -exec rm -rf {} +
+      - run: test -f dist/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      # ── Checkout ────────────────────────────────────────────────────────
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # ── Build Tool ──────────────────────────────────────────────────────
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
-      - name: Compile Tool
-        run: go build -o gist-tool ./bin && chmod +x gist-tool
-
-      - name: Run build
-        run: ./gist-tool build
-
-      - name: Exclude internal dev files from deployment
-        run: |
-          find dist -type f -name "Taskfile*" -delete
-          find dist -type d -name ".task*" -exec rm -rf {} +
-
-      # ── Deploy ──────────────────────────────────────────────────────────
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Deploy the built dist/ directory
-          path: dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
