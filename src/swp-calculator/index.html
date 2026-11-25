@@ -416,11 +416,17 @@ Updated: 2026-11-25T13:00:00+00:00
                         </div>
 
                         <!-- Expected Annual Return -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label for="annualReturn" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                    Expected Annual Return
-                                </label>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-1.5">
+                                    <label for="annualReturn" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        Expected Annual Return
+                                    </label>
+                                    <span v-if="returnPhases.length > 0"
+                                        class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                        Yr 1+
+                                    </span>
+                                </div>
                                 <div class="relative w-28">
                                     <input v-model="inputs.annualReturn"
                                         @blur="formatOnBlur('annualReturn')"
@@ -435,65 +441,66 @@ Updated: 2026-11-25T13:00:00+00:00
                                 @input="updateFromSlider('annualReturn', $event.target.value)"
                                 aria-label="Expected Annual Return Slider"
                                 class="swp-slider">
-                        </div>
-
-                        <!-- Time Horizon -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <div class="flex items-center gap-2">
-                                    <label for="withdrawalDuration" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                        Time Horizon
-                                    </label>
-                                    <button v-if="isDepleted" @click="setMaxDuration" type="button"
-                                        class="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:underline cursor-pointer">
-                                        ({{ yearsLastingFunds.toFixed(1) }}y max)
-                                    </button>
-                                </div>
-                                <div class="relative w-28">
-                                    <input v-model="inputs.withdrawalDuration"
-                                        @blur="formatOnBlur('withdrawalDuration')"
-                                        type="text" id="withdrawalDuration" inputmode="numeric"
-                                        class="w-full pl-3 pr-9 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
-                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
-                                </div>
+                            <div class="flex items-center justify-end">
+                                <button @click="addReturnPhase" type="button"
+                                    class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+                                    title="Add a future expected return phase (e.g. de-risking from 10% equity to 6% bonds later in retirement)">
+                                    <span>+ Add Phase</span>
+                                </button>
                             </div>
-                            <input type="range" min="1" :max="durationSliderMax" step="1"
-                                :value="Math.min(withdrawalDuration, durationSliderMax)"
-                                :style="{ '--fill': sliderFill(withdrawalDuration, 1, durationSliderMax) }"
-                                @input="updateFromSlider('withdrawalDuration', $event.target.value)"
-                                aria-label="Time Horizon Slider"
-                                class="swp-slider">
-                        </div>
 
-                        <!-- Annual Inflation (Minimal Default Row + Expandable Country Benchmarks) -->
-                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="min-w-0">
+                            <!-- Dynamic Return Phases -->
+                            <div v-if="returnPhases.length > 0" class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                                <div v-for="phase in returnPhases" :key="phase.id"
+                                    class="flex items-center justify-between gap-1.5 py-1 px-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                            {{ allPercentWithdrawal ? 'Reference Inflation' : 'Annual Inflation' }}
-                                        </span>
-                                        <span v-if="allPercentWithdrawal"
-                                            title="Not added onto % withdrawal — used as real-purchasing-power benchmark"
-                                            class="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                                            Ref Only
-                                        </span>
-                                        <span v-if="isLoadingInflation" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                                        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">From Yr</span>
+                                        <input v-model="phase.startYear"
+                                            @blur="formatPhaseYear(phase)"
+                                            type="text" inputmode="numeric" aria-label="Return phase start year"
+                                            :title="parseNumber(phase.startYear) > withdrawalDuration ? 'Starts after current Time Horizon' : 'Year when this return rate starts'"
+                                            :class="parseNumber(phase.startYear) > withdrawalDuration
+                                                ? 'text-amber-600 dark:text-amber-400 border-amber-400 dark:border-amber-500/70'
+                                                : 'text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700'"
+                                            class="w-12 px-1 py-1 text-center font-semibold text-xs bg-white dark:bg-slate-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     </div>
-                                    <div class="flex items-center gap-2 mt-0.5 text-xs">
-                                        <button @click="applyCountryInflationRate" type="button"
-                                            class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer truncate">
-                                            {{ activeCurrency.region }} 10Y: <strong class="text-slate-700 dark:text-slate-200">{{ currentCountryInflationAvg }}%</strong>
-                                        </button>
-                                        <span class="text-slate-300 dark:text-slate-700">&bull;</span>
-                                        <button @click="showMoreInflation = !showMoreInflation" type="button"
-                                            class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium flex items-center gap-0.5 shrink-0 cursor-pointer">
-                                            <span>{{ showMoreInflation ? 'Hide Presets' : 'Benchmarks' }}</span>
-                                            <svg class="w-3 h-3 transition-transform duration-200" :class="showMoreInflation ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="relative w-24">
+                                            <input v-model="phase.value"
+                                                @blur="formatPhaseValue(phase)"
+                                                type="text" inputmode="decimal" aria-label="Phase expected annual return"
+                                                class="w-full pl-2 pr-6 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-[10px]">%</span>
+                                        </div>
+                                        <button @click="removeReturnPhase(phase.id)" type="button"
+                                            aria-label="Remove return phase" title="Remove phase"
+                                            class="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Annual Inflation (Minimal Default Row + Expandable Country Benchmarks + Phases) -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        {{ allPercentWithdrawal ? 'Reference Inflation' : 'Annual Inflation' }}
+                                    </span>
+                                    <span v-if="inflationPhases.length > 0"
+                                        class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+                                        Yr 1+
+                                    </span>
+                                    <span v-if="allPercentWithdrawal"
+                                        title="Not added onto % withdrawal — used as real-purchasing-power benchmark"
+                                        class="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
+                                        Ref Only
+                                    </span>
+                                    <span v-if="isLoadingInflation" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
                                 </div>
 
                                 <div class="relative w-24 shrink-0">
@@ -502,6 +509,62 @@ Updated: 2026-11-25T13:00:00+00:00
                                         type="text" aria-label="Inflation Rate" inputmode="decimal"
                                         class="w-full pl-2.5 pr-6 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-2 text-xs">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <button @click="applyCountryInflationRate" type="button"
+                                        class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer truncate">
+                                        {{ activeCurrency.region }} 10Y: <strong class="text-slate-700 dark:text-slate-200">{{ currentCountryInflationAvg }}%</strong>
+                                    </button>
+                                    <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+                                    <button @click="showMoreInflation = !showMoreInflation" type="button"
+                                        class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium flex items-center gap-0.5 shrink-0 cursor-pointer">
+                                        <span>{{ showMoreInflation ? 'Hide Presets' : 'Benchmarks' }}</span>
+                                        <svg class="w-3 h-3 transition-transform duration-200" :class="showMoreInflation ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <button @click="addInflationPhase" type="button"
+                                    class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
+                                    title="Add a future inflation regime (e.g. higher near-term inflation moderating later)">
+                                    <span>+ Add Phase</span>
+                                </button>
+                            </div>
+
+                            <!-- Dynamic Inflation Phases -->
+                            <div v-if="inflationPhases.length > 0" class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                                <div v-for="phase in inflationPhases" :key="phase.id"
+                                    class="flex items-center justify-between gap-1.5 py-1 px-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">From Yr</span>
+                                        <input v-model="phase.startYear"
+                                            @blur="formatPhaseYear(phase)"
+                                            type="text" inputmode="numeric" aria-label="Inflation phase start year"
+                                            :title="parseNumber(phase.startYear) > withdrawalDuration ? 'Starts after current Time Horizon' : 'Year when this inflation rate starts'"
+                                            :class="parseNumber(phase.startYear) > withdrawalDuration
+                                                ? 'text-amber-600 dark:text-amber-400 border-amber-400 dark:border-amber-500/70'
+                                                : 'text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700'"
+                                            class="w-12 px-1 py-1 text-center font-semibold text-xs bg-white dark:bg-slate-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="relative w-24">
+                                            <input v-model="phase.value"
+                                                @blur="formatPhaseValue(phase)"
+                                                type="text" inputmode="decimal" aria-label="Phase annual inflation rate"
+                                                class="w-full pl-2 pr-6 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-[10px]">%</span>
+                                        </div>
+                                        <button @click="removeInflationPhase(phase.id)" type="button"
+                                            aria-label="Remove inflation phase" title="Remove phase"
+                                            class="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -594,6 +657,34 @@ Updated: 2026-11-25T13:00:00+00:00
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Time Horizon (Placed at Bottom as Global Simulation Horizon) -->
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <label for="withdrawalDuration" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        Time Horizon
+                                    </label>
+                                    <button v-if="isDepleted" @click="setMaxDuration" type="button"
+                                        class="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:underline cursor-pointer">
+                                        ({{ yearsLastingFunds.toFixed(1) }}y max)
+                                    </button>
+                                </div>
+                                <div class="relative w-28">
+                                    <input v-model="inputs.withdrawalDuration"
+                                        @blur="formatOnBlur('withdrawalDuration')"
+                                        type="text" id="withdrawalDuration" inputmode="numeric"
+                                        class="w-full pl-3 pr-9 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
+                                </div>
+                            </div>
+                            <input type="range" min="1" :max="durationSliderMax" step="1"
+                                :value="Math.min(withdrawalDuration, durationSliderMax)"
+                                :style="{ '--fill': sliderFill(withdrawalDuration, 1, durationSliderMax) }"
+                                @input="updateFromSlider('withdrawalDuration', $event.target.value)"
+                                aria-label="Time Horizon Slider"
+                                class="swp-slider">
                         </div>
                     </div>
                 </div>
@@ -707,12 +798,17 @@ Updated: 2026-11-25T13:00:00+00:00
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 <tr v-for="row in simulation.yearlyData" :key="row.year" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                                     <td class="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-300">
-                                        <span class="inline-flex items-center gap-1.5">
+                                        <span class="inline-flex flex-wrap items-center gap-1">
                                             <span>Year {{ row.year }}</span>
-                                            <span v-if="row.phaseTag"
-                                                title="New withdrawal phase begins this year"
-                                                class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold">
-                                                {{ row.phaseTag }}
+                                            <span v-for="(tag, idx) in row.phaseTags" :key="idx"
+                                                title="New phase begins this year"
+                                                :class="tag.kind === 'return'
+                                                    ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300'
+                                                    : (tag.kind === 'inflation'
+                                                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                                                        : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300')"
+                                                class="px-1.5 py-0.5 rounded text-[10px] font-semibold">
+                                                {{ tag.label }}
                                             </span>
                                         </span>
                                     </td>
@@ -859,6 +955,8 @@ Updated: 2026-11-25T13:00:00+00:00
                     currencies,
                     withdrawalMode: 'fixed', // 'fixed' | 'percent'
                     withdrawalPhases: [],
+                    returnPhases: [],
+                    inflationPhases: [],
                     nextPhaseId: 1,
                     swrPresets: [
                         { label: '3% Safe', rate: 3, desc: 'Ultra-safe 3% perpetual rule — strong capital compounding' },
@@ -1165,27 +1263,40 @@ Updated: 2026-11-25T13:00:00+00:00
                     if (this.initialInvestment <= 0) return 0;
                     return (this.monthlyWithdrawal / this.initialInvestment) * 100;
                 },
-                // Complete month-by-month simulation engine (supports Multi-Layer Fixed & Dynamic % Phases)
+                // Complete month-by-month simulation engine (supports Multi-Layer Withdrawal, Return & Inflation Phases)
                 simulation() {
-                    const monthlyRate = this.annualReturn / 100 / 12;
                     // Safeguard against browser freeze on astronomical durations (> 120,000 months / 10,000 yrs)
                     const totalMonths = Math.min(Math.round(this.withdrawalDuration * 12), 120000);
 
-                    const normalizedPhases = (this.withdrawalPhases || [])
-                        .map(p => ({
-                            startYear: Math.round(this.parseNumber(p.startYear)),
-                            mode: p.mode === 'percent' ? 'percent' : 'fixed',
-                            value: this.parseNumber(p.value)
-                        }))
-                        .filter(p => p.startYear >= 2)
-                        .sort((a, b) => a.startYear - b.startYear);
+                    const buildPhaseMap = (list, mapper) => {
+                        const normalized = (list || [])
+                            .map(p => ({
+                                startYear: Math.round(this.parseNumber(p.startYear)),
+                                ...mapper(p)
+                            }))
+                            .filter(p => p.startYear >= 2)
+                            .sort((a, b) => a.startYear - b.startYear);
+                        const map = new Map();
+                        for (const p of normalized) {
+                            map.set((p.startYear - 1) * 12 + 1, p);
+                        }
+                        return map;
+                    };
 
-                    const phaseByStartMonth = new Map();
-                    for (const p of normalizedPhases) {
-                        phaseByStartMonth.set((p.startYear - 1) * 12 + 1, p);
-                    }
+                    const withdrawalPhaseByMonth = buildPhaseMap(this.withdrawalPhases, p => ({
+                        mode: p.mode === 'percent' ? 'percent' : 'fixed',
+                        value: this.parseNumber(p.value)
+                    }));
+                    const returnPhaseByMonth = buildPhaseMap(this.returnPhases, p => ({
+                        value: this.parseNumber(p.value)
+                    }));
+                    const inflationPhaseByMonth = buildPhaseMap(this.inflationPhases, p => ({
+                        value: this.parseNumber(p.value)
+                    }));
 
                     let balance = this.initialInvestment;
+                    let activeMonthlyRate = this.annualReturn / 100 / 12;
+                    let activeInflationRate = this.inflationRate;
                     let activeMode = this.withdrawalMode;
                     let activeMonthlyFrac = (this.withdrawalPercent / 100) / 12;
                     let activeFixedMonthly = this.monthlyWithdrawal;
@@ -1203,27 +1314,39 @@ Updated: 2026-11-25T13:00:00+00:00
                     let yearWithdrawn = 0;
                     let yearInterest = 0;
                     let yearMonthsCount = 0;
-                    let yearPhaseTag = null;
+                    let yearPhaseTags = [];
 
                     for (let m = 1; m <= totalMonths; m++) {
-                        if (phaseByStartMonth.has(m)) {
-                            const phase = phaseByStartMonth.get(m);
+                        if (returnPhaseByMonth.has(m)) {
+                            const rp = returnPhaseByMonth.get(m);
+                            activeMonthlyRate = rp.value / 100 / 12;
+                            yearPhaseTags.push({ label: `Ret ${rp.value}%`, kind: 'return' });
+                        }
+
+                        if (inflationPhaseByMonth.has(m)) {
+                            const ip = inflationPhaseByMonth.get(m);
+                            activeInflationRate = ip.value;
+                            yearPhaseTags.push({ label: `Inf ${ip.value}%`, kind: 'inflation' });
+                        }
+
+                        if (withdrawalPhaseByMonth.has(m)) {
+                            const phase = withdrawalPhaseByMonth.get(m);
                             activeMode = phase.mode;
                             if (activeMode === 'percent') {
                                 activeMonthlyFrac = (phase.value / 100) / 12;
-                                yearPhaseTag = `${phase.value}%/yr`;
+                                yearPhaseTags.push({ label: `${phase.value}%/yr`, kind: 'withdrawal' });
                             } else {
                                 activeFixedMonthly = phase.value;
                                 fixedPhaseStartMonth = m;
-                                yearPhaseTag = `${this.currencySymbol}${this.formatCompact(phase.value)}/mo`;
+                                yearPhaseTags.push({ label: `${this.currencySymbol}${this.formatCompact(phase.value)}/mo`, kind: 'withdrawal' });
                             }
-                        } else if (activeMode === 'fixed' && m > fixedPhaseStartMonth && (m - fixedPhaseStartMonth) % 12 === 0 && this.inflationRate > 0) {
+                        } else if (activeMode === 'fixed' && m > fixedPhaseStartMonth && (m - fixedPhaseStartMonth) % 12 === 0 && activeInflationRate > 0) {
                             // Annual inflation step-up anchored to when the current fixed phase began
-                            activeFixedMonthly *= (1 + this.inflationRate / 100);
+                            activeFixedMonthly *= (1 + activeInflationRate / 100);
                         }
 
                         if (balance > 0) {
-                            const interestEarned = balance * monthlyRate;
+                            const interestEarned = balance * activeMonthlyRate;
                             balance += interestEarned;
                             totalInterest += interestEarned;
                             yearInterest += interestEarned;
@@ -1257,12 +1380,13 @@ Updated: 2026-11-25T13:00:00+00:00
                                 interest: yearInterest,
                                 endingBalance: balance,
                                 cumulativeWithdrawn: totalWithdrawn,
-                                phaseTag: yearPhaseTag
+                                phaseTags: yearPhaseTags,
+                                phaseTag: yearPhaseTags.length ? yearPhaseTags.map(t => t.label).join(' · ') : null
                             });
                             yearWithdrawn = 0;
                             yearInterest = 0;
                             yearMonthsCount = 0;
-                            yearPhaseTag = null;
+                            yearPhaseTags = [];
                         }
                     }
 
@@ -1420,24 +1544,20 @@ Updated: 2026-11-25T13:00:00+00:00
                     }
                     this.withdrawalMode = mode;
                 },
+                getNextPhaseStartYear(phases) {
+                    const lastPhase = phases[phases.length - 1];
+                    const horizon = Math.max(2, Math.floor(this.withdrawalDuration));
+                    if (!lastPhase) {
+                        return horizon >= 15 ? 11 : Math.max(2, Math.ceil(horizon / 2));
+                    }
+                    const lastYr = Math.max(2, Math.round(this.parseNumber(lastPhase.startYear)));
+                    if (lastYr + 10 <= horizon) return lastYr + 10;
+                    if (lastYr < horizon) return Math.min(horizon, lastYr + 5);
+                    return lastYr + 5;
+                },
                 addWithdrawalPhase() {
                     const lastPhase = this.withdrawalPhases[this.withdrawalPhases.length - 1];
-                    const horizon = Math.max(2, Math.floor(this.withdrawalDuration));
-                    let defaultStartYear;
-
-                    if (!lastPhase) {
-                        defaultStartYear = horizon >= 15 ? 11 : Math.max(2, Math.ceil(horizon / 2));
-                    } else {
-                        const lastYr = Math.max(2, Math.round(this.parseNumber(lastPhase.startYear)));
-                        if (lastYr + 10 <= horizon) {
-                            defaultStartYear = lastYr + 10;
-                        } else if (lastYr < horizon) {
-                            defaultStartYear = Math.min(horizon, lastYr + 5);
-                        } else {
-                            defaultStartYear = lastYr + 5;
-                        }
-                    }
-
+                    const defaultStartYear = this.getNextPhaseStartYear(this.withdrawalPhases);
                     const mode = lastPhase ? lastPhase.mode : this.withdrawalMode;
                     let value;
                     if (mode === 'percent') {
@@ -1457,6 +1577,34 @@ Updated: 2026-11-25T13:00:00+00:00
                 },
                 removeWithdrawalPhase(id) {
                     this.withdrawalPhases = this.withdrawalPhases.filter(p => p.id !== id);
+                },
+                addReturnPhase() {
+                    const lastPhase = this.returnPhases[this.returnPhases.length - 1];
+                    const defaultStartYear = this.getNextPhaseStartYear(this.returnPhases);
+                    const lastReturn = lastPhase ? this.parseNumber(lastPhase.value) : this.annualReturn;
+                    const defaultVal = Math.max(1, Math.round((lastReturn - 1) * 10) / 10);
+                    this.returnPhases.push({
+                        id: this.nextPhaseId++,
+                        startYear: String(defaultStartYear),
+                        value: String(defaultVal)
+                    });
+                },
+                removeReturnPhase(id) {
+                    this.returnPhases = this.returnPhases.filter(p => p.id !== id);
+                },
+                addInflationPhase() {
+                    const lastPhase = this.inflationPhases[this.inflationPhases.length - 1];
+                    const defaultStartYear = this.getNextPhaseStartYear(this.inflationPhases);
+                    const lastInfl = lastPhase ? this.parseNumber(lastPhase.value) : this.inflationRate;
+                    const defaultVal = lastInfl >= 1 ? Math.round((lastInfl - 0.5) * 10) / 10 : lastInfl;
+                    this.inflationPhases.push({
+                        id: this.nextPhaseId++,
+                        startYear: String(defaultStartYear),
+                        value: String(defaultVal)
+                    });
+                },
+                removeInflationPhase(id) {
+                    this.inflationPhases = this.inflationPhases.filter(p => p.id !== id);
                 },
                 setPhaseMode(phase, newMode) {
                     if (phase.mode === newMode) return;
@@ -1609,6 +1757,8 @@ Updated: 2026-11-25T13:00:00+00:00
                     const defaultRate = this.currentCountryInflationAvg || this.globalDecadeAvg || 3.4;
                     this.withdrawalMode = 'fixed';
                     this.withdrawalPhases = [];
+                    this.returnPhases = [];
+                    this.inflationPhases = [];
                     this.inputs = {
                         initialInvestment: this.activeCurrency.defaultCorpus || '500000',
                         annualReturn: '7',
