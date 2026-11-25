@@ -1066,51 +1066,181 @@ Updated: 2026-11-25T16:30:00+00:00
 
                         <!-- Tax, Sequence Risk Stress & Bear-Market Guardrail -->
                         <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-1.5">
-                                    <label for="taxRate" class="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                                        Effective Tax Drag
-                                    </label>
-                                    <span class="group relative inline-flex items-center cursor-help">
-                                        <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
-                                            Applied to total withdrawals (like pre-tax retirement accounts). For taxable brokerage accounts where cost basis isn't taxed, enter a lower blended effective rate. Fixed mode grosses up withdrawals so net spending stays intact; % mode shows net take-home.
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <label for="taxRate" class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                            Effective Tax Drag
+                                        </label>
+                                        <span class="group relative inline-flex items-center cursor-help">
+                                            <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                                Applied to total withdrawals (like pre-tax retirement accounts). For taxable brokerage accounts where cost basis isn't taxed, enter the lower SWP effective rate (only gains are taxed). Fixed mode grosses up withdrawals so net spend stays intact.
+                                            </span>
                                         </span>
-                                    </span>
+                                    </div>
+                                    <div class="relative w-24 shrink-0">
+                                        <input v-model="inputs.taxRate"
+                                            @blur="formatOnBlur('taxRate')"
+                                            type="text" id="taxRate" inputmode="decimal" aria-label="Effective Tax Rate"
+                                            class="w-full pl-2.5 pr-7 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                        <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                                    </div>
                                 </div>
-                                <div class="relative w-24 shrink-0">
-                                    <input v-model="inputs.taxRate"
-                                        @blur="formatOnBlur('taxRate')"
-                                        type="text" id="taxRate" inputmode="decimal" aria-label="Effective Tax Rate"
-                                        class="w-full pl-2.5 pr-7 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
-                                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+
+                                <div class="flex items-center justify-between gap-2 text-[11px]">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <button @click="inputs.taxRate = String(currentCountryTaxProfile.swpRate)" type="button"
+                                            class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer truncate"
+                                            :title="currentCountryTaxProfile.swpDesc">
+                                            {{ activeCountry.flag }} {{ currentCountryTaxProfile.swpLabel }}: <strong class="text-slate-700 dark:text-slate-200">{{ currentCountryTaxProfile.swpRate }}%</strong>
+                                        </button>
+                                        <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+                                        <button @click="showMoreTax = !showMoreTax" type="button"
+                                            class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium flex items-center gap-0.5 shrink-0 cursor-pointer">
+                                            <span>{{ showMoreTax ? 'Hide' : 'Presets' }}</span>
+                                            <svg class="w-3 h-3 transition-transform duration-200" :class="showMoreTax ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <button v-if="taxRate > 0" @click="inputs.taxRate = '0'" type="button"
+                                        class="text-[10px] font-medium text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer shrink-0">
+                                        0% Tax-Free
+                                    </button>
+                                </div>
+
+                                <!-- Progressive Tax Regime Presets Drawer -->
+                                <div v-if="showMoreTax" class="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        <button v-for="p in taxPresets" :key="p.id"
+                                            @click="inputs.taxRate = String(p.rate)"
+                                            type="button"
+                                            :title="p.tooltip"
+                                            :class="Math.abs(taxRate - p.rate) < 0.05
+                                                ? 'bg-emerald-600 text-white font-bold border-emerald-600'
+                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
+                                            class="px-2 py-1.5 rounded-lg border text-left transition-all text-[11px] flex flex-col justify-between cursor-pointer">
+                                            <div class="flex items-center justify-between w-full gap-1">
+                                                <span class="font-semibold truncate">{{ p.label }}</span>
+                                                <span class="font-bold text-[10px] shrink-0">{{ p.rate }}%</span>
+                                            </div>
+                                            <span class="text-[9px] opacity-75 truncate w-full">{{ p.sub }}</span>
+                                        </button>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                                        {{ activeCountry.flag }} {{ activeCountry.region }} guide &bull; Taxable brokerage SWPs only tax the gains portion (~{{ Math.round(planGainShare * 100) }}% of withdrawals over {{ withdrawalDuration }}y).
+                                    </p>
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300" title="Simulate an early market crash at the start of retirement (sequence-of-returns risk)">
-                                    Sequence Risk Stress
-                                </span>
-                                <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-[10px] font-semibold">
-                                    <button @click="stressScenario = 'none'" type="button"
-                                        :class="stressScenario === 'none' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
-                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
-                                        Steady
-                                    </button>
-                                    <button @click="stressScenario = 'crash30'" type="button"
-                                        title="Year 1 market drop of -30% before resuming expected return"
-                                        :class="stressScenario === 'crash30' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
-                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
-                                        -30% Yr 1
-                                    </button>
-                                    <button @click="stressScenario = 'crash45'" type="button"
-                                        title="Two-year bear market (-45% cumulative across Yr 1–2) before resuming expected return"
-                                        :class="stressScenario === 'crash45' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
-                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
-                                        -45% Yr 1&ndash;2
-                                    </button>
+                            <!-- Multi-Phase Sequence Risk & Market Shocks -->
+                            <div class="space-y-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300" title="Simulate early or recurring market crashes &amp; bear markets at any retirement year">
+                                            Sequence Risk Stress
+                                        </span>
+                                        <span v-if="stressPhases.length > 0"
+                                            class="px-1.5 py-0.5 rounded bg-rose-500/15 text-[10px] font-semibold text-rose-700 dark:text-rose-300">
+                                            {{ stressPhases.length }} {{ stressPhases.length === 1 ? 'shock' : 'shocks' }}
+                                        </span>
+                                        <span class="group relative inline-flex items-center cursor-help">
+                                            <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                                Override normal market returns with custom crash or recovery shocks (e.g. &minus;30% in Year 1, a 2-year &minus;45% bear market, or recurring decade crashes).
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 text-[11px] ml-auto">
+                                        <template v-if="stressPhases.length === 0">
+                                            <button @click="applyStressPreset('crash30')" type="button"
+                                                title="Quick test: -30% crash in Year 1"
+                                                class="text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:underline font-medium cursor-pointer">
+                                                -30% Yr 1
+                                            </button>
+                                            <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+                                            <button @click="applyStressPreset('cycles')" type="button"
+                                                title="Simulate recurring -25% 1-year crashes every 10 years"
+                                                class="text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:underline font-medium cursor-pointer">
+                                                Decade Cycles
+                                            </button>
+                                        </template>
+                                        <button v-else @click="stressPhases = []" type="button"
+                                            class="text-slate-400 hover:text-rose-500 hover:underline font-medium cursor-pointer">
+                                            Clear
+                                        </button>
+                                        <button @click="addStressPhase" type="button"
+                                            class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+                                            title="Add a custom market crash or rebound shock at any year">
+                                            <span>+ Add Phase</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Stress / Shock Phases List -->
+                                <div v-if="stressPhases.length > 0" class="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                                    <div v-for="phase in stressPhases" :key="phase.id"
+                                        class="flex flex-wrap items-center justify-between gap-1.5 py-1.5 px-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">Yr</span>
+                                            <input v-model="phase.startYear"
+                                                @blur="formatStressYear(phase)"
+                                                type="text" inputmode="numeric" aria-label="Stress phase start year"
+                                                :title="parseNumber(phase.startYear) > withdrawalDuration ? 'Starts after current Time Horizon' : 'Year when this shock starts (1+)'"
+                                                :class="parseNumber(phase.startYear) > withdrawalDuration
+                                                    ? 'text-amber-600 dark:text-amber-400 border-amber-400 dark:border-amber-500/70'
+                                                    : 'text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700'"
+                                                class="w-11 px-1 py-1 text-center font-semibold text-xs bg-white dark:bg-slate-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            <span class="text-[10px] text-slate-400">for</span>
+                                            <div class="relative w-14">
+                                                <input v-model="phase.duration"
+                                                    @blur="formatStressDuration(phase)"
+                                                    type="text" inputmode="numeric" aria-label="Stress shock duration in years"
+                                                    title="How many years the shock return lasts"
+                                                    class="w-full pl-1.5 pr-5 py-1 text-center font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                                <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">y</span>
+                                            </div>
+                                            <span v-if="currentAge > 0" class="text-[10px] text-slate-400 hidden sm:inline">
+                                                (Age {{ currentAge + Math.max(1, Math.round(parseNumber(phase.startYear))) - 1 }})
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-center gap-1">
+                                            <div class="relative w-20">
+                                                <input v-model="phase.value"
+                                                    @blur="formatStressValue(phase)"
+                                                    type="text" inputmode="decimal" aria-label="Cumulative shock return percentage"
+                                                    title="Total cumulative return over this shock duration (e.g. -30 for a -30% crash, +25 for a rebound)"
+                                                    :class="parseSignedNumber(phase.value) < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'"
+                                                    class="w-full pl-2 pr-5 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                                <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-[10px]">%</span>
+                                            </div>
+                                            <button @click="removeStressPhase(phase.id)" type="button"
+                                                aria-label="Remove stress phase" title="Remove shock"
+                                                class="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center justify-end gap-1.5 text-[10px] text-slate-400 pt-0.5">
+                                        <span>Templates:</span>
+                                        <button @click="applyStressPreset('crash30')" type="button" class="hover:text-rose-500 hover:underline cursor-pointer">Yr 1 (-30%)</button>
+                                        <span>&middot;</span>
+                                        <button @click="applyStressPreset('bear45')" type="button" class="hover:text-rose-500 hover:underline cursor-pointer">2Y Bear (-45%)</button>
+                                        <span>&middot;</span>
+                                        <button @click="applyStressPreset('rebound')" type="button" class="hover:text-emerald-500 hover:underline cursor-pointer">V-Rebound (-30%/+25%)</button>
+                                        <span>&middot;</span>
+                                        <button @click="applyStressPreset('cycles')" type="button" class="hover:text-rose-500 hover:underline cursor-pointer">Decade Cycles</button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1591,7 +1721,20 @@ Updated: 2026-11-25T16:30:00+00:00
                 const restoredWp = sanitizePhases(savedPlan && savedPlan.wp, true);
                 const restoredRp = sanitizePhases(savedPlan && savedPlan.rp, false);
                 const restoredIp = sanitizePhases(savedPlan && savedPlan.ip, false);
-                const maxPhaseId = [...restoredWp, ...restoredRp, ...restoredIp].reduce((m, p) => Math.max(m, p.id || 0), 0);
+                let restoredSp = [];
+                if (savedPlan && Array.isArray(savedPlan.sp)) {
+                    restoredSp = savedPlan.sp.map((p, idx) => ({
+                        id: Number(p && p.id) || (idx + 1000),
+                        startYear: String(Math.max(1, Math.round(Number(p && p.startYear) || 1))),
+                        duration: String(Math.max(1, Math.min(30, Math.round(Number(p && p.duration) || 1)))),
+                        value: String((p && p.value) ?? '-30')
+                    }));
+                } else if (savedPlan && savedPlan.s === 'crash30') {
+                    restoredSp = [{ id: 1000, startYear: '1', duration: '1', value: '-30' }];
+                } else if (savedPlan && savedPlan.s === 'crash45') {
+                    restoredSp = [{ id: 1000, startYear: '1', duration: '2', value: '-45' }];
+                }
+                const maxPhaseId = [...restoredWp, ...restoredRp, ...restoredIp, ...restoredSp].reduce((m, p) => Math.max(m, p.id || 0), 0);
 
                 return {
                     themePreference: 'system',
@@ -1608,8 +1751,8 @@ Updated: 2026-11-25T16:30:00+00:00
                     withdrawalPhases: restoredWp,
                     returnPhases: restoredRp,
                     inflationPhases: restoredIp,
+                    stressPhases: restoredSp,
                     nextPhaseId: maxPhaseId + 1,
-                    stressScenario: savedPlan && (savedPlan.s === 'crash30' || savedPlan.s === 'crash45') ? savedPlan.s : 'none',
                     enableGuardrail: Boolean(savedPlan && savedPlan.g),
                     showCountdown: Boolean(savedPlan && savedPlan.cd),
                     shareCopied: false,
@@ -1623,6 +1766,7 @@ Updated: 2026-11-25T16:30:00+00:00
                     inflationDrawerTab: 'regimes',
                     showMoreFx: false,
                     fxDrawerTab: 'regimes',
+                    showMoreTax: false,
                     isLoadingFxHistory: false,
                     fxPairProfiles: {},
                     countryProfiles: {},
@@ -2059,6 +2203,156 @@ Updated: 2026-11-25T16:30:00+00:00
                 taxRate() {
                     return Math.min(60, this.parseNumber(this.inputs.taxRate));
                 },
+                planGainShare() {
+                    const r = Math.max(0.01, this.effectiveLocalAnnualReturn / 100);
+                    const midYr = Math.max(1, this.withdrawalDuration / 2);
+                    const avgGrowthMult = Math.pow(1 + r, midYr);
+                    const rawShare = 1 - 1 / avgGrowthMult;
+                    return Math.min(0.85, Math.max(0.30, Math.round(rawShare * 100) / 100));
+                },
+                currentCountryTaxProfile() {
+                    const code = (this.activeCountry && this.activeCountry.countryCode) || 'USA';
+                    const zeroCgtHubs = new Set(['ARE', 'SGP', 'HKG', 'CHE', 'MYS', 'CYM', 'BMU', 'BHS', 'MCO', 'BHR', 'QAT', 'KWT', 'OMN', 'SAU', 'BEL', 'NZL']);
+                    const g = this.planGainShare;
+                    const calcSwp = (ltcg) => Math.round(ltcg * g * 10) / 10;
+
+                    if (zeroCgtHubs.has(code)) {
+                        return {
+                            taxFreeLabel: 'Tax-Free Hub',
+                            taxFreeSub: '0% local capital gains',
+                            swpLabel: 'Zero-CGT SWP',
+                            swpRate: 0,
+                            swpSub: '0% capital gains jurisdiction',
+                            swpDesc: `${this.activeCountry.region} generally imposes 0% personal capital gains tax`,
+                            ltcgLabel: 'Withholding / Div',
+                            ltcgRate: 5,
+                            ltcgSub: 'Foreign dividend drag',
+                            incomeLabel: 'Cross-Border / High',
+                            incomeRate: 15,
+                            incomeSub: 'Foreign-sourced / treaty tax'
+                        };
+                    }
+
+                    const profiles = {
+                        USA: {
+                            taxFreeLabel: 'Roth / 0% LTCG', taxFreeSub: 'Roth IRA or 0% LTCG bracket',
+                            swpLabel: 'Brokerage SWP', ltcgBase: 15, ltcgSub: '15% headline LTCG',
+                            incomeLabel: 'Pre-Tax 401k/IRA', incomeRate: 22, incomeSub: 'Ordinary income bracket'
+                        },
+                        IND: {
+                            taxFreeLabel: 'PPF / Exempt', taxFreeSub: 'Tax-exempt corpus',
+                            swpLabel: 'Equity MF SWP', ltcgBase: 12.5, ltcgSub: '12.5% LTCG (>₹1.25L)',
+                            incomeLabel: 'Debt / Slab', incomeRate: 20, incomeSub: 'Marginal income slab'
+                        },
+                        CHN: {
+                            taxFreeLabel: 'A-Share Exempt', taxFreeSub: 'Listed stock cap gains 0%',
+                            swpLabel: 'Blended SWP', ltcgBase: 15, ltcgSub: '20% overseas / dividend', ltcgOverride: 20,
+                            incomeLabel: 'Taxable Income', incomeRate: 25, incomeSub: 'High-bracket income'
+                        },
+                        GBR: {
+                            taxFreeLabel: 'ISA Tax-Free', taxFreeSub: 'Stocks & Shares ISA',
+                            swpLabel: 'GIA Brokerage SWP', ltcgBase: 18, ltcgSub: '18% basic / 24% higher CGT',
+                            incomeLabel: 'SIPP Drawdown', incomeRate: 20, incomeSub: '20% basic rate (post-25% PCLS)'
+                        },
+                        CAN: {
+                            taxFreeLabel: 'TFSA Tax-Free', taxFreeSub: 'TFSA tax-free withdrawals',
+                            swpLabel: 'Non-Reg SWP', ltcgBase: 15, ltcgSub: '50% inclusion cap gains',
+                            incomeLabel: 'RRSP / RRIF', incomeRate: 25, incomeSub: 'Ordinary income draw'
+                        },
+                        AUS: {
+                            taxFreeLabel: 'Super 60+ Free', taxFreeSub: 'Tax-free pension phase',
+                            swpLabel: '50% CGT SWP', ltcgBase: 16, ltcgSub: '50% CGT discount applied',
+                            incomeLabel: 'Marginal Income', incomeRate: 25, incomeSub: 'Pre-retirement marginal tax'
+                        },
+                        JPN: {
+                            taxFreeLabel: 'NISA Tax-Free', taxFreeSub: 'NISA tax-exempt growth',
+                            swpLabel: 'Taxable SWP', ltcgBase: 20.3, ltcgSub: '20.315% flat stock/div tax',
+                            incomeLabel: 'Pension / Income', incomeRate: 25, incomeSub: 'Progressive income draw'
+                        },
+                        DEU: {
+                            taxFreeLabel: 'Sparerpausch', taxFreeSub: 'Below allowance / exempt',
+                            swpLabel: 'Depot SWP', ltcgBase: 18.5, ltcgSub: '26.4% Abgeltung (70% equity)',
+                            incomeLabel: 'Full Cap / Income', incomeRate: 26.4, incomeSub: 'Abgeltungssteuer + SolZ'
+                        },
+                        FRA: {
+                            taxFreeLabel: 'PEA Social-Only', taxFreeSub: 'Exempt income tax',
+                            swpLabel: 'CTO / PFU SWP', ltcgBase: 30, ltcgSub: '30% flat PFU on gains',
+                            incomeLabel: 'Flat PFU Full', incomeRate: 30, incomeSub: '30% Prélèvement Forfaitaire'
+                        },
+                        PRT: {
+                            taxFreeLabel: 'Exempt / Low', taxFreeSub: 'Tax-exempt wrapper',
+                            swpLabel: 'Brokerage SWP', ltcgBase: 28, ltcgSub: '28% flat capital gains',
+                            incomeLabel: 'Full 28% Cap', incomeRate: 28, incomeSub: '28% autonomous rate'
+                        },
+                        ESP: {
+                            taxFreeLabel: 'Exempt / Low', taxFreeSub: 'Below personal allowance',
+                            swpLabel: 'Savings SWP', ltcgBase: 21, ltcgSub: '19–28% savings tax',
+                            incomeLabel: 'General IRPF', incomeRate: 26, incomeSub: 'General income bracket'
+                        },
+                        ITA: {
+                            taxFreeLabel: 'Exempt / Low', taxFreeSub: 'Tax-exempt allowance',
+                            swpLabel: 'Brokerage SWP', ltcgBase: 26, ltcgSub: '26% capital gains tax',
+                            incomeLabel: 'Full 26% Cap', incomeRate: 26, incomeSub: '26% substitute tax'
+                        },
+                        KOR: {
+                            taxFreeLabel: 'KRX Domestic', taxFreeSub: 'Domestic listed 0% retail',
+                            swpLabel: 'Overseas SWP', ltcgBase: 22, ltcgSub: '22% overseas stock CGT',
+                            incomeLabel: 'Dividend / Slab', incomeRate: 24, incomeSub: 'Comprehensive income tax'
+                        },
+                        BRA: {
+                            taxFreeLabel: 'Exempt Sales', taxFreeSub: 'Within monthly exempt limit',
+                            swpLabel: 'Equity / Fund SWP', ltcgBase: 15, ltcgSub: '15% swing/fund gains tax',
+                            incomeLabel: 'High Slab / IRPF', incomeRate: 22.5, incomeSub: 'Fixed-income / IRPF slab'
+                        },
+                        MEX: {
+                            taxFreeLabel: 'Exempt / PPR', taxFreeSub: 'Art. 151 / retirement exempt',
+                            swpLabel: 'Bolsa SWP', ltcgBase: 10, ltcgSub: '10% BMV equity gain tax',
+                            incomeLabel: 'ISR Income', incomeRate: 25, incomeSub: 'Ordinary ISR bracket'
+                        },
+                        THA: {
+                            taxFreeLabel: 'SET / LTF Free', taxFreeSub: 'Thai exchange equity exempt',
+                            swpLabel: 'RMF / Remit SWP', ltcgBase: 15, ltcgSub: '15% fixed / remitted gains',
+                            incomeLabel: 'PIT Slab', incomeRate: 20, incomeSub: 'Personal income bracket'
+                        }
+                    };
+
+                    const p = profiles[code] || {
+                        taxFreeLabel: 'Tax-Free / Sheltered',
+                        taxFreeSub: 'Exempt retirement account',
+                        swpLabel: 'Brokerage SWP',
+                        ltcgBase: 20,
+                        ltcgSub: '20% headline cap gains',
+                        incomeLabel: 'Pre-Tax / Income',
+                        incomeRate: 25,
+                        incomeSub: 'Ordinary income bracket'
+                    };
+
+                    const swpRate = calcSwp(p.ltcgBase);
+                    const ltcgRate = p.ltcgOverride !== undefined ? p.ltcgOverride : p.ltcgBase;
+                    return {
+                        taxFreeLabel: p.taxFreeLabel,
+                        taxFreeSub: p.taxFreeSub,
+                        swpLabel: p.swpLabel,
+                        swpRate,
+                        swpSub: `${p.ltcgBase}% LTCG × ~${Math.round(g * 100)}% gains`,
+                        swpDesc: `${this.activeCountry.region} taxable SWP estimate: ${p.ltcgBase}% cap-gains tax on the ~${Math.round(g * 100)}% gain portion of withdrawals`,
+                        ltcgLabel: 'Full Cap Gains',
+                        ltcgRate,
+                        ltcgSub: p.ltcgSub,
+                        incomeLabel: p.incomeLabel,
+                        incomeRate: p.incomeRate,
+                        incomeSub: p.incomeSub
+                    };
+                },
+                taxPresets() {
+                    const tp = this.currentCountryTaxProfile;
+                    return [
+                        { id: 'free', label: tp.taxFreeLabel, rate: 0, sub: tp.taxFreeSub, tooltip: `${tp.taxFreeLabel}: 0% effective tax drag` },
+                        { id: 'swp', label: tp.swpLabel, rate: tp.swpRate, sub: tp.swpSub, tooltip: tp.swpDesc },
+                        { id: 'ltcg', label: tp.ltcgLabel, rate: tp.ltcgRate, sub: tp.ltcgSub, tooltip: `Conservative assumption: full ${tp.ltcgRate}% capital gains rate on withdrawals` },
+                        { id: 'income', label: tp.incomeLabel, rate: tp.incomeRate, sub: tp.incomeSub, tooltip: `${tp.incomeLabel}: ${tp.incomeRate}% ordinary income / pension withdrawal rate` }
+                    ];
+                },
                 hasFixedWithdrawalTarget() {
                     return this.withdrawalMode === 'fixed' || this.withdrawalPhases.some(p => p.mode === 'fixed');
                 },
@@ -2398,6 +2692,30 @@ Updated: 2026-11-25T16:30:00+00:00
                         value: this.parseSignedNumber(p.value, -20, 500)
                     }));
 
+                    const stressByMonth = new Map();
+                    const sortedStress = (this.stressPhases || [])
+                        .map(p => ({
+                            startYear: Math.max(1, Math.round(this.parseNumber(p.startYear) || 1)),
+                            duration: Math.max(1, Math.min(30, Math.round(this.parseNumber(p.duration) || 1))),
+                            value: this.parseSignedNumber(p.value, -95, 300)
+                        }))
+                        .sort((a, b) => a.startYear - b.startYear);
+                    for (const sp of sortedStress) {
+                        const startM = (sp.startYear - 1) * 12 + 1;
+                        const spanMonths = sp.duration * 12;
+                        const shockMonthlyRate = Math.pow(Math.max(0.01, 1 + sp.value / 100), 1 / spanMonths) - 1;
+                        const tagLabel = `${sp.value >= 0 ? '+' : ''}${sp.value}%${sp.duration > 1 ? ' (' + sp.duration + 'y)' : ''}`;
+                        const tagKind = sp.value < 0 ? 'stress' : 'return';
+                        for (let offset = 0; offset < spanMonths; offset++) {
+                            stressByMonth.set(startM + offset, {
+                                rate: shockMonthlyRate,
+                                isStart: offset === 0,
+                                tagLabel,
+                                tagKind
+                            });
+                        }
+                    }
+
                     let fxRate = this.spotFxRate;
                     const startLocal = overrideInitialLocal !== null ? Math.max(0, overrideInitialLocal) : this.initialInvestment;
                     let foreignBalance = this.isCrossCurrency && fxRate > 0 ? startLocal / fxRate : startLocal;
@@ -2462,12 +2780,12 @@ Updated: 2026-11-25T16:30:00+00:00
                         }
 
                         let effectiveMonthlyRate = activeMonthlyRate;
-                        if (this.stressScenario === 'crash30' && m <= 12) {
-                            effectiveMonthlyRate = Math.pow(0.70, 1 / 12) - 1;
-                            if (m === 1 && yearPhaseTags) yearPhaseTags.push({ label: 'Crash -30%', kind: 'stress' });
-                        } else if (this.stressScenario === 'crash45' && m <= 24) {
-                            effectiveMonthlyRate = Math.pow(0.55, 1 / 24) - 1;
-                            if (m === 1 && yearPhaseTags) yearPhaseTags.push({ label: 'Bear -45%', kind: 'stress' });
+                        if (stressByMonth.has(m)) {
+                            const st = stressByMonth.get(m);
+                            effectiveMonthlyRate = st.rate;
+                            if (st.isStart && yearPhaseTags) {
+                                yearPhaseTags.push({ label: st.tagLabel, kind: st.tagKind });
+                            }
                         }
 
                         // Apply growth first, then check guardrail and withdrawals
@@ -2978,6 +3296,62 @@ Updated: 2026-11-25T16:30:00+00:00
                 removeInflationPhase(id) {
                     this.inflationPhases = this.inflationPhases.filter(p => p.id !== id);
                 },
+                addStressPhase() {
+                    const last = this.stressPhases[this.stressPhases.length - 1];
+                    const horizon = Math.max(2, Math.floor(this.withdrawalDuration));
+                    let startYear = 1;
+                    if (last) {
+                        const lastStart = Math.max(1, Math.round(this.parseNumber(last.startYear) || 1));
+                        const lastDur = Math.max(1, Math.round(this.parseNumber(last.duration) || 1));
+                        startYear = Math.min(horizon, lastStart + lastDur + 8);
+                        if (startYear <= lastStart) startYear = lastStart + lastDur;
+                    }
+                    this.stressPhases.push({
+                        id: this.nextPhaseId++,
+                        startYear: String(startYear),
+                        duration: '1',
+                        value: last ? '-25' : '-30'
+                    });
+                },
+                removeStressPhase(id) {
+                    this.stressPhases = this.stressPhases.filter(p => p.id !== id);
+                },
+                applyStressPreset(kind) {
+                    if (kind === 'crash30') {
+                        this.stressPhases = [{ id: this.nextPhaseId++, startYear: '1', duration: '1', value: '-30' }];
+                    } else if (kind === 'bear45') {
+                        this.stressPhases = [{ id: this.nextPhaseId++, startYear: '1', duration: '2', value: '-45' }];
+                    } else if (kind === 'rebound') {
+                        this.stressPhases = [
+                            { id: this.nextPhaseId++, startYear: '1', duration: '1', value: '-30' },
+                            { id: this.nextPhaseId++, startYear: '2', duration: '1', value: '25' }
+                        ];
+                    } else if (kind === 'cycles') {
+                        const horizon = Math.max(10, Math.round(this.withdrawalDuration));
+                        const phases = [];
+                        for (let yr = 1; yr <= horizon; yr += 10) {
+                            phases.push({ id: this.nextPhaseId++, startYear: String(yr), duration: '1', value: '-25' });
+                        }
+                        this.stressPhases = phases;
+                    }
+                },
+                formatStressYear(phase) {
+                    const cleaned = String(phase.startYear ?? '').replace(/[^0-9]/g, '');
+                    phase.startYear = String(Math.max(1, parseInt(cleaned, 10) || 1));
+                },
+                formatStressDuration(phase) {
+                    const cleaned = String(phase.duration ?? '').replace(/[^0-9]/g, '');
+                    phase.duration = String(Math.max(1, Math.min(30, parseInt(cleaned, 10) || 1)));
+                },
+                formatStressValue(phase) {
+                    const val = phase.value;
+                    if (val === '' || val === null || val === undefined) {
+                        phase.value = '0';
+                        return;
+                    }
+                    const parsed = this.parseSignedNumber(val, -95, 300);
+                    phase.value = String(Math.round(parsed * 10) / 10);
+                },
                 setPhaseMode(phase, newMode) {
                     if (phase.mode === newMode) return;
                     const yr = Math.max(2, Math.round(this.parseNumber(phase.startYear)));
@@ -3288,7 +3662,7 @@ Updated: 2026-11-25T16:30:00+00:00
                         wp: this.withdrawalPhases.map(p => ({ ...p })),
                         rp: this.returnPhases.map(p => ({ ...p })),
                         ip: this.inflationPhases.map(p => ({ ...p })),
-                        s: this.stressScenario,
+                        sp: this.stressPhases.map(p => ({ ...p })),
                         g: this.enableGuardrail ? 1 : 0,
                         v: this.valueDisplayMode
                     };
@@ -3345,7 +3719,7 @@ Updated: 2026-11-25T16:30:00+00:00
 
                     this.investmentCurrency = this.selectedCurrency;
                     this.withdrawalMode = 'percent';
-                    this.stressScenario = 'none';
+                    this.stressPhases = [];
                     this.enableGuardrail = false;
                     this.showCountdown = false;
                     this.userEditedInflation = false;
