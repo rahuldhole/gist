@@ -160,20 +160,20 @@ Updated: 2026-11-25T10:44:00+01:00
                                 <label for="initialInvestment" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                     Initial Investment
                                 </label>
-                                <div class="relative w-36">
+                                <div class="relative w-40">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
                                     <input v-model="inputs.initialInvestment" @input="handleTextInput('initialInvestment')"
                                         type="text" id="initialInvestment" inputmode="decimal"
                                         class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
-                            <input type="range" min="10000" max="5000000" step="10000"
-                                :value="Math.min(initialInvestment, 5000000)"
+                            <input type="range" min="1000" :max="investmentSliderMax" :step="investmentSliderStep"
+                                :value="initialInvestment"
                                 @input="updateFromSlider('initialInvestment', $event.target.value, true)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
-                                <span>$10K</span>
-                                <span>$5M+</span>
+                                <span>$1K</span>
+                                <span>${{ formatCompact(investmentSliderMax) }}</span>
                             </div>
                         </div>
 
@@ -190,15 +190,15 @@ Updated: 2026-11-25T10:44:00+01:00
                                         <span>Max Perpetual: ${{ formatCompact(monthlyReturnAmount) }}/mo</span>
                                     </button>
                                 </div>
-                                <div class="relative w-36">
+                                <div class="relative w-40">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
                                     <input v-model="inputs.monthlyWithdrawal" @input="handleTextInput('monthlyWithdrawal')"
                                         type="text" id="monthlyWithdrawal" inputmode="decimal"
                                         class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
-                            <input type="range" min="100" :max="Math.max(50000, Math.round(initialInvestment * 0.05))" step="100"
-                                :value="Math.min(monthlyWithdrawal, Math.max(50000, Math.round(initialInvestment * 0.05)))"
+                            <input type="range" min="0" :max="withdrawalSliderMax" :step="withdrawalSliderStep"
+                                :value="monthlyWithdrawal"
                                 @input="updateFromSlider('monthlyWithdrawal', $event.target.value, true)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
@@ -213,21 +213,21 @@ Updated: 2026-11-25T10:44:00+01:00
                                 <label for="annualReturn" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                     Expected Annual Return
                                 </label>
-                                <div class="relative w-28">
+                                <div class="relative w-32">
                                     <input v-model="inputs.annualReturn" @input="handleTextInput('annualReturn')"
                                         type="text" id="annualReturn" inputmode="decimal"
                                         class="w-full pl-3 pr-7 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">%</span>
                                 </div>
                             </div>
-                            <input type="range" min="1" max="25" step="0.5"
-                                :value="Math.min(annualReturn, 25)"
+                            <input type="range" min="0" :max="returnSliderMax" step="0.5"
+                                :value="annualReturn"
                                 @input="updateFromSlider('annualReturn', $event.target.value, false)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
-                                <span>1%</span>
+                                <span>0%</span>
                                 <span>Monthly yield: {{ monthlyReturn.toFixed(2) }}%</span>
-                                <span>25%</span>
+                                <span>{{ returnSliderMax }}%</span>
                             </div>
                         </div>
 
@@ -243,21 +243,21 @@ Updated: 2026-11-25T10:44:00+01:00
                                         Depletes in {{ yearsLastingFunds.toFixed(1) }} yrs (Click to set)
                                     </button>
                                 </div>
-                                <div class="relative w-28">
+                                <div class="relative w-32">
                                     <input v-model="inputs.withdrawalDuration" @input="handleTextInput('withdrawalDuration')"
                                         type="text" id="withdrawalDuration" inputmode="numeric"
                                         class="w-full pl-3 pr-10 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
                                 </div>
                             </div>
-                            <input type="range" min="1" max="60" step="1"
-                                :value="Math.min(withdrawalDuration, 60)"
+                            <input type="range" min="1" :max="durationSliderMax" step="1"
+                                :value="withdrawalDuration"
                                 @input="updateFromSlider('withdrawalDuration', $event.target.value, false)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
                                 <span>1 yr</span>
-                                <span>{{ Math.round(withdrawalDuration * 12) }} months total</span>
-                                <span>60 yrs</span>
+                                <span>{{ Math.round(withdrawalDuration * 12).toLocaleString('en-US') }} months total</span>
+                                <span>{{ durationSliderMax }} yrs</span>
                             </div>
                         </div>
 
@@ -384,10 +384,10 @@ Updated: 2026-11-25T10:44:00+01:00
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 <tr v-for="row in simulation.yearlyData" :key="row.year" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                                     <td class="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-300">Year {{ row.year }}</td>
-                                    <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium">${{ formatCurrency(row.withdrawn, 0) }}</td>
-                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">+${{ formatCurrency(row.interest, 0) }}</td>
-                                    <td class="py-2.5 px-4 text-right font-semibold" :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'">
-                                        ${{ formatCurrency(row.endingBalance, 0) }}
+                                    <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium" :title="'$' + formatCurrency(row.withdrawn, 0)">${{ formatCompact(row.withdrawn) }}</td>
+                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400" :title="'+$' + formatCurrency(row.interest, 0)">+${{ formatCompact(row.interest) }}</td>
+                                    <td class="py-2.5 px-4 text-right font-semibold" :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'" :title="'$' + formatCurrency(row.endingBalance, 0)">
+                                        ${{ formatCompact(row.endingBalance) }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -430,13 +430,37 @@ Updated: 2026-11-25T10:44:00+01:00
                     return this.parseNumber(this.inputs.annualReturn);
                 },
                 withdrawalDuration() {
-                    return Math.min(Math.max(this.parseNumber(this.inputs.withdrawalDuration), 0), 100);
+                    return Math.max(this.parseNumber(this.inputs.withdrawalDuration), 0);
                 },
                 monthlyWithdrawal() {
                     return this.parseNumber(this.inputs.monthlyWithdrawal);
                 },
                 inflationRate() {
                     return this.parseNumber(this.inputs.inflationRate);
+                },
+                // Dynamic slider bounds that automatically scale up for large inputs
+                investmentSliderMax() {
+                    if (this.initialInvestment <= 5000000) return 5000000;
+                    const magnitude = Math.pow(10, Math.floor(Math.log10(this.initialInvestment)));
+                    return Math.ceil(this.initialInvestment / magnitude) * magnitude;
+                },
+                investmentSliderStep() {
+                    return Math.max(1000, Math.round(this.investmentSliderMax / 500));
+                },
+                withdrawalSliderMax() {
+                    const baseMax = Math.max(50000, Math.round(this.initialInvestment * 0.05), this.monthlyWithdrawal);
+                    if (baseMax <= 50000) return 50000;
+                    const magnitude = Math.pow(10, Math.floor(Math.log10(baseMax)));
+                    return Math.ceil(baseMax / magnitude) * magnitude;
+                },
+                withdrawalSliderStep() {
+                    return Math.max(100, Math.round(this.withdrawalSliderMax / 500));
+                },
+                returnSliderMax() {
+                    return this.annualReturn <= 25 ? 25 : Math.ceil(this.annualReturn / 10) * 10;
+                },
+                durationSliderMax() {
+                    return this.withdrawalDuration <= 60 ? 60 : Math.ceil(this.withdrawalDuration / 25) * 25;
                 },
                 monthlyReturn() {
                     return this.annualReturn / 12;
@@ -451,7 +475,8 @@ Updated: 2026-11-25T10:44:00+01:00
                 // Complete month-by-month simulation engine
                 simulation() {
                     const monthlyRate = this.annualReturn / 100 / 12;
-                    const totalMonths = Math.round(this.withdrawalDuration * 12);
+                    // Safeguard against browser freeze on astronomical durations (> 120,000 months / 10,000 yrs)
+                    const totalMonths = Math.min(Math.round(this.withdrawalDuration * 12), 120000);
                     let balance = this.initialInvestment;
                     let currentMonthlyWithdrawal = this.monthlyWithdrawal;
                     let totalWithdrawn = 0;
@@ -553,6 +578,7 @@ Updated: 2026-11-25T10:44:00+01:00
                 formatCompact(input) {
                     const num = Number(input);
                     if (isNaN(num)) return input;
+                    if (!isFinite(num)) return "∞";
                     const absNum = Math.abs(num);
                     const sign = num < 0 ? "-" : "";
 
@@ -567,7 +593,12 @@ Updated: 2026-11-25T10:44:00+01:00
                     };
 
                     const abbreviations = [
-                        [1.0e15, "Q"], [1.0e12, "T"], [1.0e9, "B"], [1.0e6, "M"], [1.0e3, "K"]
+                        [1.0e230, "Ct"], [1.0e207, "DuVg"], [1.0e204, "UnVg"], [1.0e180, "Vg"],
+                        [1.0e150, "Qad"], [1.0e120, "Tdc"], [1.0e100, "Gg"], [1.0e90, "NoV"],
+                        [1.0e81, "OcV"], [1.0e72, "SpV"], [1.0e63, "SxV"], [1.0e54, "QdV"],
+                        [1.0e48, "TdV"], [1.0e42, "DcV"], [1.0e36, "No"], [1.0e30, "Oc"],
+                        [1.0e27, "Sp"], [1.0e24, "Y"], [1.0e21, "Z"], [1.0e18, "E"],
+                        [1.0e15, "P"], [1.0e12, "T"], [1.0e9, "B"], [1.0e6, "M"], [1.0e3, "K"]
                     ];
 
                     for (const [value, suffix] of abbreviations) {
