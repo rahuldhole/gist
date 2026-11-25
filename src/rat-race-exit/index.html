@@ -1432,6 +1432,7 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <th class="py-3 px-4">Year</th>
                                     <th class="py-3 px-4 text-right">Mo. Payout</th>
                                     <th class="py-3 px-4 text-right">Annual Drawn</th>
+                                    <th class="py-3 px-4 text-right">Tax Paid</th>
                                     <th class="py-3 px-4 text-right">{{ valueDisplayMode === 'real' ? 'Real Gain' : 'Interest Earned' }}</th>
                                     <th class="py-3 px-4 text-right">Ending Balance</th>
                                 </tr>
@@ -1465,6 +1466,11 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium"
                                         :title="'Nominal: ' + currencySymbol + formatCurrency(row.withdrawn, 0) + ' | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realWithdrawn, 0)">
                                         {{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realWithdrawn : row.withdrawn) }}
+                                    </td>
+                                    <td class="py-2.5 px-4 text-right font-medium"
+                                        :class="row.taxesPaid > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'"
+                                        :title="'Nominal Tax: ' + currencySymbol + formatCurrency(row.taxesPaid, 0) + ' | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realTaxesPaid, 0)">
+                                        {{ (valueDisplayMode === 'real' ? row.realTaxesPaid : row.taxesPaid) > 0 ? (currencySymbol + formatCompact(valueDisplayMode === 'real' ? row.realTaxesPaid : row.taxesPaid)) : '—' }}
                                     </td>
                                     <td class="py-2.5 px-4 text-right font-medium"
                                         :class="(valueDisplayMode === 'real' ? row.realGain : row.interest) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'"
@@ -2781,6 +2787,7 @@ Updated: 2026-11-25T16:30:00+00:00
                     let yearRealWithdrawn = 0;
                     let yearRealGrossOutflow = 0;
                     let yearTaxesPaid = 0;
+                    let yearRealTaxesPaid = 0;
                     let yearInterest = 0;
                     let yearMonthsCount = 0;
                     let yearPhaseTags = includeYearlyData ? [] : null;
@@ -2895,6 +2902,7 @@ Updated: 2026-11-25T16:30:00+00:00
                             yearRealWithdrawn += realNetWithdrawal;
                             yearRealGrossOutflow += actualGrossWithdrawal / cumulativeInflationFactor;
                             yearTaxesPaid += taxPaid;
+                            yearRealTaxesPaid += taxPaid / cumulativeInflationFactor;
                             yearMonthsCount++;
                             monthsCompleted = m;
                             endingMonthlyWithdrawal = actualNetWithdrawal;
@@ -2929,6 +2937,7 @@ Updated: 2026-11-25T16:30:00+00:00
                                     withdrawn: yearWithdrawn,
                                     realWithdrawn: yearRealWithdrawn,
                                     taxesPaid: yearTaxesPaid,
+                                    realTaxesPaid: yearRealTaxesPaid,
                                     interest: yearInterest,
                                     realGain,
                                     endingBalance: balance,
@@ -2949,6 +2958,7 @@ Updated: 2026-11-25T16:30:00+00:00
                             yearRealWithdrawn = 0;
                             yearRealGrossOutflow = 0;
                             yearTaxesPaid = 0;
+                            yearRealTaxesPaid = 0;
                             yearInterest = 0;
                             yearMonthsCount = 0;
                             yearGuardrailTagged = false;
