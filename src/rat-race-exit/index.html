@@ -959,6 +959,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     inflationPhases: [],
                     nextPhaseId: 1,
                     swrPresets: [
+                        { label: '2% Ultra-Safe', rate: 2, desc: 'Ultra-conservative 2% endowment draw — maximum capital growth' },
                         { label: '3% Safe', rate: 3, desc: 'Ultra-safe 3% perpetual rule — strong capital compounding' },
                         { label: '4% Trinity', rate: 4, desc: 'Classic 4% FIRE benchmark' },
                         { label: '5% Balanced', rate: 5, desc: '5% balanced yield harvest' },
@@ -966,10 +967,10 @@ Updated: 2026-11-25T14:35:00+00:00
                     ],
                     inputs: {
                         initialInvestment: initialCurr.defaultCorpus,
-                        annualReturn: '7',
+                        annualReturn: '6',
                         withdrawalDuration: '30',
                         monthlyWithdrawal: initialCurr.defaultMonthly,
-                        withdrawalPercent: '4',
+                        withdrawalPercent: '2',
                         inflationRate: String(initialCurr.defaultRate)
                     },
                     isLoadingInflation: false,
@@ -1761,10 +1762,10 @@ Updated: 2026-11-25T14:35:00+00:00
                     this.inflationPhases = [];
                     this.inputs = {
                         initialInvestment: this.activeCurrency.defaultCorpus || '500000',
-                        annualReturn: '7',
+                        annualReturn: '6',
                         withdrawalDuration: '30',
                         monthlyWithdrawal: this.activeCurrency.defaultMonthly || '2500',
-                        withdrawalPercent: '4',
+                        withdrawalPercent: '2',
                         inflationRate: String(defaultRate)
                     };
                 },
