@@ -1,0 +1,754 @@
+<!-- APP-META
+Title: SWP Calculator
+Description: Systematic Withdrawal Plan (SWP) calculator and corpus projection simulator with inflation adjustment and interactive charts.
+Category: Finance
+Icon: fa-solid fa-chart-line
+Image: https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80&w=800
+Status: published
+Disable-Footer: false
+Disable-PWA: false
+Updated: 2026-11-25T10:44:00+01:00
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description"
+        content="SWP Calculator: Calculate your systematic withdrawal plan with ease using this interactive SWP calculator and corpus simulator.">
+    <meta name="keywords"
+        content="swp, calculator, simulator, systematic withdrawal plan, investment, finance">
+    <meta name="color-scheme" content="dark light">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Modern Typography: Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <title>SWP Calculator</title>
+    
+    <!-- Tailwind CSS with Dark Mode Class Configuration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        emerald: {
+                            450: '#10b981',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Vue 3 & Chart.js -->
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* Custom Range Slider Styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 999px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #10b981;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            margin-top: -6px;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+
+        .dark input[type="range"]::-webkit-slider-thumb {
+            border-color: #0f172a;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #059669;
+        }
+
+        /* Custom Scrollbar for Breakdown Table */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.6);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 antialiased selection:bg-emerald-500 selection:text-white">
+    <div id="app" class="min-h-screen flex flex-col justify-start py-6 px-4 sm:px-6 lg:px-8">
+        
+        <!-- Top Navigation Header -->
+        <header class="max-w-6xl w-full mx-auto flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 rounded-2xl bg-emerald-600 dark:bg-emerald-500/20 border border-emerald-500/30 shadow-sm">
+                    <svg class="h-6 w-6 text-white dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">SWP Calculator</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Systematic Withdrawal Plan Simulator</p>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button @click="resetDefaults" title="Reset to defaults"
+                    class="px-3 py-2 text-xs sm:text-sm font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors">
+                    Reset
+                </button>
+                <button @click="toggleDarkMode" aria-label="Toggle Dark Mode"
+                    class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                    <!-- Sun Icon -->
+                    <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <!-- Moon Icon -->
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Container -->
+        <main class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            
+            <!-- Left Column: Interactive Parameters (5 cols) -->
+            <section class="lg:col-span-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col justify-between space-y-6">
+                <div>
+                    <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white mb-1">Plan Parameters</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Adjust your corpus, expected returns, and withdrawal strategy.</p>
+
+                    <div class="space-y-6">
+                        <!-- Initial Investment -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label for="initialInvestment" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    Initial Investment
+                                </label>
+                                <div class="relative w-36">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
+                                    <input v-model="inputs.initialInvestment" @input="handleTextInput('initialInvestment')"
+                                        type="text" id="initialInvestment" inputmode="decimal"
+                                        class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                </div>
+                            </div>
+                            <input type="range" min="10000" max="5000000" step="10000"
+                                :value="Math.min(initialInvestment, 5000000)"
+                                @input="updateFromSlider('initialInvestment', $event.target.value, true)"
+                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>$10K</span>
+                                <span>$5M+</span>
+                            </div>
+                        </div>
+
+                        <!-- Monthly Withdrawal -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <div>
+                                    <label for="monthlyWithdrawal" class="text-sm font-semibold text-slate-700 dark:text-slate-300 block">
+                                        Monthly Withdrawal
+                                    </label>
+                                    <button @click="setSustainableWithdrawal" type="button"
+                                        class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-0.5"
+                                        title="Set to exact monthly interest earned so principal never shrinks">
+                                        <span>Max Perpetual: ${{ formatCompact(monthlyReturnAmount) }}/mo</span>
+                                    </button>
+                                </div>
+                                <div class="relative w-36">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
+                                    <input v-model="inputs.monthlyWithdrawal" @input="handleTextInput('monthlyWithdrawal')"
+                                        type="text" id="monthlyWithdrawal" inputmode="decimal"
+                                        class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                </div>
+                            </div>
+                            <input type="range" min="100" :max="Math.max(50000, Math.round(initialInvestment * 0.05))" step="100"
+                                :value="Math.min(monthlyWithdrawal, Math.max(50000, Math.round(initialInvestment * 0.05)))"
+                                @input="updateFromSlider('monthlyWithdrawal', $event.target.value, true)"
+                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>Withdrawal Rate: <strong class="text-slate-600 dark:text-slate-300">{{ (monthlyWithdrawalPercentage * 12).toFixed(2) }}%/yr</strong></span>
+                                <span>{{ monthlyWithdrawalPercentage.toFixed(2) }}%/mo</span>
+                            </div>
+                        </div>
+
+                        <!-- Expected Annual Return -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label for="annualReturn" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    Expected Annual Return
+                                </label>
+                                <div class="relative w-28">
+                                    <input v-model="inputs.annualReturn" @input="handleTextInput('annualReturn')"
+                                        type="text" id="annualReturn" inputmode="decimal"
+                                        class="w-full pl-3 pr-7 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">%</span>
+                                </div>
+                            </div>
+                            <input type="range" min="1" max="25" step="0.5"
+                                :value="Math.min(annualReturn, 25)"
+                                @input="updateFromSlider('annualReturn', $event.target.value, false)"
+                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>1%</span>
+                                <span>Monthly yield: {{ monthlyReturn.toFixed(2) }}%</span>
+                                <span>25%</span>
+                            </div>
+                        </div>
+
+                        <!-- Withdrawal Duration -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <div>
+                                    <label for="withdrawalDuration" class="text-sm font-semibold text-slate-700 dark:text-slate-300 block">
+                                        Time Horizon
+                                    </label>
+                                    <button v-if="isDepleted" @click="setMaxDuration" type="button"
+                                        class="text-xs font-medium text-rose-600 dark:text-rose-400 hover:underline mt-0.5">
+                                        Depletes in {{ yearsLastingFunds.toFixed(1) }} yrs (Click to set)
+                                    </button>
+                                </div>
+                                <div class="relative w-28">
+                                    <input v-model="inputs.withdrawalDuration" @input="handleTextInput('withdrawalDuration')"
+                                        type="text" id="withdrawalDuration" inputmode="numeric"
+                                        class="w-full pl-3 pr-10 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
+                                </div>
+                            </div>
+                            <input type="range" min="1" max="60" step="1"
+                                :value="Math.min(withdrawalDuration, 60)"
+                                @input="updateFromSlider('withdrawalDuration', $event.target.value, false)"
+                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>1 yr</span>
+                                <span>{{ Math.round(withdrawalDuration * 12) }} months total</span>
+                                <span>60 yrs</span>
+                            </div>
+                        </div>
+
+                        <!-- Optional Annual Inflation Step-Up -->
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300 block">Annual Inflation Adjustment</span>
+                                    <span class="text-xs text-slate-400">Increase withdrawal yearly to match inflation</span>
+                                </div>
+                                <div class="relative w-24">
+                                    <input v-model="inputs.inflationRate" @input="handleTextInput('inflationRate')"
+                                        type="text" aria-label="Inflation Rate" inputmode="decimal"
+                                        class="w-full pl-2 pr-6 py-1 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Status Pill -->
+                <div class="p-3.5 rounded-2xl border text-sm flex items-start gap-3 transition-colors"
+                    :class="isDepleted 
+                        ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300' 
+                        : 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'">
+                    <svg v-if="isDepleted" class="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <svg v-else class="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p class="font-semibold" v-if="isDepleted">Corpus Depletes Early</p>
+                        <p class="font-semibold" v-else>Sustainable Withdrawal Plan</p>
+                        <p class="text-xs opacity-90 mt-0.5" v-if="isDepleted">
+                            Your balance reaches $0 after <strong>{{ yearsLastingFunds.toFixed(1) }} years</strong> ({{ Math.round(yearsLastingFunds * 12) }} months).
+                        </p>
+                        <p class="text-xs opacity-90 mt-0.5" v-else>
+                            Your corpus survives all {{ withdrawalDuration }} years with <strong>${{ formatCompact(finalBalance) }}</strong> remaining.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Summary Cards, Visualization & Breakdown (7 cols) -->
+            <section class="lg:col-span-7 flex flex-col gap-6">
+                
+                <!-- 3 KPI Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Card 1: Initial Corpus -->
+                    <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+                        <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Invested</span>
+                        <div class="mt-1.5 font-display text-2xl font-bold text-slate-900 dark:text-white truncate" :title="'$' + formatCurrency(initialInvestment)">
+                            ${{ formatCompact(initialInvestment) }}
+                        </div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">Starting principal</span>
+                    </div>
+
+                    <!-- Card 2: Total Withdrawn -->
+                    <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+                        <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Withdrawn</span>
+                        <div class="mt-1.5 font-display text-2xl font-bold text-sky-600 dark:text-sky-400 truncate" :title="'$' + formatCurrency(actualTotalWithdrawn)">
+                            ${{ formatCompact(actualTotalWithdrawn) }}
+                        </div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+                            Across {{ simulation.monthsCompleted }} months
+                        </span>
+                    </div>
+
+                    <!-- Card 3: Final Value -->
+                    <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+                        <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Final Balance</span>
+                        <div class="mt-1.5 font-display text-2xl font-bold truncate"
+                            :class="finalBalance > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+                            :title="'$' + formatCurrency(finalBalance)">
+                            ${{ formatCompact(finalBalance) }}
+                        </div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+                            {{ finalBalance >= initialInvestment ? '+' : '' }}{{ initialInvestment > 0 ? ((finalBalance - initialInvestment) / initialInvestment * 100).toFixed(1) : 0 }}% net change
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Interactive Chart & Yearly Schedule Tabs -->
+                <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex-1 flex flex-col">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white">Corpus Projection</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Balance trajectory vs. cumulative cash withdrawn</p>
+                        </div>
+
+                        <!-- View Switcher -->
+                        <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
+                            <button @click="activeTab = 'chart'"
+                                :class="activeTab === 'chart' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                                class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                                Growth Chart
+                            </button>
+                            <button @click="activeTab = 'table'"
+                                :class="activeTab === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                                class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                                Yearly Schedule
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chart View -->
+                    <div v-show="activeTab === 'chart'" class="relative w-full h-72 sm:h-80">
+                        <canvas id="swpChart"></canvas>
+                    </div>
+
+                    <!-- Yearly Schedule Table View -->
+                    <div v-show="activeTab === 'table'" class="overflow-x-auto max-h-80 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-800/80 sticky top-0 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold">
+                                <tr>
+                                    <th class="py-3 px-4">Year</th>
+                                    <th class="py-3 px-4 text-right">Withdrawn</th>
+                                    <th class="py-3 px-4 text-right">Interest Earned</th>
+                                    <th class="py-3 px-4 text-right">Ending Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tr v-for="row in simulation.yearlyData" :key="row.year" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                    <td class="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-300">Year {{ row.year }}</td>
+                                    <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium">${{ formatCurrency(row.withdrawn, 0) }}</td>
+                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400">+${{ formatCurrency(row.interest, 0) }}</td>
+                                    <td class="py-2.5 px-4 text-right font-semibold" :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'">
+                                        ${{ formatCurrency(row.endingBalance, 0) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Total Wealth Generated Footer -->
+                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <span>Total Interest Generated: <strong class="text-emerald-600 dark:text-emerald-400">${{ formatCompact(simulation.totalInterest) }}</strong></span>
+                        <span>Total Value (Withdrawn + Final): <strong class="text-slate-800 dark:text-slate-200">${{ formatCompact(actualTotalWithdrawn + finalBalance) }}</strong></span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        let chartInstance = null;
+
+        createApp({
+            data() {
+                return {
+                    isDarkMode: false,
+                    activeTab: 'chart',
+                    inputs: {
+                        initialInvestment: '500 000',
+                        annualReturn: '7',
+                        withdrawalDuration: '30',
+                        monthlyWithdrawal: '2 500',
+                        inflationRate: '0'
+                    }
+                };
+            },
+            computed: {
+                initialInvestment() {
+                    return this.parseNumber(this.inputs.initialInvestment);
+                },
+                annualReturn() {
+                    return this.parseNumber(this.inputs.annualReturn);
+                },
+                withdrawalDuration() {
+                    return Math.min(Math.max(this.parseNumber(this.inputs.withdrawalDuration), 0), 100);
+                },
+                monthlyWithdrawal() {
+                    return this.parseNumber(this.inputs.monthlyWithdrawal);
+                },
+                inflationRate() {
+                    return this.parseNumber(this.inputs.inflationRate);
+                },
+                monthlyReturn() {
+                    return this.annualReturn / 12;
+                },
+                monthlyReturnAmount() {
+                    return (this.monthlyReturn / 100) * this.initialInvestment;
+                },
+                monthlyWithdrawalPercentage() {
+                    if (this.initialInvestment <= 0) return 0;
+                    return (this.monthlyWithdrawal / this.initialInvestment) * 100;
+                },
+                // Complete month-by-month simulation engine
+                simulation() {
+                    const monthlyRate = this.annualReturn / 100 / 12;
+                    const totalMonths = Math.round(this.withdrawalDuration * 12);
+                    let balance = this.initialInvestment;
+                    let currentMonthlyWithdrawal = this.monthlyWithdrawal;
+                    let totalWithdrawn = 0;
+                    let totalInterest = 0;
+                    let monthsCompleted = 0;
+                    let depletedMonth = null;
+
+                    const yearlyData = [];
+                    let yearWithdrawn = 0;
+                    let yearInterest = 0;
+
+                    for (let m = 1; m <= totalMonths; m++) {
+                        // Apply annual inflation step-up at the start of each new year (month 13, 25, etc.)
+                        if (m > 1 && (m - 1) % 12 === 0 && this.inflationRate > 0) {
+                            currentMonthlyWithdrawal *= (1 + this.inflationRate / 100);
+                        }
+
+                        if (balance > 0) {
+                            const interestEarned = balance * monthlyRate;
+                            balance += interestEarned;
+                            totalInterest += interestEarned;
+                            yearInterest += interestEarned;
+
+                            const actualWithdrawal = Math.min(balance, currentMonthlyWithdrawal);
+                            balance -= actualWithdrawal;
+                            totalWithdrawn += actualWithdrawal;
+                            yearWithdrawn += actualWithdrawal;
+                            monthsCompleted = m;
+
+                            if (balance <= 0.01) {
+                                balance = 0;
+                                if (depletedMonth === null) depletedMonth = m;
+                            }
+                        }
+
+                        if (m % 12 === 0 || m === totalMonths) {
+                            yearlyData.push({
+                                year: Math.ceil(m / 12),
+                                withdrawn: yearWithdrawn,
+                                interest: yearInterest,
+                                endingBalance: balance,
+                                cumulativeWithdrawn: totalWithdrawn
+                            });
+                            yearWithdrawn = 0;
+                            yearInterest = 0;
+                        }
+                    }
+
+                    return {
+                        finalBalance: balance,
+                        totalWithdrawn,
+                        totalInterest,
+                        monthsCompleted,
+                        depletedMonth,
+                        yearlyData
+                    };
+                },
+                finalBalance() {
+                    return this.simulation.finalBalance;
+                },
+                actualTotalWithdrawn() {
+                    return this.simulation.totalWithdrawn;
+                },
+                isDepleted() {
+                    return this.simulation.depletedMonth !== null && this.simulation.depletedMonth < Math.round(this.withdrawalDuration * 12);
+                },
+                yearsLastingFunds() {
+                    if (this.simulation.depletedMonth !== null) {
+                        return this.simulation.depletedMonth / 12;
+                    }
+                    return this.withdrawalDuration;
+                }
+            },
+            watch: {
+                simulation: {
+                    handler() {
+                        this.updateChart();
+                    },
+                    deep: true
+                },
+                isDarkMode() {
+                    this.updateChart();
+                }
+            },
+            methods: {
+                parseNumber(val) {
+                    if (!val) return 0;
+                    const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
+                    const parsed = parseFloat(cleaned);
+                    return isNaN(parsed) ? 0 : Math.max(0, parsed);
+                },
+                formatCurrency(value, decimals = 2) {
+                    const num = Number(value) || 0;
+                    return num.toLocaleString('en-US', {
+                        minimumFractionDigits: decimals,
+                        maximumFractionDigits: decimals
+                    }).replace(/,/g, ' ');
+                },
+                formatCompact(input) {
+                    const num = Number(input);
+                    if (isNaN(num)) return input;
+                    const absNum = Math.abs(num);
+                    const sign = num < 0 ? "-" : "";
+
+                    if (absNum < 100000) {
+                        return sign + this.formatCurrency(absNum, absNum % 1 === 0 ? 0 : 2);
+                    }
+
+                    const formatDec = (val) => {
+                        if (val >= 100) return val.toFixed(0);
+                        if (val >= 10) return val.toFixed(1);
+                        return val.toFixed(2);
+                    };
+
+                    const abbreviations = [
+                        [1.0e15, "Q"], [1.0e12, "T"], [1.0e9, "B"], [1.0e6, "M"], [1.0e3, "K"]
+                    ];
+
+                    for (const [value, suffix] of abbreviations) {
+                        if (absNum >= value) {
+                            return sign + formatDec(absNum / value) + suffix;
+                        }
+                    }
+                    return sign + num.toFixed(0);
+                },
+                handleTextInput(key) {
+                    let value = String(this.inputs[key]);
+                    // Allow digits, spaces, and single decimal point
+                    value = value.replace(/[^0-9.\s]/g, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+
+                    if (key === 'initialInvestment' || key === 'monthlyWithdrawal') {
+                        const raw = value.replace(/\s+/g, '');
+                        if (raw === '' || raw.endsWith('.')) {
+                            this.inputs[key] = value;
+                            return;
+                        }
+                        const num = parseFloat(raw);
+                        if (!isNaN(num)) {
+                            const formattedInt = Math.floor(num).toLocaleString('en-US').replace(/,/g, ' ');
+                            this.inputs[key] = parts.length > 1 ? `${formattedInt}.${parts[1]}` : formattedInt;
+                        }
+                    } else {
+                        this.inputs[key] = value;
+                    }
+                },
+                updateFromSlider(key, value, formatSpaces) {
+                    if (formatSpaces) {
+                        this.inputs[key] = Number(value).toLocaleString('en-US').replace(/,/g, ' ');
+                    } else {
+                        this.inputs[key] = String(value);
+                    }
+                },
+                setSustainableWithdrawal() {
+                    const maxMonthly = Math.floor(this.monthlyReturnAmount);
+                    this.inputs.monthlyWithdrawal = maxMonthly.toLocaleString('en-US').replace(/,/g, ' ');
+                },
+                setMaxDuration() {
+                    this.inputs.withdrawalDuration = Math.max(1, Math.floor(this.yearsLastingFunds)).toString();
+                },
+                resetDefaults() {
+                    this.inputs = {
+                        initialInvestment: '500 000',
+                        annualReturn: '7',
+                        withdrawalDuration: '30',
+                        monthlyWithdrawal: '2 500',
+                        inflationRate: '0'
+                    };
+                },
+                toggleDarkMode() {
+                    this.isDarkMode = !this.isDarkMode;
+                    document.documentElement.classList.toggle('dark', this.isDarkMode);
+                    localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
+                },
+                initChart() {
+                    const ctx = document.getElementById('swpChart');
+                    if (!ctx) return;
+
+                    chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: [],
+                            datasets: [
+                                {
+                                    label: 'Remaining Balance',
+                                    data: [],
+                                    borderColor: '#10b981',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                    borderWidth: 2.5,
+                                    fill: true,
+                                    tension: 0.35,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 5
+                                },
+                                {
+                                    label: 'Cumulative Withdrawn',
+                                    data: [],
+                                    borderColor: '#0ea5e9',
+                                    backgroundColor: 'transparent',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    fill: false,
+                                    tension: 0.35,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 5
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    align: 'end',
+                                    labels: {
+                                        usePointStyle: true,
+                                        boxWidth: 8,
+                                        font: { family: 'Inter', size: 12 }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                    titleFont: { family: 'Inter', size: 13 },
+                                    bodyFont: { family: 'Inter', size: 12 },
+                                    padding: 12,
+                                    cornerRadius: 12,
+                                    callbacks: {
+                                        label: (context) => {
+                                            return ` ${context.dataset.label}: $${Number(context.raw).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { font: { family: 'Inter', size: 11 }, maxTicksLimit: 10 }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    border: { display: false },
+                                    ticks: {
+                                        font: { family: 'Inter', size: 11 },
+                                        callback: (val) => '$' + this.formatCompact(val)
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    this.updateChart();
+                },
+                updateChart() {
+                    if (!chartInstance) return;
+
+                    const labels = ['Start', ...this.simulation.yearlyData.map(d => `Yr ${d.year}`)];
+                    const balances = [this.initialInvestment, ...this.simulation.yearlyData.map(d => Math.round(d.endingBalance))];
+                    const withdrawn = [0, ...this.simulation.yearlyData.map(d => Math.round(d.cumulativeWithdrawn))];
+
+                    const textColor = this.isDarkMode ? '#94a3b8' : '#64748b';
+                    const gridColor = this.isDarkMode ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)';
+
+                    chartInstance.data.labels = labels;
+                    chartInstance.data.datasets[0].data = balances;
+                    chartInstance.data.datasets[1].data = withdrawn;
+
+                    chartInstance.options.plugins.legend.labels.color = textColor;
+                    chartInstance.options.scales.x.ticks.color = textColor;
+                    chartInstance.options.scales.y.ticks.color = textColor;
+                    chartInstance.options.scales.y.grid.color = gridColor;
+
+                    chartInstance.update('none');
+                }
+            },
+            mounted() {
+                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    this.isDarkMode = true;
+                    document.documentElement.classList.add('dark');
+                } else {
+                    this.isDarkMode = false;
+                    document.documentElement.classList.remove('dark');
+                }
+
+                this.$nextTick(() => {
+                    this.initChart();
+                });
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
