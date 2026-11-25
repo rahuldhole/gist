@@ -148,35 +148,35 @@ Updated: 2026-11-25T16:30:00+00:00
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 antialiased selection:bg-emerald-500 selection:text-white">
     <div id="app" class="min-h-screen flex flex-col justify-start py-6 px-4 sm:px-6 lg:px-8">
 
-        <!-- Top Navigation Header with Rat Race Escape Branding & World Currency Selector -->
-        <header class="max-w-6xl w-full mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-            <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-500/20 border border-emerald-400/30">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <!-- Top Navigation Header: Brand + World Currency & Theme -->
+        <header class="max-w-6xl w-full mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-500/20 border border-emerald-400/30 shrink-0">
+                    <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">Rat Race Exit</h1>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-gradient-to-r from-amber-500/15 to-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <h1 class="font-display font-bold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white leading-tight">Rat Race Exit</h1>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-gradient-to-r from-amber-500/15 to-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
                             Freedom Engine
                         </span>
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Multi-Phase Financial Independence &amp; Global Geo-Arbitrage Planner</p>
+                    <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">Multi-Phase Financial Independence &amp; Geo-Arbitrage</p>
                 </div>
             </div>
 
-            <!-- Action Controls & Unified World Currency Pill -->
-            <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
+            <!-- World Currency Selector, Convert FX & Theme Controls -->
+            <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                 <!-- Unified Currency Selector + FX Converter Trigger -->
-                <div class="inline-flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-sm max-w-full">
+                <div class="flex flex-1 sm:flex-initial items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-sm min-w-0">
                     <label for="currencySelect" class="sr-only">Select Currency</label>
-                    <div class="flex items-center px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200 min-w-0"
+                    <div class="flex items-center px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200 min-w-0 flex-1"
                         :title="currencyAutoDetected ? 'Auto-detected from your region — click to choose from 150+ world currencies' : 'Select from 150+ world currencies'">
                         <span class="text-emerald-600 dark:text-emerald-400 font-bold mr-1 shrink-0">{{ currencySymbol }}</span>
                         <select id="currencySelect" v-model="selectedCurrency" aria-label="Select Currency"
-                            class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer max-w-[175px] sm:max-w-[210px] truncate">
+                            class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer w-full sm:max-w-[200px] truncate">
                             <optgroup label="Major &amp; Popular Currencies">
                                 <option v-for="c in popularCurrencies" :key="'pop-' + c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                     {{ c.flag }} {{ c.code }} &middot; {{ c.name }}
@@ -198,22 +198,8 @@ Updated: 2026-11-25T16:30:00+00:00
                     </button>
                 </div>
 
-                <button @click="sharePlan" type="button" title="Copy shareable link to this plan"
-                    class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors flex items-center gap-1.5 cursor-pointer">
-                    <svg v-if="!shareCopied" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                    <svg v-else class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{{ shareCopied ? 'Copied!' : 'Share' }}</span>
-                </button>
-                <button @click="resetDefaults" title="Reset to defaults"
-                    class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors">
-                    Reset
-                </button>
                 <button @click="cycleTheme" :title="'Theme: ' + themeLabel" aria-label="Cycle Theme"
-                    class="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+                    class="px-2.5 py-2 sm:py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 shrink-0 cursor-pointer">
                     <!-- Sun Icon (Light) -->
                     <svg v-if="themePreference === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -235,23 +221,43 @@ Updated: 2026-11-25T16:30:00+00:00
         <main class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
             <!-- Left Column: Interactive Parameters (5 cols) -->
-            <section class="lg:col-span-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col justify-between space-y-5">
+            <section class="lg:col-span-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col justify-between space-y-5">
                 <div>
-                    <div class="flex items-center justify-between gap-2 mb-5">
-                        <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white">Exit Blueprint</h2>
-                        <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                            <span>{{ activeCountry.flag }}</span>
-                            <select v-if="countriesForSelectedCurrency.length > 1" v-model="selectedCountry"
-                                @change="onCountryChanged"
-                                aria-label="Select Country for Inflation"
-                                title="Country using this currency (calibrates local World Bank CPI inflation)"
-                                class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-1.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[140px]">
-                                <option v-for="cty in countriesForSelectedCurrency" :key="cty.countryCode" :value="cty.countryCode" class="bg-white dark:bg-slate-900">
-                                    {{ cty.region }}
-                                </option>
-                            </select>
-                            <span v-else>{{ activeCountry.region }}</span>
-                            <span>&middot; {{ selectedCurrency }}</span>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+                        <div class="min-w-0">
+                            <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white leading-tight">Exit Blueprint</h2>
+                            <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                                <span>{{ activeCountry.flag }}</span>
+                                <select v-if="countriesForSelectedCurrency.length > 1" v-model="selectedCountry"
+                                    @change="onCountryChanged"
+                                    aria-label="Select Country for Inflation"
+                                    title="Country using this currency (calibrates local World Bank CPI inflation)"
+                                    class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-1.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[140px]">
+                                    <option v-for="cty in countriesForSelectedCurrency" :key="cty.countryCode" :value="cty.countryCode" class="bg-white dark:bg-slate-900">
+                                        {{ cty.region }}
+                                    </option>
+                                </select>
+                                <span v-else class="truncate">{{ activeCountry.region }}</span>
+                                <span>&middot; {{ selectedCurrency }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Blueprint Share & Reset Actions -->
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button @click="sharePlan" type="button" title="Copy shareable link to this blueprint"
+                                class="px-2.5 py-1 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors flex items-center gap-1 cursor-pointer">
+                                <svg v-if="!shareCopied" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                <svg v-else class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>{{ shareCopied ? 'Copied!' : 'Share' }}</span>
+                            </button>
+                            <button @click="resetDefaults" type="button" title="Reset blueprint to defaults"
+                                class="px-2.5 py-1 text-xs font-medium rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                                Reset
+                            </button>
                         </div>
                     </div>
 
@@ -398,28 +404,37 @@ Updated: 2026-11-25T16:30:00+00:00
                                     </div>
                                 </div>
 
-                                <!-- Row 2: Currency Depreciation / FX Drift Rate -->
+                                <!-- Row 2: Currency Appreciation / Depreciation (FX Drift) + Live Historical Benchmarks -->
                                 <div class="pt-2 border-t border-slate-200/70 dark:border-slate-700/60 space-y-1.5">
                                     <div class="flex items-center justify-between gap-2">
-                                        <div class="flex items-center gap-1 min-w-0">
+                                        <div class="flex items-center gap-1.5 min-w-0">
                                             <label for="fxDepreciationRate" class="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
-                                                {{ selectedCurrency }} Depreciation vs {{ investmentCurrency }}
+                                                {{ investmentCurrency }} &rarr; {{ selectedCurrency }} Drift
                                             </label>
+                                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0"
+                                                :class="fxDepreciationRate > 0.05
+                                                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                                                    : (fxDepreciationRate < -0.05
+                                                        ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                                                        : 'bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300')">
+                                                {{ fxDepreciationRate > 0.05 ? selectedCurrency + ' Depreciates' : (fxDepreciationRate < -0.05 ? selectedCurrency + ' Appreciates' : 'Flat FX') }}
+                                            </span>
                                             <span class="group relative inline-flex items-center cursor-help shrink-0">
                                                 <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
-                                                    Annual change in <strong>1 {{ investmentCurrency }} &rarr; {{ selectedCurrency }}</strong>. Positive (+) means {{ selectedCurrency }} weakens vs {{ investmentCurrency }} (FX tailwind for {{ investmentCurrency }} assets). Negative (&minus;) means {{ selectedCurrency }} strengthens (FX headwind).
+                                                    Annual change in <strong>1 {{ investmentCurrency }} &rarr; {{ selectedCurrency }}</strong>. Positive (+) = {{ selectedCurrency }} depreciates vs {{ investmentCurrency }} (FX tailwind). Negative (&minus;) = {{ selectedCurrency }} appreciates (FX headwind).
                                                 </span>
                                             </span>
+                                            <span v-if="isLoadingFxHistory" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
                                         </div>
                                         <div class="relative w-24 shrink-0">
                                             <input v-model="inputs.fxDepreciationRate"
                                                 @input="userEditedFxDrift = true"
                                                 @blur="formatSignedOnBlur('fxDepreciationRate', -50, 500)"
                                                 type="text" id="fxDepreciationRate" inputmode="decimal"
-                                                aria-label="Annual Currency Depreciation Rate"
+                                                aria-label="Annual Currency Appreciation or Depreciation Rate"
                                                 class="w-full pl-2 pr-8 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                             <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">%/yr</span>
                                         </div>
@@ -429,20 +444,102 @@ Updated: 2026-11-25T16:30:00+00:00
                                         :value="Math.min(Math.max(fxDepreciationRate, fxSliderMin), fxSliderMax)"
                                         :style="{ '--fill': sliderFill(fxDepreciationRate, fxSliderMin, fxSliderMax) }"
                                         @input="userEditedFxDrift = true; updateFromSlider('fxDepreciationRate', $event.target.value)"
-                                        aria-label="Currency Depreciation Rate Slider"
+                                        aria-label="Currency Drift Rate Slider"
                                         class="exit-slider">
 
-                                    <div class="flex items-center justify-between gap-2 text-[11px]">
-                                        <button @click="userEditedFxDrift = true; inputs.fxDepreciationRate = String(pppImpliedDrift)" type="button"
-                                            class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium cursor-pointer truncate"
-                                            :title="`Apply Purchasing Power Parity drift implied by ${activeCountry.region} (${currentCountryInflationAvg}%) vs ${activeInvestmentCurrency.region} (${investmentCountryInflationAvg}%) 10Y CPI`">
-                                            PPP Implied: {{ pppImpliedDrift >= 0 ? '+' : '' }}{{ pppImpliedDrift }}%/yr
-                                        </button>
+                                    <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <button @click="userEditedFxDrift = true; inputs.fxDepreciationRate = String(fxPairProfile.ready ? fxPairProfile.avg10Y : pppImpliedDrift)" type="button"
+                                                class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer truncate"
+                                                :title="fxPairProfile.ready ? ('Actual 10Y World Bank FX CAGR for 1 ' + investmentCurrency + ' -> ' + selectedCurrency) : 'Apply PPP implied drift'">
+                                                {{ fxPairProfile.ready ? '10Y FX:' : 'PPP:' }}
+                                                <strong class="text-slate-700 dark:text-slate-200">{{ (fxPairProfile.ready ? fxPairProfile.avg10Y : pppImpliedDrift) >= 0 ? '+' : '' }}{{ fxPairProfile.ready ? fxPairProfile.avg10Y : pppImpliedDrift }}%</strong>
+                                            </button>
+                                            <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+                                            <button @click="showMoreFx = !showMoreFx" type="button"
+                                                class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium flex items-center gap-0.5 shrink-0 cursor-pointer">
+                                                <span>{{ showMoreFx ? 'Hide' : 'Benchmarks' }}</span>
+                                                <svg class="w-3 h-3 transition-transform duration-200" :class="showMoreFx ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                         <button @click="toggleCrossCurrencyMode" type="button"
                                             class="text-[10px] font-medium text-slate-400 hover:text-rose-500 transition-colors cursor-pointer shrink-0"
                                             title="Switch investment back to local currency">
                                             Use {{ selectedCurrency }} only
                                         </button>
+                                    </div>
+
+                                    <!-- Progressive FX Appreciation / Depreciation Benchmarks Drawer -->
+                                    <div v-if="showMoreFx" class="mt-2 p-2.5 rounded-xl bg-white/90 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/60 space-y-2">
+                                        <!-- Primary Horizons (Latest, 5Y, 10Y, 20Y) -->
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                            <button v-for="b in fxPrimaryBenchmarks" :key="b.id"
+                                                @click="applyFxBenchmark(b)"
+                                                type="button"
+                                                :title="b.tooltip"
+                                                :class="Math.abs(fxDepreciationRate - b.rate) < 0.05
+                                                    ? 'bg-emerald-600 text-white font-bold shadow-sm border border-emerald-600'
+                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700'"
+                                                class="px-1.5 py-1.5 rounded-lg text-center transition-all text-[11px] flex flex-col items-center cursor-pointer">
+                                                <span class="font-semibold truncate max-w-full leading-tight">{{ b.label }}</span>
+                                                <span class="text-[10px] opacity-90">{{ b.rate >= 0 ? '+' : '' }}{{ b.rate }}%</span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Sub-tabs: Regimes & PPP | Year-by-Year -->
+                                        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                            <div class="flex items-center justify-between gap-1">
+                                                <div class="inline-flex p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-[10px] font-semibold">
+                                                    <button @click="fxDrawerTab = 'regimes'" type="button"
+                                                        :class="fxDrawerTab === 'regimes' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                                        Regimes &amp; PPP
+                                                    </button>
+                                                    <button @click="fxDrawerTab = 'yearly'" type="button"
+                                                        :class="fxDrawerTab === 'yearly' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                                        Year-by-Year
+                                                    </button>
+                                                </div>
+                                                <span class="text-[10px] text-slate-400 font-mono truncate">{{ fxPairProfile.source }}</span>
+                                            </div>
+
+                                            <div v-if="fxDrawerTab === 'regimes'" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                                                <button v-for="b in fxExtendedBenchmarks" :key="b.id"
+                                                    @click="applyFxBenchmark(b)"
+                                                    type="button"
+                                                    :title="b.tooltip"
+                                                    :class="Math.abs(fxDepreciationRate - b.rate) < 0.05
+                                                        ? 'bg-emerald-600 text-white font-bold border-emerald-600'
+                                                        : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700'"
+                                                    class="px-2 py-1.5 rounded-lg border text-left transition-all text-[11px] flex flex-col justify-between cursor-pointer">
+                                                    <div class="flex items-center justify-between w-full gap-1">
+                                                        <span class="font-semibold truncate">{{ b.label }}</span>
+                                                        <span class="font-bold text-[10px] shrink-0">{{ b.rate >= 0 ? '+' : '' }}{{ b.rate }}%</span>
+                                                    </div>
+                                                    <span class="text-[9px] opacity-75 truncate w-full">{{ b.sub }}</span>
+                                                </button>
+                                            </div>
+
+                                            <div v-else class="grid grid-cols-5 gap-1 max-h-28 overflow-y-auto pr-0.5">
+                                                <div v-if="fxPairProfile.history.length === 0" class="col-span-5 py-3 text-center text-[10px] text-slate-400">
+                                                    Loading World Bank historical FX series...
+                                                </div>
+                                                <button v-for="yr in fxPairProfile.history" :key="yr.year"
+                                                    @click="userEditedFxDrift = true; inputs.fxDepreciationRate = String(yr.value)"
+                                                    type="button"
+                                                    :title="yr.year + ': 1 ' + investmentCurrency + ' = ' + formatFxRate(yr.rate) + ' ' + selectedCurrency + ' (' + (yr.value >= 0 ? '+' : '') + yr.value + '% YoY)'"
+                                                    :class="Math.abs(fxDepreciationRate - yr.value) < 0.05
+                                                        ? 'bg-emerald-600 text-white font-bold border-emerald-600'
+                                                        : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-400 border border-slate-200/80 dark:border-slate-700'"
+                                                    class="px-1 py-1 rounded-md border text-center transition-all flex flex-col items-center cursor-pointer">
+                                                    <span class="text-[9px] opacity-70 font-mono">{{ yr.year }}</span>
+                                                    <span class="text-[10px] font-semibold">{{ yr.value >= 0 ? '+' : '' }}{{ yr.value.toFixed(1) }}%</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -513,14 +610,14 @@ Updated: 2026-11-25T16:30:00+00:00
                                         </button>
                                     </div>
 
-                                    <div v-if="withdrawalMode === 'fixed'" class="flex items-center w-28 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition-all overflow-hidden">
+                                    <div v-if="withdrawalMode === 'fixed'" class="flex items-center w-24 sm:w-28 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition-all overflow-hidden">
                                         <span class="pl-2 pr-1 text-slate-400 font-medium text-xs shrink-0 select-none">{{ currencySymbol }}</span>
                                         <input v-model="inputs.monthlyWithdrawal"
                                             @blur="formatOnBlur('monthlyWithdrawal')"
                                             type="text" id="monthlyWithdrawal" inputmode="decimal"
                                             class="w-full min-w-0 pr-2 py-1.5 text-right font-semibold text-sm bg-transparent focus:outline-none">
                                     </div>
-                                    <div v-else class="relative w-28">
+                                    <div v-else class="relative w-24 sm:w-28">
                                         <input v-model="inputs.withdrawalPercent"
                                             @blur="formatOnBlur('withdrawalPercent')"
                                             type="text" id="withdrawalPercent" inputmode="decimal"
@@ -668,7 +765,7 @@ Updated: 2026-11-25T16:30:00+00:00
                                         Yr 1+
                                     </span>
                                 </div>
-                                <div class="relative w-28">
+                                <div class="relative w-24 sm:w-28">
                                     <input v-model="inputs.annualReturn"
                                         @blur="formatSignedOnBlur('annualReturn', -50, 200)"
                                         type="text" id="annualReturn" inputmode="decimal"
@@ -743,7 +840,7 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <span v-if="isLoadingInflation" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
                                 </div>
 
-                                <div class="relative w-28 shrink-0">
+                                <div class="relative w-24 sm:w-28 shrink-0">
                                     <input v-model="inputs.inflationRate"
                                         @input="userEditedInflation = true"
                                         @blur="formatSignedOnBlur('inflationRate', -20, 500)"
@@ -944,18 +1041,18 @@ Updated: 2026-11-25T16:30:00+00:00
                                     </button>
                                 </div>
                                 <div class="flex items-center gap-1.5">
-                                    <div class="flex items-center w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 overflow-hidden"
+                                    <div class="flex items-center w-16 sm:w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 overflow-hidden"
                                         title="Optional current age to frame chart &amp; table milestones by age">
-                                        <span class="pl-2 text-[10px] font-medium text-slate-400 shrink-0">Age</span>
+                                        <span class="pl-1.5 sm:pl-2 text-[10px] font-medium text-slate-400 shrink-0">Age</span>
                                         <input v-model="inputs.currentAge" @blur="formatAgeOnBlur" type="text" inputmode="numeric" aria-label="Current Age (Optional)" placeholder="--"
-                                            class="w-full min-w-0 pr-2 py-1.5 text-right font-semibold text-xs bg-transparent focus:outline-none">
+                                            class="w-full min-w-0 pr-1.5 sm:pr-2 py-1.5 text-right font-semibold text-xs bg-transparent focus:outline-none">
                                     </div>
-                                    <div class="relative w-24">
+                                    <div class="relative w-20 sm:w-24">
                                         <input v-model="inputs.withdrawalDuration"
                                             @blur="formatOnBlur('withdrawalDuration')"
                                             type="text" id="withdrawalDuration" inputmode="numeric"
-                                            class="w-full pl-2.5 pr-8 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
-                                        <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
+                                            class="w-full pl-2 pr-7 sm:pl-2.5 sm:pr-8 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                        <span class="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
                                     </div>
                                 </div>
                             </div>
@@ -1129,8 +1226,8 @@ Updated: 2026-11-25T16:30:00+00:00
                 </div>
 
                 <!-- Interactive Chart & Yearly Schedule Tabs -->
-                <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex-1 flex flex-col">
-                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex-1 flex flex-col">
+                    <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
                         <div>
                             <div class="flex items-center gap-2">
                                 <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white">Freedom Projection</h3>
@@ -1141,7 +1238,7 @@ Updated: 2026-11-25T16:30:00+00:00
                             <p class="text-xs text-slate-500 dark:text-slate-400">Nominal trajectory vs. real purchasing power (in today's {{ currencySymbol }}) &amp; cumulative cash drawn</p>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                             <!-- Nominal / Real Toggle (applies to Chart & Schedule) -->
                             <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
                                 <button @click="valueDisplayMode = 'nominal'" type="button"
@@ -1524,6 +1621,10 @@ Updated: 2026-11-25T16:30:00+00:00
                     bulkInflationReady: 0,
                     showMoreInflation: false,
                     inflationDrawerTab: 'regimes',
+                    showMoreFx: false,
+                    fxDrawerTab: 'regimes',
+                    isLoadingFxHistory: false,
+                    fxPairProfiles: {},
                     countryProfiles: {},
                     globalDecadeAvg: 3.4,
                     exchangeRates: null,
@@ -1812,6 +1913,113 @@ Updated: 2026-11-25T16:30:00+00:00
                 },
                 fxSliderMax() {
                     return this.fxDepreciationRate <= 15 ? 15 : Math.ceil(this.fxDepreciationRate / 5) * 5;
+                },
+                fxPairKey() {
+                    const fromCty = this.activeInvestmentCurrency.countryCode || 'USA';
+                    const toCty = this.activeCountry.countryCode || 'USA';
+                    return `${this.investmentCurrency}:${this.selectedCurrency}:${fromCty}:${toCty}`;
+                },
+                fxPairProfile() {
+                    if (this.fxPairProfiles[this.fxPairKey]) {
+                        return this.fxPairProfiles[this.fxPairKey];
+                    }
+                    if (window.CurrencyExchangeSDK && window.CurrencyExchangeSDK.getSyncPairHistoricalProfile) {
+                        return window.CurrencyExchangeSDK.getSyncPairHistoricalProfile(
+                            this.investmentCurrency,
+                            this.selectedCurrency,
+                            this.activeInvestmentCurrency.countryCode,
+                            this.activeCountry.countryCode
+                        );
+                    }
+                    return {
+                        pair: `${this.investmentCurrency}->${this.selectedCurrency}`,
+                        ready: false,
+                        source: 'World Bank FX',
+                        latest: { rate: this.pppImpliedDrift, year: 2025 },
+                        avg3Y: this.pppImpliedDrift, avg5Y: this.pppImpliedDrift,
+                        avg10Y: this.pppImpliedDrift, avg20Y: this.pppImpliedDrift, avg30Y: this.pppImpliedDrift,
+                        maxDepr: { rate: Math.max(0, this.pppImpliedDrift), year: 2022 },
+                        maxAppr: { rate: Math.min(0, this.pppImpliedDrift), year: 2021 },
+                        history: []
+                    };
+                },
+                fxPrimaryBenchmarks() {
+                    const p = this.fxPairProfile;
+                    const pairLabel = `1 ${this.investmentCurrency} -> ${this.selectedCurrency}`;
+                    return [
+                        {
+                            id: 'latest',
+                            label: `Latest (${p.latest.year})`,
+                            rate: p.ready ? p.latest.rate : this.pppImpliedDrift,
+                            tooltip: `${pairLabel} YoY FX change in ${p.latest.year}`
+                        },
+                        {
+                            id: '5y',
+                            label: '5Y Avg',
+                            rate: p.ready ? p.avg5Y : this.pppImpliedDrift,
+                            tooltip: `${pairLabel} 5-year compound annual FX drift`
+                        },
+                        {
+                            id: '10y',
+                            label: '10Y Decade',
+                            rate: p.ready ? p.avg10Y : this.pppImpliedDrift,
+                            tooltip: `${pairLabel} 10-year compound annual FX drift`
+                        },
+                        {
+                            id: '20y',
+                            label: '20Y Cycle',
+                            rate: p.ready ? p.avg20Y : this.pppImpliedDrift,
+                            tooltip: `${pairLabel} 20-year macro cycle compound FX drift`
+                        }
+                    ];
+                },
+                fxExtendedBenchmarks() {
+                    const p = this.fxPairProfile;
+                    const ppp = this.pppImpliedDrift;
+                    return [
+                        {
+                            id: '3y',
+                            label: '3Y Recent',
+                            rate: p.ready ? p.avg3Y : ppp,
+                            sub: 'Short-term trend',
+                            tooltip: `3-year recent FX CAGR for ${this.investmentCurrency}/${this.selectedCurrency}`
+                        },
+                        {
+                            id: '30y',
+                            label: '30Y Long-Run',
+                            rate: p.ready ? p.avg30Y : ppp,
+                            sub: 'Generational drift',
+                            tooltip: `30-year generational FX CAGR for ${this.investmentCurrency}/${this.selectedCurrency}`
+                        },
+                        {
+                            id: 'ppp',
+                            label: 'PPP Implied',
+                            rate: ppp,
+                            sub: 'CPI differential',
+                            tooltip: `Relative Purchasing Power Parity implied by ${this.activeCountry.region} (${this.currentCountryInflationAvg}%) vs ${this.activeInvestmentCurrency.region} (${this.investmentCountryInflationAvg}%) 10Y CPI`
+                        },
+                        {
+                            id: 'maxDepr',
+                            label: `Peak Depr. (${p.maxDepr.year})`,
+                            rate: p.ready ? p.maxDepr.rate : 5,
+                            sub: `${this.selectedCurrency} weakest yr`,
+                            tooltip: `Strongest annual ${this.selectedCurrency} depreciation (FX tailwind) in recent 15 years`
+                        },
+                        {
+                            id: 'maxAppr',
+                            label: `Peak Appr. (${p.maxAppr.year})`,
+                            rate: p.ready ? p.maxAppr.rate : -5,
+                            sub: `${this.selectedCurrency} strongest yr`,
+                            tooltip: `Strongest annual ${this.selectedCurrency} appreciation (FX headwind stress) in recent 15 years`
+                        },
+                        {
+                            id: 'flat',
+                            label: 'Flat 0%',
+                            rate: 0,
+                            sub: 'Pegged / constant FX',
+                            tooltip: 'Assume constant exchange rate over the entire horizon'
+                        }
+                    ];
                 },
                 foreignInitialInvestment() {
                     return this.parseNumber(this.inputs.initialInvestment);
@@ -2872,6 +3080,34 @@ Updated: 2026-11-25T16:30:00+00:00
                     this.onLocationChanged(this.selectedCountry, { resetEdited: true });
                     this.savePlanToStorage();
                 },
+                applyFxBenchmark(b) {
+                    this.userEditedFxDrift = true;
+                    this.inputs.fxDepreciationRate = String(b.rate);
+                },
+                async loadFxPairHistory(options = {}) {
+                    if (!this.isCrossCurrency || !window.CurrencyExchangeSDK || !window.CurrencyExchangeSDK.getPairHistoricalProfile) return null;
+                    const key = this.fxPairKey;
+                    this.isLoadingFxHistory = true;
+                    try {
+                        const prof = await window.CurrencyExchangeSDK.getPairHistoricalProfile(
+                            this.investmentCurrency,
+                            this.selectedCurrency,
+                            this.activeInvestmentCurrency.countryCode,
+                            this.activeCountry.countryCode
+                        );
+                        if (prof) {
+                            this.fxPairProfiles = { ...this.fxPairProfiles, [key]: prof };
+                            if (prof.ready && !this.userEditedFxDrift && !options.initialLoad && this.fxPairKey === key) {
+                                this.inputs.fxDepreciationRate = String(prof.avg10Y);
+                            }
+                        }
+                        return prof;
+                    } catch (e) {
+                        return null;
+                    } finally {
+                        this.isLoadingFxHistory = false;
+                    }
+                },
                 async onLocationChanged(countryCode, options = {}) {
                     if (!countryCode) return;
                     if (options.resetEdited) {
@@ -2885,7 +3121,8 @@ Updated: 2026-11-25T16:30:00+00:00
                         this.inputs.inflationRate = String(syncProf.avg10Y);
                     }
                     if (this.isCrossCurrency && !this.userEditedFxDrift && !options.initialLoad) {
-                        this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                        const syncFx = this.fxPairProfile;
+                        this.inputs.fxDepreciationRate = String(syncFx.ready ? syncFx.avg10Y : this.pppImpliedDrift);
                     }
 
                     if (window.InflationSDK) {
@@ -2896,11 +3133,17 @@ Updated: 2026-11-25T16:30:00+00:00
                                 this.inputs.inflationRate = String(prof.avg10Y);
                             }
                             if (prof && this.isCrossCurrency && !this.userEditedFxDrift && !options.initialLoad) {
-                                this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                                const curFx = this.fxPairProfile;
+                                if (!curFx.ready) {
+                                    this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                                }
                             }
                         } finally {
                             this.isLoadingInflation = false;
                         }
+                    }
+                    if (this.isCrossCurrency) {
+                        this.loadFxPairHistory(options);
                     }
                 },
                 async onInvestmentCurrencyChanged(newInvCode, oldInvCode) {
@@ -2922,17 +3165,17 @@ Updated: 2026-11-25T16:30:00+00:00
                     if (newInvCode === this.selectedCurrency) {
                         this.inputs.fxDepreciationRate = '0';
                         this.userEditedFxDrift = false;
+                        this.showMoreFx = false;
                     } else {
+                        const syncFx = this.fxPairProfile;
                         if (!this.userEditedFxDrift) {
-                            this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
+                            this.inputs.fxDepreciationRate = String(syncFx.ready ? syncFx.avg10Y : this.pppImpliedDrift);
                         }
                         const invCurr = this.currencies.find(c => c.code === newInvCode);
                         if (invCurr && invCurr.countryCode && !this.countryProfiles[invCurr.countryCode]) {
                             await this.loadCountryProfile(invCurr.countryCode);
-                            if (!this.userEditedFxDrift && this.investmentCurrency === newInvCode && this.isCrossCurrency) {
-                                this.inputs.fxDepreciationRate = String(this.pppImpliedDrift);
-                            }
                         }
+                        await this.loadFxPairHistory();
                     }
                     this.savePlanToStorage();
                 },
@@ -3315,6 +3558,7 @@ Updated: 2026-11-25T16:30:00+00:00
                     }
                     if (this.isCrossCurrency && this.activeInvestmentCurrency && this.activeInvestmentCurrency.countryCode) {
                         this.loadCountryProfile(this.activeInvestmentCurrency.countryCode);
+                        this.loadFxPairHistory({ initialLoad: true });
                     }
                 });
             }

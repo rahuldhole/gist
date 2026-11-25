@@ -403,9 +403,12 @@ VUT:VU:VUV WSM:WS:WST XKX:XK:EUR YEM:YE:YER ZAF:ZA:ZAR ZMB:ZM:ZMW ZWE:ZW:ZWG ABW
     class CurrencyExchangeSDK {
         constructor(options = {}) {
             this.cacheTimeoutMs = options.cacheTimeoutMs || 12 * 60 * 60 * 1000; // 12 hours
+            this.wbCacheTimeoutMs = options.wbCacheTimeoutMs || 24 * 60 * 60 * 1000; // 24 hours
             this.rates = null;
             this.lastUpdated = null;
             this.listeners = [];
+            this._wbFxCache = {};
+            this._wbFxPromises = {};
             this._hydrateCachedRates();
         }
 
@@ -660,6 +663,212 @@ VUT:VU:VUV WSM:WS:WST XKX:XK:EUR YEM:YE:YER ZAF:ZA:ZAR ZMB:ZM:ZMW ZWE:ZW:ZWG ABW
             }
 
             return { code: defaultCode, countryCode: 'USA', source: 'default' };
+        }
+
+        _resolveFxAnchorCountry(currencyCode, countryCode = null) {
+            const cur = String(currencyCode || 'USD').toUpperCase();
+            if (cur === 'USD') return 'USA';
+            if (cur === 'EUR') return 'EMU';
+            if (countryCode && COUNTRY_BY_ISO3[String(countryCode).toUpperCase()]) {
+                return String(countryCode).toUpperCase();
+            }
+            if (PRIMARY_COUNTRY_BY_CURRENCY[cur]) return PRIMARY_COUNTRY_BY_CURRENCY[cur].countryCode;
+            const list = COUNTRIES_BY_CURRENCY[cur];
+            return (list && list[0] && list[0].countryCode) || 'USA';
+        }
+
+        _getSyncCountryFxSeries(currencyCode, countryCode = null) {
+            const cur = String(currencyCode || 'USD').toUpperCase();
+            if (cur === 'USD') {
+                const nowYr = new Date().getFullYear();
+                const usdMap = {};
+                for (let y = nowYr; y >= nowYr - 36; y--) usdMap[y] = 1;
+                return usdMap;
+            }
+            const anchor = this._resolveFxAnchorCountry(cur, countryCode);
+            const fallbackAnchor = PRIMARY_COUNTRY_BY_CURRENCY[cur]?.countryCode || COUNTRIES_BY_CURRENCY[cur]?.[0]?.countryCode;
+            const candidates = anchor === fallbackAnchor ? [anchor] : [anchor, fallbackAnchor];
+
+            for (const code of candidates) {
+                if (!code) continue;
+                if (this._wbFxCache[code]) return this._wbFxCache[code];
+                try {
+                    if (typeof localStorage !== 'undefined') {
+                        const raw = localStorage.getItem(`fx_sdk_wb_hist_${code}`);
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            if (parsed && parsed.data && Object.keys(parsed.data).length > 0) {
+                                this._wbFxCache[code] = parsed.data;
+                                return parsed.data;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+            return null;
+        }
+
+        async _fetchRawCountryFxSeries(code) {
+            if (!code) return null;
+            if (code === 'USA') {
+                const nowYr = new Date().getFullYear();
+                const usdMap = {};
+                for (let y = nowYr; y >= nowYr - 36; y--) usdMap[y] = 1;
+                return usdMap;
+            }
+
+            if (this._wbFxCache[code]) return this._wbFxCache[code];
+
+            let staleData = null;
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    const raw = localStorage.getItem(`fx_sdk_wb_hist_${code}`);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && parsed.data && Object.keys(parsed.data).length > 0) {
+                            staleData = parsed.data;
+                            if (Date.now() - parsed.timestamp < this.wbCacheTimeoutMs) {
+                                this._wbFxCache[code] = parsed.data;
+                                return parsed.data;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            if (this._wbFxPromises[code]) return this._wbFxPromises[code];
+
+            this._wbFxPromises[code] = (async () => {
+                try {
+                    const endYear = new Date().getFullYear();
+                    const startYear = endYear - 36;
+                    const url = `https://api.worldbank.org/v2/country/${encodeURIComponent(code)}/indicator/PA.NUS.FCRF?date=${startYear}:${endYear}&format=json&per_page=60`;
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 7000);
+                    const res = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (!res.ok) throw new Error(`WB FX HTTP ${res.status}`);
+                    const json = await res.json();
+                    if (Array.isArray(json) && Array.isArray(json[1])) {
+                        const map = {};
+                        for (const r of json[1]) {
+                            if (r && r.value !== null && r.value !== undefined && Number(r.value) > 0) {
+                                map[parseInt(r.date, 10)] = Number(r.value);
+                            }
+                        }
+                        if (Object.keys(map).length > 0) {
+                            this._wbFxCache[code] = map;
+                            try {
+                                if (typeof localStorage !== 'undefined') {
+                                    localStorage.setItem(`fx_sdk_wb_hist_${code}`, JSON.stringify({
+                                        timestamp: Date.now(),
+                                        data: map
+                                    }));
+                                }
+                            } catch (e) {}
+                            return map;
+                        }
+                    }
+                } catch (e) {
+                    // Fall back to stale data if offline
+                } finally {
+                    delete this._wbFxPromises[code];
+                }
+                return staleData;
+            })();
+
+            return this._wbFxPromises[code];
+        }
+
+        async _fetchCountryHistoricalFx(currencyCode, countryCode = null) {
+            const cur = String(currencyCode || 'USD').toUpperCase();
+            if (cur === 'USD') return this._fetchRawCountryFxSeries('USA');
+            const anchor = this._resolveFxAnchorCountry(cur, countryCode);
+            let map = await this._fetchRawCountryFxSeries(anchor);
+            if (!map) {
+                const fallbackAnchor = PRIMARY_COUNTRY_BY_CURRENCY[cur]?.countryCode || COUNTRIES_BY_CURRENCY[cur]?.[0]?.countryCode;
+                if (fallbackAnchor && fallbackAnchor !== anchor) {
+                    map = await this._fetchRawCountryFxSeries(fallbackAnchor);
+                }
+            }
+            return map;
+        }
+
+        _buildPairFxProfile(fromCurrency, toCurrency, fromMap, toMap, source = 'World Bank FX') {
+            if (!fromMap || !toMap) {
+                return {
+                    pair: `${fromCurrency}->${toCurrency}`,
+                    ready: false,
+                    source: 'Pending World Bank FX',
+                    latest: { rate: 0, year: new Date().getFullYear() - 1 },
+                    avg3Y: 0, avg5Y: 0, avg10Y: 0, avg20Y: 0, avg30Y: 0,
+                    maxDepr: { rate: 0, year: new Date().getFullYear() - 1 },
+                    maxAppr: { rate: 0, year: new Date().getFullYear() - 1 },
+                    history: []
+                };
+            }
+
+            const years = Object.keys(toMap)
+                .map(Number)
+                .filter(y => fromMap[y] > 0 && toMap[y] > 0)
+                .sort((a, b) => b - a);
+
+            const cross = {};
+            for (const y of years) cross[y] = toMap[y] / fromMap[y];
+
+            const history = [];
+            for (const y of years) {
+                if (cross[y - 1] > 0) {
+                    const pct = ((cross[y] / cross[y - 1]) - 1) * 100;
+                    history.push({ year: y, value: Math.round(pct * 10) / 10, rate: cross[y] });
+                }
+            }
+
+            const cagr = (n) => {
+                if (years.length < 2) return 0;
+                const y0 = years[0];
+                const targetYr = y0 - n;
+                const yN = years.find(y => y <= targetYr) ?? years[years.length - 1];
+                const span = y0 - yN;
+                if (!y0 || !yN || span <= 0 || !cross[y0] || !cross[yN]) return 0;
+                const val = (Math.pow(cross[y0] / cross[yN], 1 / span) - 1) * 100;
+                return Math.round(val * 10) / 10;
+            };
+
+            const latestEntry = history[0] || { year: years[0] || new Date().getFullYear() - 1, value: 0 };
+            const recent15 = history.slice(0, 15);
+            const maxDepr = recent15.reduce((best, r) => (!best || r.value > best.value ? r : best), null) || latestEntry;
+            const maxAppr = recent15.reduce((best, r) => (!best || r.value < best.value ? r : best), null) || latestEntry;
+
+            return {
+                pair: `${fromCurrency}->${toCurrency}`,
+                ready: history.length > 0,
+                source,
+                latest: { rate: latestEntry.value, year: latestEntry.year },
+                avg3Y: cagr(3),
+                avg5Y: cagr(5),
+                avg10Y: cagr(10),
+                avg20Y: cagr(20),
+                avg30Y: cagr(30),
+                maxDepr: { rate: maxDepr.value, year: maxDepr.year },
+                maxAppr: { rate: maxAppr.value, year: maxAppr.year },
+                history: recent15
+            };
+        }
+
+        getSyncPairHistoricalProfile(fromCurrency, toCurrency, fromCountryCode = null, toCountryCode = null) {
+            const fromMap = this._getSyncCountryFxSeries(fromCurrency, fromCountryCode);
+            const toMap = this._getSyncCountryFxSeries(toCurrency, toCountryCode);
+            return this._buildPairFxProfile(fromCurrency, toCurrency, fromMap, toMap, 'World Bank FX');
+        }
+
+        async getPairHistoricalProfile(fromCurrency, toCurrency, fromCountryCode = null, toCountryCode = null) {
+            const [fromMap, toMap] = await Promise.all([
+                this._fetchCountryHistoricalFx(fromCurrency, fromCountryCode),
+                this._fetchCountryHistoricalFx(toCurrency, toCountryCode)
+            ]);
+            return this._buildPairFxProfile(fromCurrency, toCurrency, fromMap, toMap, 'World Bank FX');
         }
     }
 
