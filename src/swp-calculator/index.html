@@ -172,7 +172,8 @@ Updated: 2026-11-25T13:00:00+00:00
                 <!-- Unified Currency Selector + FX Converter Trigger -->
                 <div class="inline-flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-xs">
                     <label for="currencySelect" class="sr-only">Select Currency</label>
-                    <div class="flex items-center px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <div class="flex items-center px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                        :title="currencyAutoDetected ? 'Auto-detected from your region — click to change' : 'Select Currency'">
                         <span class="text-emerald-600 dark:text-emerald-400 font-bold mr-1">{{ currencySymbol }}</span>
                         <select id="currencySelect" v-model="selectedCurrency" aria-label="Select Currency"
                             class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer">
@@ -817,23 +818,45 @@ Updated: 2026-11-25T13:00:00+00:00
 
         createApp({
             data() {
+                const currencies = [
+                    { code: 'USD', symbol: '$', name: 'US Dollar', countryCode: 'USA', region: 'United States', defaultRate: 2.9, defaultCorpus: '500000', defaultMonthly: '2500' },
+                    { code: 'EUR', symbol: '€', name: 'Euro', countryCode: 'EMU', region: 'Eurozone', defaultRate: 2.7, defaultCorpus: '500000', defaultMonthly: '2500' },
+                    { code: 'GBP', symbol: '£', name: 'British Pound', countryCode: 'GBR', region: 'United Kingdom', defaultRate: 3.3, defaultCorpus: '500000', defaultMonthly: '2500' },
+                    { code: 'INR', symbol: '₹', name: 'Indian Rupee', countryCode: 'IND', region: 'India', defaultRate: 4.7, defaultCorpus: '10000000', defaultMonthly: '50000' },
+                    { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', countryCode: 'CAN', region: 'Canada', defaultRate: 2.7, defaultCorpus: '500000', defaultMonthly: '2500' },
+                    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', countryCode: 'AUS', region: 'Australia', defaultRate: 2.9, defaultCorpus: '500000', defaultMonthly: '2500' },
+                    { code: 'JPY', symbol: '¥', name: 'Japanese Yen', countryCode: 'JPN', region: 'Japan', defaultRate: 1.3, defaultCorpus: '50000000', defaultMonthly: '250000' },
+                    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc', countryCode: 'CHE', region: 'Switzerland', defaultRate: 0.7, defaultCorpus: '500000', defaultMonthly: '2500' },
+                    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', countryCode: 'SGP', region: 'Singapore', defaultRate: 1.8, defaultCorpus: '500000', defaultMonthly: '2500' },
+                    { code: 'AED', symbol: 'AED', name: 'UAE Dirham', countryCode: 'ARE', region: 'UAE', defaultRate: 1.3, defaultCorpus: '2000000', defaultMonthly: '10000' }
+                ];
+
+                let initialCurrency = null;
+                let currencyAutoDetected = false;
+                try {
+                    const savedCurrency = localStorage.getItem('swp_preferred_currency');
+                    if (savedCurrency && currencies.some(c => c.code === savedCurrency)) {
+                        initialCurrency = savedCurrency;
+                    }
+                } catch (e) {}
+
+                if (!initialCurrency && typeof window !== 'undefined' && window.CurrencyExchangeSDK && typeof window.CurrencyExchangeSDK.detectUserCurrency === 'function') {
+                    const detected = window.CurrencyExchangeSDK.detectUserCurrency(currencies.map(c => c.code));
+                    if (detected && currencies.some(c => c.code === detected.code)) {
+                        initialCurrency = detected.code;
+                        currencyAutoDetected = detected.source !== 'default';
+                    }
+                }
+
+                const initialCurr = currencies.find(c => c.code === initialCurrency) || currencies[0];
+
                 return {
                     themePreference: 'system', // 'light' | 'dark' | 'system'
                     systemPrefersDark: false,
                     activeTab: 'chart',
-                    selectedCurrency: 'USD',
-                    currencies: [
-                        { code: 'USD', symbol: '$', name: 'US Dollar', countryCode: 'USA', region: 'United States', defaultRate: 2.9 },
-                        { code: 'EUR', symbol: '€', name: 'Euro', countryCode: 'EMU', region: 'Eurozone', defaultRate: 2.7 },
-                        { code: 'GBP', symbol: '£', name: 'British Pound', countryCode: 'GBR', region: 'United Kingdom', defaultRate: 3.3 },
-                        { code: 'INR', symbol: '₹', name: 'Indian Rupee', countryCode: 'IND', region: 'India', defaultRate: 4.7 },
-                        { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', countryCode: 'CAN', region: 'Canada', defaultRate: 2.7 },
-                        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', countryCode: 'AUS', region: 'Australia', defaultRate: 2.9 },
-                        { code: 'JPY', symbol: '¥', name: 'Japanese Yen', countryCode: 'JPN', region: 'Japan', defaultRate: 1.3 },
-                        { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc', countryCode: 'CHE', region: 'Switzerland', defaultRate: 0.7 },
-                        { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', countryCode: 'SGP', region: 'Singapore', defaultRate: 1.8 },
-                        { code: 'AED', symbol: 'AED', name: 'UAE Dirham', countryCode: 'ARE', region: 'UAE', defaultRate: 1.3 }
-                    ],
+                    selectedCurrency: initialCurr.code,
+                    currencyAutoDetected,
+                    currencies,
                     withdrawalMode: 'fixed', // 'fixed' | 'percent'
                     withdrawalPhases: [],
                     nextPhaseId: 1,
@@ -844,12 +867,12 @@ Updated: 2026-11-25T13:00:00+00:00
                         { label: '6% High', rate: 6, desc: '6% aggressive cashflow draw' }
                     ],
                     inputs: {
-                        initialInvestment: '500000',
+                        initialInvestment: initialCurr.defaultCorpus,
                         annualReturn: '7',
                         withdrawalDuration: '30',
-                        monthlyWithdrawal: '2500',
+                        monthlyWithdrawal: initialCurr.defaultMonthly,
                         withdrawalPercent: '4',
-                        inflationRate: '3.4'
+                        inflationRate: String(initialCurr.defaultRate)
                     },
                     isLoadingInflation: false,
                     inflationDataSource: 'World Bank API',
@@ -1105,7 +1128,8 @@ Updated: 2026-11-25T13:00:00+00:00
                 },
                 // Non-linear (power-curve) slider mappings for smooth feel across small & HNI amounts
                 investmentSliderCap() {
-                    return Math.max(10000000, this.initialInvestment > 10000000 ? Math.pow(10, Math.ceil(Math.log10(this.initialInvestment))) : 10000000);
+                    if (this.initialInvestment < 5000000) return 10000000;
+                    return Math.pow(10, Math.floor(Math.log10(this.initialInvestment)) + 1);
                 },
                 investmentSliderPos() {
                     const min = 1000;
@@ -1279,6 +1303,7 @@ Updated: 2026-11-25T13:00:00+00:00
                     this.updateChart();
                 },
                 selectedCurrency(newVal) {
+                    this.currencyAutoDetected = false;
                     try {
                         localStorage.setItem('swp_preferred_currency', newVal);
                     } catch (e) {}
@@ -1585,10 +1610,10 @@ Updated: 2026-11-25T13:00:00+00:00
                     this.withdrawalMode = 'fixed';
                     this.withdrawalPhases = [];
                     this.inputs = {
-                        initialInvestment: '500000',
+                        initialInvestment: this.activeCurrency.defaultCorpus || '500000',
                         annualReturn: '7',
                         withdrawalDuration: '30',
-                        monthlyWithdrawal: '2500',
+                        monthlyWithdrawal: this.activeCurrency.defaultMonthly || '2500',
                         withdrawalPercent: '4',
                         inflationRate: String(defaultRate)
                     };
@@ -1729,11 +1754,6 @@ Updated: 2026-11-25T13:00:00+00:00
                     this.themePreference = savedTheme;
                 } else {
                     this.themePreference = 'system';
-                }
-
-                const savedCurrency = localStorage.getItem('swp_preferred_currency');
-                if (savedCurrency && this.currencies.some(c => c.code === savedCurrency)) {
-                    this.selectedCurrency = savedCurrency;
                 }
 
                 this.applyTheme();
