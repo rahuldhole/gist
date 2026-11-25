@@ -53,6 +53,7 @@ Updated: 2026-11-25T13:00:00+00:00
     <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="inflation-sdk.js"></script>
+    <script src="currency-exchange-sdk.js"></script>
 
     <style>
         /* Custom Range Slider Styling */
@@ -194,7 +195,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ currencySymbol }}</span>
                                     <input v-model="inputs.initialInvestment" 
                                         @blur="formatOnBlur('initialInvestment')"
-                                        type="number" id="initialInvestment" inputmode="decimal"
+                                        type="text" id="initialInvestment" inputmode="decimal"
                                         class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
@@ -225,7 +226,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ currencySymbol }}</span>
                                     <input v-model="inputs.monthlyWithdrawal"
                                         @blur="formatOnBlur('monthlyWithdrawal')"
-                                        type="number" id="monthlyWithdrawal" inputmode="decimal"
+                                        type="text" id="monthlyWithdrawal" inputmode="decimal"
                                         class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
@@ -248,7 +249,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 <div class="relative w-32">
                                     <input v-model="inputs.annualReturn"
                                         @blur="formatOnBlur('annualReturn')"
-                                        type="number" step="any" id="annualReturn" inputmode="decimal"
+                                        type="text" id="annualReturn" inputmode="decimal"
                                         class="w-full pl-3 pr-7 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">%</span>
                                 </div>
@@ -279,7 +280,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 <div class="relative w-32">
                                     <input v-model="inputs.withdrawalDuration"
                                         @blur="formatOnBlur('withdrawalDuration')"
-                                        type="number" id="withdrawalDuration" inputmode="numeric"
+                                        type="text" id="withdrawalDuration" inputmode="numeric"
                                         class="w-full pl-3 pr-10 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
                                 </div>
@@ -308,20 +309,46 @@ Updated: 2026-11-25T13:00:00+00:00
                                 <div class="relative w-24">
                                     <input v-model="inputs.inflationRate"
                                         @blur="formatOnBlur('inflationRate')"
-                                        type="number" step="any" aria-label="Inflation Rate" inputmode="decimal"
+                                        type="text" aria-label="Inflation Rate" inputmode="decimal"
                                         class="w-full pl-2 pr-6 py-1 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
                                 </div>
                             </div>
 
-                            <!-- Inflation Benchmark Quick Select (SDK Driven) -->
-                            <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-200/60 dark:border-slate-700/60 mt-2">
-                                <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1.5">
+                            <!-- Active Currency Historic Inflation Highlight & Quick Select -->
+                            <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-200/60 dark:border-slate-700/60 mt-2 space-y-2">
+                                <!-- Country-specific inflation spotlight -->
+                                <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <span class="text-base select-none">📍</span>
+                                        <div class="min-w-0">
+                                            <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
+                                                {{ activeCurrency.region }} 10Y Inflation Avg
+                                            </div>
+                                            <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                                                {{ selectedCurrency }} ({{ activeCurrency.name }}) Benchmark
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button @click="applyCountryInflationRate" type="button"
+                                        title="Click to apply country average inflation"
+                                        class="px-2.5 py-1 rounded-md text-xs font-bold transition-all shrink-0 flex items-center gap-1"
+                                        :class="Math.abs(Number(inputs.inflationRate) - currentCountryInflationAvg) < 0.05
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-slate-800 border border-emerald-300 dark:border-emerald-700'">
+                                        <span>{{ currentCountryInflationAvg }}%</span>
+                                        <span class="text-[10px] font-normal opacity-90" v-if="Math.abs(Number(inputs.inflationRate) - currentCountryInflationAvg) < 0.05">Active</span>
+                                        <span class="text-[10px] font-normal underline" v-else>Apply</span>
+                                    </button>
+                                </div>
+
+                                <!-- Other Historic Benchmarks -->
+                                <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
                                     <span class="font-medium flex items-center gap-1">
                                         <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Historic Averages (Last Decade &bull; Open API)
+                                        Other Historic Benchmarks (Open API)
                                     </span>
                                     <span class="text-[10px] text-slate-400 font-mono">{{ inflationDataSource }}</span>
                                 </div>
@@ -403,6 +430,42 @@ Updated: 2026-11-25T13:00:00+00:00
                         <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
                             {{ finalBalance >= initialInvestment ? '+' : '' }}{{ initialInvestment > 0 ? ((finalBalance - initialInvestment) / initialInvestment * 100).toFixed(1) : 0 }}% net change
                         </span>
+                    </div>
+                </div>
+
+                <!-- Currency Exchange Bar (Converted in USD, EUR, etc.) -->
+                <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold text-xs flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                Live Exchange
+                            </span>
+                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                Equivalent in Major Currencies
+                            </span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Base: <strong class="text-slate-700 dark:text-slate-300">1 {{ selectedCurrency }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <div v-for="conv in currencyConversions.slice(0, 4)" :key="conv.code"
+                            class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 transition-all hover:border-emerald-400/50">
+                            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200">{{ conv.code }}</span>
+                                <span class="text-[10px] font-mono">1 {{ selectedCurrency }} ≈ {{ conv.rate < 0.1 ? conv.rate.toFixed(4) : conv.rate < 10 ? conv.rate.toFixed(2) : conv.rate.toFixed(1) }}</span>
+                            </div>
+                            <div class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 truncate" :title="'Initial Nest Egg: ' + conv.symbol + formatCurrency(conv.initialConverted)">
+                                {{ conv.symbol }}{{ formatCompact(conv.initialConverted) }}
+                            </div>
+                            <div class="text-[10px] text-slate-400 truncate">
+                                Draw: {{ conv.symbol }}{{ formatCompact(conv.monthlyConverted) }}/mo
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -489,26 +552,30 @@ Updated: 2026-11-25T13:00:00+00:00
                     activeTab: 'chart',
                     selectedCurrency: 'USD',
                     currencies: [
-                        { code: 'USD', symbol: '$', name: 'US Dollar' },
-                        { code: 'EUR', symbol: '€', name: 'Euro' },
-                        { code: 'GBP', symbol: '£', name: 'British Pound' },
-                        { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-                        { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar' },
-                        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-                        { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-                        { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-                        { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-                        { code: 'AED', symbol: 'AED', name: 'UAE Dirham' }
+                        { code: 'USD', symbol: '$', name: 'US Dollar', countryCode: 'USA', region: 'United States', defaultRate: 2.9 },
+                        { code: 'EUR', symbol: '€', name: 'Euro', countryCode: 'EMU', region: 'Eurozone', defaultRate: 2.7 },
+                        { code: 'GBP', symbol: '£', name: 'British Pound', countryCode: 'GBR', region: 'United Kingdom', defaultRate: 3.3 },
+                        { code: 'INR', symbol: '₹', name: 'Indian Rupee', countryCode: 'IND', region: 'India', defaultRate: 4.7 },
+                        { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', countryCode: 'CAN', region: 'Canada', defaultRate: 2.7 },
+                        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', countryCode: 'AUS', region: 'Australia', defaultRate: 2.9 },
+                        { code: 'JPY', symbol: '¥', name: 'Japanese Yen', countryCode: 'JPN', region: 'Japan', defaultRate: 1.3 },
+                        { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc', countryCode: 'CHE', region: 'Switzerland', defaultRate: 0.7 },
+                        { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', countryCode: 'SGP', region: 'Singapore', defaultRate: 1.8 },
+                        { code: 'AED', symbol: 'AED', name: 'UAE Dirham', countryCode: 'ARE', region: 'UAE', defaultRate: 1.3 }
                     ],
                     inputs: {
-                        initialInvestment: 500000,
-                        annualReturn: 7,
-                        withdrawalDuration: 30,
-                        monthlyWithdrawal: 2500,
-                        inflationRate: 3.4
+                        initialInvestment: '500000',
+                        annualReturn: '7',
+                        withdrawalDuration: '30',
+                        monthlyWithdrawal: '2500',
+                        inflationRate: '3.4'
                     },
                     isLoadingInflation: false,
                     inflationDataSource: 'World Bank API',
+                    exchangeRates: null,
+                    exchangeLastUpdated: null,
+                    showExchangeModal: false,
+                    comparisonCurrencies: ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD', 'JPY', 'CHF'],
                     inflationBenchmarks: [
                         { code: 'WLD', label: 'Global 10Y Avg', rate: 3.4 },
                         { code: 'USA', label: 'US 10Y Avg', rate: 3.0 },
@@ -526,9 +593,31 @@ Updated: 2026-11-25T13:00:00+00:00
                 themeLabel() {
                     return this.themePreference.charAt(0).toUpperCase() + this.themePreference.slice(1);
                 },
+                activeCurrency() {
+                    return this.currencies.find(c => c.code === this.selectedCurrency) || this.currencies[0];
+                },
                 currencySymbol() {
-                    const found = this.currencies.find(c => c.code === this.selectedCurrency);
-                    return found ? found.symbol : '$';
+                    return this.activeCurrency.symbol;
+                },
+                currentCountryInflationAvg() {
+                    return this.activeCurrency.defaultRate;
+                },
+                currencyConversions() {
+                    const targets = this.comparisonCurrencies.filter(c => c !== this.selectedCurrency);
+                    if (!window.CurrencyExchangeSDK) return [];
+                    return targets.map(code => {
+                        const targetObj = this.currencies.find(c => c.code === code) || { symbol: code, name: code };
+                        const rate = window.CurrencyExchangeSDK.getExchangeRate(this.selectedCurrency, code) || 1;
+                        return {
+                            code,
+                            symbol: targetObj.symbol,
+                            name: targetObj.name,
+                            rate,
+                            initialConverted: this.initialInvestment * rate,
+                            monthlyConverted: this.monthlyWithdrawal * rate,
+                            finalConverted: this.finalBalance * rate
+                        };
+                    });
                 },
                 initialInvestment() {
                     return this.parseNumber(this.inputs.initialInvestment);
@@ -718,12 +807,13 @@ Updated: 2026-11-25T13:00:00+00:00
                         localStorage.setItem('swp_preferred_currency', newVal);
                     } catch (e) {}
                     this.updateChart();
+                    this.onCurrencyChanged(newVal);
                 }
             },
             methods: {
                 parseNumber(val) {
                     if (val === null || val === undefined || val === '') return 0;
-                    const cleaned = String(val).replace(/,/g, '.');
+                    const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
                     const parsed = parseFloat(cleaned);
                     return isNaN(parsed) ? 0 : Math.max(0, parsed);
                 },
@@ -768,22 +858,68 @@ Updated: 2026-11-25T13:00:00+00:00
                     return sign + num.toFixed(0);
                 },
                 formatOnBlur(key) {
-                    if (this.inputs[key] === '' || this.inputs[key] === null || this.inputs[key] === undefined) {
-                        this.inputs[key] = 0;
+                    let val = this.inputs[key];
+                    if (val === '' || val === null || val === undefined) {
+                        this.inputs[key] = '0';
+                    } else {
+                        // Strip whitespace or stray invalid characters on blur
+                        const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
+                        if (!isNaN(parseFloat(cleaned))) {
+                            this.inputs[key] = cleaned;
+                        }
                     }
                 },
                 updateFromSlider(key, value) {
-                    this.inputs[key] = Number(value);
+                    this.inputs[key] = String(value);
                 },
                 setSustainableWithdrawal() {
                     const maxMonthly = Math.floor(this.monthlyReturnAmount);
-                    this.inputs.monthlyWithdrawal = maxMonthly;
+                    this.inputs.monthlyWithdrawal = String(maxMonthly);
                 },
                 setMaxDuration() {
-                    this.inputs.withdrawalDuration = Math.max(1, Math.floor(this.yearsLastingFunds));
+                    this.inputs.withdrawalDuration = String(Math.max(1, Math.floor(this.yearsLastingFunds)));
                 },
                 applyInflationBenchmark(b) {
-                    this.inputs.inflationRate = b.rate;
+                    this.inputs.inflationRate = String(b.rate);
+                },
+                applyCountryInflationRate() {
+                    this.inputs.inflationRate = String(this.currentCountryInflationAvg);
+                },
+                async onCurrencyChanged(newCurrencyCode) {
+                    const curr = this.currencies.find(c => c.code === newCurrencyCode);
+                    if (!curr) return;
+
+                    // Automatically update inflation input to the newly selected country's 10-year average
+                    this.inputs.inflationRate = String(curr.defaultRate);
+
+                    // Fetch latest live 10-year inflation from World Bank Open API for this country
+                    if (window.InflationSDK && curr.countryCode) {
+                        try {
+                            const res = await window.InflationSDK.getDecadeAverage(curr.countryCode, 10);
+                            if (res && res.average) {
+                                curr.defaultRate = res.average;
+                                // If the input is still reflecting this country rate, update it with live precision
+                                this.inputs.inflationRate = String(res.average);
+                            }
+                        } catch (e) {
+                            console.warn('Could not fetch country inflation live:', e);
+                        }
+                    }
+                },
+                async fetchExchangeRates() {
+                    if (window.CurrencyExchangeSDK) {
+                        try {
+                            const data = await window.CurrencyExchangeSDK.getLatestRates();
+                            this.exchangeRates = data.rates;
+                            this.exchangeLastUpdated = data.lastUpdated;
+                        } catch (e) {
+                            console.warn('Could not load exchange rates:', e);
+                        }
+                    }
+                },
+                convertVal(val, targetCur) {
+                    if (!window.CurrencyExchangeSDK) return val;
+                    return window.CurrencyExchangeSDK.convert(val, this.selectedCurrency, targetCur);
                 },
                 async fetchLiveInflationData() {
                     if (typeof root !== 'undefined' && root.InflationSDK) {
@@ -801,7 +937,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 // Set default inflation rate to global average if user hasn't overridden
                                 const savedInflation = localStorage.getItem('swp_user_inflation');
                                 if (!savedInflation) {
-                                    this.inputs.inflationRate = res.average;
+                                    this.inputs.inflationRate = String(res.average);
                                 }
                                 this.inflationDataSource = res.source || 'World Bank API';
                             }
@@ -815,11 +951,11 @@ Updated: 2026-11-25T13:00:00+00:00
                 resetDefaults() {
                     const globalAvg = this.inflationBenchmarks.find(b => b.code === 'WLD')?.rate || 3.4;
                     this.inputs = {
-                        initialInvestment: 500000,
-                        annualReturn: 7,
-                        withdrawalDuration: 30,
-                        monthlyWithdrawal: 2500,
-                        inflationRate: globalAvg
+                        initialInvestment: '500000',
+                        annualReturn: '7',
+                        withdrawalDuration: '30',
+                        monthlyWithdrawal: '2500',
+                        inflationRate: String(globalAvg)
                     };
                 },
                 applyTheme() {
@@ -965,6 +1101,11 @@ Updated: 2026-11-25T13:00:00+00:00
                 this.$nextTick(() => {
                     this.initChart();
                     this.fetchLiveInflationData();
+                    this.fetchExchangeRates();
+                    // Load live data for the active currency's country
+                    if (this.activeCurrency && this.activeCurrency.countryCode) {
+                        this.onCurrencyChanged(this.selectedCurrency);
+                    }
                 });
             }
         }).mount('#app');

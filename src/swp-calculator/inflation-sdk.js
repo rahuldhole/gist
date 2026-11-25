@@ -17,64 +17,59 @@
     // Baseline historical world & regional inflation data (fallback cache)
     const FALLBACK_DATA = {
         WLD: [
-            { year: 2025, value: 3.04 },
-            { year: 2024, value: 3.01 },
-            { year: 2023, value: 5.73 },
-            { year: 2022, value: 8.00 },
-            { year: 2021, value: 3.47 },
-            { year: 2020, value: 1.92 },
-            { year: 2019, value: 2.22 },
-            { year: 2018, value: 2.45 },
-            { year: 2017, value: 2.25 },
-            { year: 2016, value: 1.60 }
+            { year: 2025, value: 3.04 }, { year: 2024, value: 3.01 }, { year: 2023, value: 5.73 },
+            { year: 2022, value: 8.00 }, { year: 2021, value: 3.47 }, { year: 2020, value: 1.92 },
+            { year: 2019, value: 2.22 }, { year: 2018, value: 2.45 }, { year: 2017, value: 2.25 }, { year: 2016, value: 1.60 }
         ],
         USA: [
-            { year: 2025, value: 2.70 },
-            { year: 2024, value: 2.90 },
-            { year: 2023, value: 4.12 },
-            { year: 2022, value: 8.00 },
-            { year: 2021, value: 4.70 },
-            { year: 2020, value: 1.23 },
-            { year: 2019, value: 1.81 },
-            { year: 2018, value: 2.44 },
-            { year: 2017, value: 2.13 },
-            { year: 2016, value: 1.26 }
+            { year: 2025, value: 2.70 }, { year: 2024, value: 2.90 }, { year: 2023, value: 4.12 },
+            { year: 2022, value: 8.00 }, { year: 2021, value: 4.70 }, { year: 2020, value: 1.23 },
+            { year: 2019, value: 1.81 }, { year: 2018, value: 2.44 }, { year: 2017, value: 2.13 }, { year: 2016, value: 1.26 }
         ],
         IND: [
-            { year: 2025, value: 4.80 },
-            { year: 2024, value: 5.10 },
-            { year: 2023, value: 5.65 },
-            { year: 2022, value: 6.70 },
-            { year: 2021, value: 5.13 },
-            { year: 2020, value: 6.62 },
-            { year: 2019, value: 3.73 },
-            { year: 2018, value: 3.94 },
-            { year: 2017, value: 3.33 },
-            { year: 2016, value: 4.95 }
+            { year: 2025, value: 4.80 }, { year: 2024, value: 5.10 }, { year: 2023, value: 5.65 },
+            { year: 2022, value: 6.70 }, { year: 2021, value: 5.13 }, { year: 2020, value: 6.62 },
+            { year: 2019, value: 3.73 }, { year: 2018, value: 3.94 }, { year: 2017, value: 3.33 }, { year: 2016, value: 4.95 }
         ],
         EMU: [
-            { year: 2025, value: 2.30 },
-            { year: 2024, value: 2.40 },
-            { year: 2023, value: 5.40 },
-            { year: 2022, value: 8.40 },
-            { year: 2021, value: 2.60 },
-            { year: 2020, value: 0.30 },
-            { year: 2019, value: 1.20 },
-            { year: 2018, value: 1.80 },
-            { year: 2017, value: 1.50 },
-            { year: 2016, value: 0.20 }
+            { year: 2025, value: 2.30 }, { year: 2024, value: 2.40 }, { year: 2023, value: 5.40 },
+            { year: 2022, value: 8.40 }, { year: 2021, value: 2.60 }, { year: 2020, value: 0.30 },
+            { year: 2019, value: 1.20 }, { year: 2018, value: 1.80 }, { year: 2017, value: 1.50 }, { year: 2016, value: 0.20 }
         ],
         GBR: [
-            { year: 2025, value: 2.50 },
-            { year: 2024, value: 2.60 },
-            { year: 2023, value: 7.30 },
-            { year: 2022, value: 9.10 },
-            { year: 2021, value: 2.60 },
-            { year: 2020, value: 0.85 },
-            { year: 2019, value: 1.79 },
-            { year: 2018, value: 2.48 },
-            { year: 2017, value: 2.68 },
-            { year: 2016, value: 0.66 }
+            { year: 2025, value: 2.50 }, { year: 2024, value: 2.60 }, { year: 2023, value: 7.30 },
+            { year: 2022, value: 9.10 }, { year: 2021, value: 2.60 }, { year: 2020, value: 0.85 },
+            { year: 2019, value: 1.79 }, { year: 2018, value: 2.48 }, { year: 2017, value: 2.68 }, { year: 2016, value: 0.66 }
+        ],
+        CAN: [
+            { year: 2025, value: 2.50 }, { year: 2024, value: 2.40 }, { year: 2023, value: 3.88 },
+            { year: 2022, value: 6.80 }, { year: 2021, value: 3.40 }, { year: 2020, value: 0.72 },
+            { year: 2019, value: 1.95 }, { year: 2018, value: 2.27 }, { year: 2017, value: 1.60 }, { year: 2016, value: 1.43 }
+        ],
+        AUS: [
+            { year: 2025, value: 2.80 }, { year: 2024, value: 3.20 }, { year: 2023, value: 5.61 },
+            { year: 2022, value: 6.59 }, { year: 2021, value: 2.86 }, { year: 2020, value: 0.85 },
+            { year: 2019, value: 1.61 }, { year: 2018, value: 1.91 }, { year: 2017, value: 1.95 }, { year: 2016, value: 1.28 }
+        ],
+        JPN: [
+            { year: 2025, value: 2.20 }, { year: 2024, value: 2.70 }, { year: 2023, value: 3.27 },
+            { year: 2022, value: 2.50 }, { year: 2021, value: -0.23 }, { year: 2020, value: -0.02 },
+            { year: 2019, value: 0.48 }, { year: 2018, value: 0.98 }, { year: 2017, value: 0.47 }, { year: 2016, value: -0.12 }
+        ],
+        CHE: [
+            { year: 2025, value: 1.10 }, { year: 2024, value: 1.30 }, { year: 2023, value: 2.14 },
+            { year: 2022, value: 2.84 }, { year: 2021, value: 0.58 }, { year: 2020, value: -0.73 },
+            { year: 2019, value: 0.36 }, { year: 2018, value: 0.94 }, { year: 2017, value: 0.53 }, { year: 2016, value: -0.43 }
+        ],
+        SGP: [
+            { year: 2025, value: 2.30 }, { year: 2024, value: 2.40 }, { year: 2023, value: 4.82 },
+            { year: 2022, value: 6.12 }, { year: 2021, value: 2.30 }, { year: 2020, value: -0.18 },
+            { year: 2019, value: 0.57 }, { year: 2018, value: 0.44 }, { year: 2017, value: 0.58 }, { year: 2016, value: -0.53 }
+        ],
+        ARE: [
+            { year: 2025, value: 2.00 }, { year: 2024, value: 2.10 }, { year: 2023, value: 1.60 },
+            { year: 2022, value: 4.83 }, { year: 2021, value: -0.11 }, { year: 2020, value: -2.08 },
+            { year: 2019, value: -1.93 }, { year: 2018, value: 3.07 }, { year: 2017, value: 1.97 }, { year: 2016, value: 1.62 }
         ]
     };
 
@@ -153,12 +148,13 @@
          * Calculate average annual inflation over the last N years
          * @param {string} countryCode 
          * @param {number} years 
-         * @returns {Promise<{average: number, yearsCount: number, source: string, history: Array<{year: number, value: number}>}>}
+         * @returns {Promise<{countryCode: string, average: number, yearsCount: number, source: string, history: Array<{year: number, value: number}>}>}
          */
         async getDecadeAverage(countryCode = 'WLD', years = 10) {
             const history = await this.getHistoricInflation(countryCode, years);
             if (!history || history.length === 0) {
                 return {
+                    countryCode,
                     average: 3.4,
                     yearsCount: 0,
                     source: 'Default fallback estimate',
@@ -170,7 +166,8 @@
             const avg = total / history.length;
 
             return {
-                average: Math.round(avg * 10) / 10, // e.g. 3.4%
+                countryCode,
+                average: Math.round(avg * 10) / 10, // e.g. 2.9%
                 exactAverage: avg,
                 yearsCount: history.length,
                 source: 'World Bank Open Data',
