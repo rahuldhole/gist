@@ -1073,6 +1073,13 @@ Updated: 2026-11-25T14:35:00+00:00
                         const jsonStr = decodeURIComponent(escape(atob(padded)));
                         const parsed = JSON.parse(jsonStr);
                         if (parsed && typeof parsed === 'object') savedPlan = parsed;
+
+                        // Immediately clear the hash from the address bar so the user doesn't copy an obsolete/bloated URL
+                        if (window.history && window.history.replaceState) {
+                            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                        } else {
+                            window.location.hash = '';
+                        }
                     }
                 } catch (e) {}
 
@@ -2116,18 +2123,14 @@ Updated: 2026-11-25T14:35:00+00:00
                             .replace(/\+/g, '-')
                             .replace(/\//g, '_')
                             .replace(/=+$/, '');
-                        const newHash = '#plan=' + b64;
-                        if (window.history && window.history.replaceState) {
-                            window.history.replaceState(null, '', newHash);
-                        } else {
-                            window.location.hash = newHash;
-                        }
-                        const url = window.location.href;
+                        
+                        // Construct the shareable link without modifying the current window's address bar
+                        const shareUrl = window.location.origin + window.location.pathname + window.location.search + '#plan=' + b64;
                         if (navigator.clipboard && navigator.clipboard.writeText) {
-                            await navigator.clipboard.writeText(url);
+                            await navigator.clipboard.writeText(shareUrl);
                         } else {
                             const ta = document.createElement('textarea');
-                            ta.value = url;
+                            ta.value = shareUrl;
                             ta.style.position = 'fixed';
                             ta.style.opacity = '0';
                             document.body.appendChild(ta);
