@@ -131,30 +131,28 @@ Updated: 2026-11-25T13:00:00+00:00
                 </div>
             </div>
 
-            <!-- Action Controls & Currency Selector -->
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
-                <!-- Currency Selector -->
-                <div class="relative">
+            <!-- Action Controls & Unified Currency Pill -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
+                <!-- Unified Currency Selector + FX Converter Trigger -->
+                <div class="inline-flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-xs">
                     <label for="currencySelect" class="sr-only">Select Currency</label>
-                    <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-                        <span class="text-emerald-600 dark:text-emerald-400 font-bold mr-1.5">{{ currencySymbol }}</span>
+                    <div class="flex items-center px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                        <span class="text-emerald-600 dark:text-emerald-400 font-bold mr-1">{{ currencySymbol }}</span>
                         <select id="currencySelect" v-model="selectedCurrency" aria-label="Select Currency"
-                            class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-1">
+                            class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer">
                             <option v-for="c in currencies" :key="c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-                                {{ c.symbol }} {{ c.code }} ({{ c.name }})
+                                {{ c.code }} &middot; {{ c.name }}
                             </option>
                         </select>
                     </div>
+                    <button @click="openExchangeModal" type="button" title="Convert entire plan into another currency at live FX rates"
+                        class="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors flex items-center gap-1 text-[11px] font-semibold cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <span>Convert FX</span>
+                    </button>
                 </div>
-
-                <!-- Convert Plan Currency Button (Global HNI Mobility) -->
-                <button @click="openExchangeModal" type="button" title="Convert entire plan into another currency using live FX rates"
-                    class="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 shadow-xs transition-all flex items-center gap-1.5 text-xs font-semibold">
-                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                    <span>Convert Plan FX</span>
-                </button>
 
                 <button @click="resetDefaults" title="Reset to defaults"
                     class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors">
@@ -183,28 +181,23 @@ Updated: 2026-11-25T13:00:00+00:00
         <main class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
             
             <!-- Left Column: Interactive Parameters (5 cols) -->
-            <section class="lg:col-span-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col justify-between space-y-6">
+            <section class="lg:col-span-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col justify-between space-y-5">
                 <div>
-                    <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center justify-between mb-5">
                         <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white">Plan Parameters</h2>
-                        <button @click="openExchangeModal" type="button" title="Convert corpus & withdrawal into another currency"
-                            class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-2.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 transition-colors">
-                            <span>{{ selectedCurrency }}</span>
-                            <svg class="w-3 h-3 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                            </svg>
-                        </button>
+                        <span class="text-[11px] font-medium text-slate-400">
+                            {{ activeCurrency.region }} &middot; {{ selectedCurrency }}
+                        </span>
                     </div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Adjust your corpus, returns, inflation protection, and withdrawal strategy.</p>
 
-                    <div class="space-y-6">
+                    <div class="space-y-5">
                         <!-- Initial Investment -->
                         <div>
-                            <div class="flex justify-between items-center mb-2">
+                            <div class="flex justify-between items-center mb-1.5">
                                 <label for="initialInvestment" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                     Initial Investment
                                 </label>
-                                <div class="relative w-40">
+                                <div class="relative w-36">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ currencySymbol }}</span>
                                     <input v-model="inputs.initialInvestment" 
                                         @blur="formatOnBlur('initialInvestment')"
@@ -216,171 +209,138 @@ Updated: 2026-11-25T13:00:00+00:00
                                 :value="initialInvestment"
                                 @input="updateFromSlider('initialInvestment', $event.target.value)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
-                            <div class="flex justify-between text-xs text-slate-400 mt-1">
-                                <span>{{ currencySymbol }}1K</span>
-                                <span>{{ currencySymbol }}{{ formatCompact(investmentSliderMax) }}</span>
-                            </div>
                         </div>
 
-                        <!-- Monthly Withdrawal Strategy: Fixed Amount vs Dynamic % + Target Milestone -->
-                        <div class="space-y-3">
-                            <!-- Mode Switcher Header -->
+                        <!-- Monthly Withdrawal (Clean Mode Switch + Progressive Target Goal) -->
+                        <div class="space-y-2">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                    Withdrawal Strategy
-                                </span>
-                                <div class="inline-flex p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-[11px] font-semibold">
-                                    <button @click="setWithdrawalMode('fixed')" type="button"
-                                        :class="withdrawalMode === 'fixed' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
-                                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer">
-                                        {{ currencySymbol }} Fixed
-                                    </button>
-                                    <button @click="setWithdrawalMode('percent')" type="button"
-                                        :class="withdrawalMode === 'percent' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
-                                        class="px-2.5 py-1 rounded-lg transition-all cursor-pointer">
-                                        % of Balance
-                                    </button>
+                                <div class="flex items-center gap-1.5">
+                                    <label :for="withdrawalMode === 'fixed' ? 'monthlyWithdrawal' : 'withdrawalPercent'"
+                                        class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        Monthly Withdrawal
+                                    </label>
+                                    <!-- Subtle Info Tooltip Icon -->
+                                    <span class="group relative inline-flex items-center cursor-help">
+                                        <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                            <template v-if="withdrawalMode === 'fixed'">
+                                                <strong>Inflation-Adjusted:</strong> Steps up by {{ inflationRate }}%/yr every year to preserve real buying power.
+                                            </template>
+                                            <template v-else>
+                                                <strong>No Extra Step-Up:</strong> Scales purely with live balance ({{ withdrawalPercent }}%/yr). Beats {{ inflationRate }}% inflation when net growth ({{ (annualReturn - withdrawalPercent).toFixed(1) }}%) &ge; {{ inflationRate }}%.
+                                            </template>
+                                        </span>
+                                    </span>
                                 </div>
-                            </div>
 
-                            <!-- Inflation Adjustment Behavior Note -->
-                            <div class="px-2.5 py-1.5 rounded-lg border text-[11px] leading-snug flex items-start gap-1.5"
-                                :class="withdrawalMode === 'fixed'
-                                    ? 'bg-sky-50/70 dark:bg-sky-950/25 border-sky-200/70 dark:border-sky-800/50 text-sky-800 dark:text-sky-200'
-                                    : 'bg-amber-50/70 dark:bg-amber-950/25 border-amber-200/70 dark:border-amber-800/50 text-amber-800 dark:text-amber-200'">
-                                <span class="shrink-0 mt-0.5 select-none">ℹ️</span>
-                                <span v-if="withdrawalMode === 'fixed'">
-                                    <strong>Inflation-Adjusted Mode:</strong> Starting payout steps up by <strong>{{ inflationRate }}%/yr</strong> each year to preserve purchasing power.
-                                </span>
-                                <span v-else>
-                                    <strong>Without Separate Inflation Step-Up:</strong> Payout scales purely with portfolio balance (<strong>{{ withdrawalPercent }}%/yr</strong>). To beat {{ inflationRate }}% inflation in real terms, keep net growth (<strong>{{ (annualReturn - withdrawalPercent).toFixed(1) }}%/yr</strong>) &ge; {{ inflationRate }}%.
-                                </span>
-                            </div>
-
-                            <!-- Mode A: Fixed Starting Monthly Amount -->
-                            <div v-if="withdrawalMode === 'fixed'">
-                                <div class="flex justify-between items-center mb-2">
-                                    <div>
-                                        <label for="monthlyWithdrawal" class="text-xs font-medium text-slate-500 dark:text-slate-400 block">
-                                            Initial Monthly Withdrawal
-                                        </label>
-                                        <button @click="setSustainableWithdrawal" type="button"
-                                            class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-0.5 cursor-pointer"
-                                            title="Set to exact monthly interest earned so principal never shrinks">
-                                            <span>Max Perpetual: {{ currencySymbol }}{{ formatCompact(monthlyReturnAmount) }}/mo</span>
+                                <!-- Compact Mode Pill + Input Row -->
+                                <div class="flex items-center gap-1.5">
+                                    <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-[11px] font-semibold">
+                                        <button @click="setWithdrawalMode('fixed')" type="button"
+                                            title="Fixed starting amount (steps up yearly with inflation)"
+                                            :class="withdrawalMode === 'fixed' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                            class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                            {{ currencySymbol }}
+                                        </button>
+                                        <button @click="setWithdrawalMode('percent')" type="button"
+                                            title="Dynamic % of live portfolio balance (grows with corpus)"
+                                            :class="withdrawalMode === 'percent' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                            class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                            %
                                         </button>
                                     </div>
-                                    <div class="relative w-40">
-                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ currencySymbol }}</span>
+
+                                    <div v-if="withdrawalMode === 'fixed'" class="relative w-28">
+                                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">{{ currencySymbol }}</span>
                                         <input v-model="inputs.monthlyWithdrawal"
                                             @blur="formatOnBlur('monthlyWithdrawal')"
                                             type="text" id="monthlyWithdrawal" inputmode="decimal"
-                                            class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            class="w-full pl-6 pr-2.5 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     </div>
-                                </div>
-                                <input type="range" min="0" :max="withdrawalSliderMax" :step="withdrawalSliderStep"
-                                    :value="monthlyWithdrawal"
-                                    @input="updateFromSlider('monthlyWithdrawal', $event.target.value)"
-                                    class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
-                                <div class="flex justify-between text-xs text-slate-400 mt-1">
-                                    <span>Starting Rate: <strong class="text-slate-600 dark:text-slate-300">{{ (monthlyWithdrawalPercentage * 12).toFixed(2) }}%/yr</strong></span>
-                                    <span>End Mo. Draw: <strong class="text-sky-600 dark:text-sky-400">{{ currencySymbol }}{{ formatCompact(simulation.endingMonthlyWithdrawal) }}</strong></span>
-                                </div>
-                            </div>
-
-                            <!-- Mode B: Dynamic % of Current Balance (Scales as Corpus Grows) -->
-                            <div v-else class="space-y-2">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <label for="withdrawalPercent" class="text-xs font-medium text-slate-500 dark:text-slate-400 block">
-                                            Annual % of Live Balance
-                                        </label>
-                                        <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 block mt-0.5">
-                                            Starts at {{ currencySymbol }}{{ formatCompact(effectiveInitialMonthlyWithdrawal) }}/mo &rarr; {{ currencySymbol }}{{ formatCompact(simulation.endingMonthlyWithdrawal) }}/mo
-                                        </span>
-                                    </div>
-                                    <div class="relative w-32">
+                                    <div v-else class="relative w-28">
                                         <input v-model="inputs.withdrawalPercent"
                                             @blur="formatOnBlur('withdrawalPercent')"
                                             type="text" id="withdrawalPercent" inputmode="decimal"
-                                            class="w-full pl-3 pr-9 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            class="w-full pl-2.5 pr-8 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                         <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-[11px]">%/yr</span>
                                     </div>
                                 </div>
-                                <input type="range" min="0.5" :max="percentWithdrawalSliderMax" step="0.25"
-                                    :value="withdrawalPercent"
-                                    @input="updateFromSlider('withdrawalPercent', $event.target.value)"
-                                    class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            </div>
 
-                                <!-- Quick SWR Presets -->
-                                <div class="flex items-center justify-between gap-1 pt-0.5">
-                                    <button v-for="preset in swrPresets" :key="preset.label"
+                            <!-- Slider (Fixed or %) -->
+                            <input v-if="withdrawalMode === 'fixed'" type="range" min="0" :max="withdrawalSliderMax" :step="withdrawalSliderStep"
+                                :value="monthlyWithdrawal"
+                                @input="updateFromSlider('monthlyWithdrawal', $event.target.value)"
+                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            <input v-else type="range" min="0.5" :max="percentWithdrawalSliderMax" step="0.25"
+                                :value="withdrawalPercent"
+                                @input="updateFromSlider('withdrawalPercent', $event.target.value)"
+                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+
+                            <!-- Single Concise Sub-line + Progressive Actions -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                                <button v-if="withdrawalMode === 'fixed'" @click="setSustainableWithdrawal" type="button"
+                                    class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium cursor-pointer"
+                                    title="Set to monthly interest earned so principal stays intact">
+                                    Max Perpetual: {{ currencySymbol }}{{ formatCompact(monthlyReturnAmount) }}/mo
+                                </button>
+                                <div v-else class="flex items-center gap-1">
+                                    <button v-for="preset in swrPresets" :key="preset.rate"
                                         @click="inputs.withdrawalPercent = String(preset.rate)"
                                         type="button"
                                         :title="preset.desc"
                                         :class="Math.abs(withdrawalPercent - preset.rate) < 0.05
-                                            ? 'bg-emerald-600 text-white font-bold border-emerald-600'
-                                            : 'bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:border-emerald-400 border-slate-200 dark:border-slate-700'"
-                                        class="flex-1 py-1 px-1.5 rounded-lg border text-[10px] text-center transition-all cursor-pointer">
-                                        {{ preset.label }}
+                                            ? 'bg-emerald-600 text-white font-semibold'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                                        class="px-1.5 py-0.5 rounded text-[10px] transition-colors cursor-pointer">
+                                        {{ preset.rate }}%
                                     </button>
+                                    <span class="ml-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                        {{ currencySymbol }}{{ formatCompact(effectiveInitialMonthlyWithdrawal) }} &rarr; {{ currencySymbol }}{{ formatCompact(simulation.endingMonthlyWithdrawal) }}/mo
+                                    </span>
                                 </div>
-                                <p class="text-[11px] text-slate-400 leading-snug">
-                                    Monthly payout recalculates automatically as <strong class="text-slate-600 dark:text-slate-300">{{ (withdrawalPercent / 12).toFixed(2) }}%/mo</strong> of your live compounding balance — when your corpus grows, your monthly income grows with it.
-                                </p>
+
+                                <button @click="toggleTargetMilestone" type="button"
+                                    class="text-[11px] font-medium hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
+                                    :class="showTargetMilestone ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400'">
+                                    <span>🎯 {{ showTargetMilestone ? 'Hide Goal' : 'Target Goal' }}</span>
+                                </button>
                             </div>
 
-                            <!-- Optional Target Monthly Income Milestone Tracker -->
-                            <div class="rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-2.5">
+                            <!-- Revealable Target Monthly Income Goal -->
+                            <div v-if="showTargetMilestone" class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
                                 <div class="flex items-center justify-between gap-2">
-                                    <button @click="toggleTargetMilestone" type="button"
-                                        class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
-                                        <span class="text-sm select-none">🎯</span>
-                                        <span>Target Monthly Income Goal</span>
-                                    </button>
-                                    <button @click="toggleTargetMilestone" type="button"
-                                        class="text-[11px] font-semibold px-2 py-0.5 rounded-md transition-colors cursor-pointer"
-                                        :class="showTargetMilestone ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'">
-                                        {{ showTargetMilestone ? 'Enabled' : '+ Set Goal' }}
-                                    </button>
+                                    <label for="targetMonthlyWithdrawal" class="text-xs font-medium text-slate-600 dark:text-slate-300">
+                                        Target Monthly Income
+                                    </label>
+                                    <div class="relative w-32">
+                                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">{{ currencySymbol }}</span>
+                                        <input v-model="inputs.targetMonthlyWithdrawal"
+                                            @blur="formatOnBlur('targetMonthlyWithdrawal')"
+                                            type="text" id="targetMonthlyWithdrawal" inputmode="decimal"
+                                            class="w-full pl-6 pr-2.5 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    </div>
                                 </div>
-
-                                <div v-if="showTargetMilestone" class="mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <label for="targetMonthlyWithdrawal" class="text-[11px] text-slate-500 dark:text-slate-400">
-                                            Desired Monthly Payout
-                                        </label>
-                                        <div class="relative w-36">
-                                            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">{{ currencySymbol }}</span>
-                                            <input v-model="inputs.targetMonthlyWithdrawal"
-                                                @blur="formatOnBlur('targetMonthlyWithdrawal')"
-                                                type="text" id="targetMonthlyWithdrawal" inputmode="decimal"
-                                                class="w-full pl-6 pr-2.5 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                        </div>
-                                    </div>
-
-                                    <!-- Milestone Verdict Badge -->
-                                    <div class="p-2 rounded-lg text-[11px] leading-snug border"
-                                        :class="targetMilestoneStatus.colorClass">
-                                        <div class="font-bold flex items-center justify-between gap-1">
-                                            <span>{{ targetMilestoneStatus.headline }}</span>
-                                            <span v-if="targetMilestoneStatus.timeBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 shrink-0">
-                                                {{ targetMilestoneStatus.timeBadge }}
-                                            </span>
-                                        </div>
-                                        <p class="mt-0.5 opacity-90 text-[10px]">{{ targetMilestoneStatus.detail }}</p>
-                                    </div>
+                                <div class="px-2.5 py-2 rounded-xl text-[11px] border flex items-center justify-between gap-2"
+                                    :class="targetMilestoneStatus.colorClass"
+                                    :title="targetMilestoneStatus.detail">
+                                    <span class="font-semibold truncate">{{ targetMilestoneStatus.headline }}</span>
+                                    <span v-if="targetMilestoneStatus.timeBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 shrink-0">
+                                        {{ targetMilestoneStatus.timeBadge }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Expected Annual Return -->
                         <div>
-                            <div class="flex justify-between items-center mb-2">
+                            <div class="flex justify-between items-center mb-1.5">
                                 <label for="annualReturn" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                     Expected Annual Return
                                 </label>
-                                <div class="relative w-32">
+                                <div class="relative w-28">
                                     <input v-model="inputs.annualReturn"
                                         @blur="formatOnBlur('annualReturn')"
                                         type="text" id="annualReturn" inputmode="decimal"
@@ -392,30 +352,25 @@ Updated: 2026-11-25T13:00:00+00:00
                                 :value="annualReturn"
                                 @input="updateFromSlider('annualReturn', $event.target.value)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
-                            <div class="flex justify-between text-xs text-slate-400 mt-1">
-                                <span>0%</span>
-                                <span>Monthly yield: {{ monthlyReturn.toFixed(2) }}%</span>
-                                <span>{{ returnSliderMax }}%</span>
-                            </div>
                         </div>
 
-                        <!-- Withdrawal Duration -->
+                        <!-- Time Horizon -->
                         <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <div>
-                                    <label for="withdrawalDuration" class="text-sm font-semibold text-slate-700 dark:text-slate-300 block">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <div class="flex items-center gap-2">
+                                    <label for="withdrawalDuration" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                         Time Horizon
                                     </label>
                                     <button v-if="isDepleted" @click="setMaxDuration" type="button"
-                                        class="text-xs font-medium text-rose-600 dark:text-rose-400 hover:underline mt-0.5">
-                                        Depletes in {{ yearsLastingFunds.toFixed(1) }} yrs (Click to set)
+                                        class="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:underline cursor-pointer">
+                                        ({{ yearsLastingFunds.toFixed(1) }}y max)
                                     </button>
                                 </div>
-                                <div class="relative w-32">
+                                <div class="relative w-28">
                                     <input v-model="inputs.withdrawalDuration"
                                         @blur="formatOnBlur('withdrawalDuration')"
                                         type="text" id="withdrawalDuration" inputmode="numeric"
-                                        class="w-full pl-3 pr-10 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                        class="w-full pl-3 pr-9 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
                                 </div>
                             </div>
@@ -423,92 +378,58 @@ Updated: 2026-11-25T13:00:00+00:00
                                 :value="withdrawalDuration"
                                 @input="updateFromSlider('withdrawalDuration', $event.target.value)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
-                            <div class="flex justify-between text-xs text-slate-400 mt-1">
-                                <span>1 yr</span>
-                                <span>{{ Math.round(withdrawalDuration * 12).toLocaleString('en-US') }} months total</span>
-                                <span>{{ durationSliderMax }} yrs</span>
-                            </div>
                         </div>
 
-                        <!-- Annual Inflation Step-Up with Live Historic Benchmarks -->
-                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 transition-opacity"
-                            :class="withdrawalMode === 'percent' ? 'opacity-80' : ''">
-                            <div class="flex items-center justify-between mb-2">
-                                <div>
+                        <!-- Annual Inflation (Minimal Default Row + Expandable Country Benchmarks) -->
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300 block">
-                                            {{ withdrawalMode === 'percent' ? 'Reference Inflation (Not Added to %)' : 'Annual Inflation Step-Up' }}
+                                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                            {{ withdrawalMode === 'percent' ? 'Reference Inflation' : 'Annual Inflation' }}
                                         </span>
                                         <span v-if="withdrawalMode === 'percent'"
-                                            class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                                            Benchmark Only
+                                            title="Not added onto % withdrawal — used as real-purchasing-power benchmark"
+                                            class="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                            Ref Only
                                         </span>
-                                        <span v-if="isLoadingInflation" class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping" title="Syncing historic data..."></span>
+                                        <span v-if="isLoadingInflation" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
                                     </div>
-                                    <span class="text-xs text-slate-400" v-if="withdrawalMode === 'fixed'">Applied yearly to Fixed withdrawal to preserve purchasing power</span>
-                                    <span class="text-xs text-slate-400" v-else>Not compounded onto % draw — compare against net growth ({{ (annualReturn - withdrawalPercent).toFixed(1) }}%/yr)</span>
+                                    <div class="flex items-center gap-2 mt-0.5 text-xs">
+                                        <button @click="applyCountryInflationRate" type="button"
+                                            class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer truncate">
+                                            {{ activeCurrency.region }} 10Y: <strong class="text-slate-700 dark:text-slate-200">{{ currentCountryInflationAvg }}%</strong>
+                                        </button>
+                                        <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+                                        <button @click="showMoreInflation = !showMoreInflation" type="button"
+                                            class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium flex items-center gap-0.5 shrink-0 cursor-pointer">
+                                            <span>{{ showMoreInflation ? 'Hide Presets' : 'Benchmarks' }}</span>
+                                            <svg class="w-3 h-3 transition-transform duration-200" :class="showMoreInflation ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="relative w-24">
+
+                                <div class="relative w-24 shrink-0">
                                     <input v-model="inputs.inflationRate"
                                         @blur="formatOnBlur('inflationRate')"
                                         type="text" aria-label="Inflation Rate" inputmode="decimal"
-                                        class="w-full pl-2 pr-6 py-1 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                        class="w-full pl-2.5 pr-6 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
                                 </div>
                             </div>
 
-                            <!-- Active Currency Historic Inflation Highlight & Revealable Multi-Horizon Benchmarks -->
-                            <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-200/60 dark:border-slate-700/60 mt-2 space-y-2">
-                                <!-- Country-specific inflation spotlight -->
-                                <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="text-base select-none">📍</span>
-                                        <div class="min-w-0">
-                                            <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
-                                                {{ activeCurrency.region }} 10Y Inflation Avg
-                                            </div>
-                                            <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                                                {{ selectedCurrency }} ({{ activeCurrency.name }}) Benchmark
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button @click="applyCountryInflationRate" type="button"
-                                        title="Click to apply country 10-year average inflation"
-                                        class="px-2.5 py-1 rounded-md text-xs font-bold transition-all shrink-0 flex items-center gap-1"
-                                        :class="Math.abs(Number(inputs.inflationRate) - currentCountryInflationAvg) < 0.05
-                                            ? 'bg-emerald-600 text-white shadow-xs'
-                                            : 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-slate-800 border border-emerald-300 dark:border-emerald-700'">
-                                        <span>{{ currentCountryInflationAvg }}%</span>
-                                        <span class="text-[10px] font-normal opacity-90" v-if="Math.abs(Number(inputs.inflationRate) - currentCountryInflationAvg) < 0.05">Active</span>
-                                        <span class="text-[10px] font-normal underline" v-else>Apply</span>
-                                    </button>
-                                </div>
-
-                                <!-- Country-Related Historic Benchmarks Header + Reveal Toggle -->
-                                <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
-                                    <span class="font-medium flex items-center gap-1 truncate">
-                                        <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span class="truncate">{{ activeCurrency.region }} Historic Benchmarks</span>
-                                    </span>
-                                    <button @click="showMoreInflation = !showMoreInflation" type="button"
-                                        class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer">
-                                        <span>{{ showMoreInflation ? 'Hide Options' : 'More Horizons & Stress' }}</span>
-                                        <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="showMoreInflation ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                <!-- Primary Country Horizon Buttons (Latest, 5Y, 10Y, 20Y) -->
+                            <!-- Progressive Disclosure: Country Horizons, Stress Regimes, Yearly & Global Peers -->
+                            <div v-if="showMoreInflation" class="mt-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 space-y-2.5">
+                                <!-- Primary Country Horizons (Latest, 5Y, 10Y, 20Y) -->
                                 <div class="grid grid-cols-4 gap-1.5">
                                     <button v-for="b in countryPrimaryBenchmarks" :key="b.id"
                                         @click="applyInflationBenchmark(b)"
                                         type="button"
                                         :title="b.tooltip"
                                         :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05 
-                                            ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-600' 
+                                            ? 'bg-emerald-600 text-white font-bold shadow-2xs border border-emerald-600' 
                                             : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
                                         class="px-1.5 py-1.5 rounded-lg text-center transition-all text-[11px] flex flex-col items-center cursor-pointer">
                                         <span class="font-semibold truncate max-w-full leading-tight">{{ b.label }}</span>
@@ -516,11 +437,10 @@ Updated: 2026-11-25T13:00:00+00:00
                                     </button>
                                 </div>
 
-                                <!-- Revealable Drawer: Multi-Way Country Regimes, Year-by-Year & Global Peers -->
-                                <div v-if="showMoreInflation" class="pt-2 border-t border-slate-200/70 dark:border-slate-700/70 space-y-2.5">
-                                    <!-- View Mode Switcher -->
+                                <!-- Sub-tabs: Regimes & Stress | Year-by-Year | Global Peers -->
+                                <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
                                     <div class="flex items-center justify-between gap-1">
-                                        <div class="inline-flex p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-[10px] font-semibold">
+                                        <div class="inline-flex p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-900 text-[10px] font-semibold">
                                             <button @click="inflationDrawerTab = 'regimes'" type="button"
                                                 :class="inflationDrawerTab === 'regimes' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
                                                 class="px-2 py-1 rounded-md transition-all cursor-pointer">
@@ -540,16 +460,16 @@ Updated: 2026-11-25T13:00:00+00:00
                                         <span class="text-[10px] text-slate-400 font-mono truncate">{{ inflationDataSource }}</span>
                                     </div>
 
-                                    <!-- Tab 1: Country Regimes & Stress Scenarios (3Y, 30Y, Median, Peak, CB Target, Zero) -->
+                                    <!-- Regimes & Stress -->
                                     <div v-if="inflationDrawerTab === 'regimes'" class="grid grid-cols-3 gap-1.5">
                                         <button v-for="b in countryExtendedBenchmarks" :key="b.id"
                                             @click="applyInflationBenchmark(b)"
                                             type="button"
                                             :title="b.tooltip"
                                             :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05 
-                                                ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-600' 
-                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
-                                            class="px-2 py-1.5 rounded-lg text-left transition-all text-[11px] flex flex-col justify-between cursor-pointer">
+                                                ? 'bg-emerald-600 text-white font-bold border-emerald-600' 
+                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200/80 dark:border-slate-700'"
+                                            class="px-2 py-1.5 rounded-lg border text-left transition-all text-[11px] flex flex-col justify-between cursor-pointer">
                                             <div class="flex items-center justify-between w-full gap-1">
                                                 <span class="font-semibold truncate">{{ b.label }}</span>
                                                 <span class="font-bold text-[11px] shrink-0">{{ b.rate }}%</span>
@@ -558,37 +478,31 @@ Updated: 2026-11-25T13:00:00+00:00
                                         </button>
                                     </div>
 
-                                    <!-- Tab 2: Country Year-by-Year CPI History (Click any year to apply) -->
-                                    <div v-else-if="inflationDrawerTab === 'yearly'" class="space-y-1.5">
-                                        <div class="text-[10px] text-slate-400 flex items-center justify-between">
-                                            <span>Click any year in {{ activeCurrency.region }} history to test that CPI rate:</span>
-                                            <span>{{ activeCountryProfile.history.length }} yrs</span>
-                                        </div>
-                                        <div class="grid grid-cols-5 gap-1 max-h-32 overflow-y-auto pr-0.5">
-                                            <button v-for="yr in activeCountryProfile.history.slice(0, 15)" :key="yr.year"
-                                                @click="inputs.inflationRate = String(Math.max(0, Math.round(yr.value * 10) / 10))"
-                                                type="button"
-                                                :title="activeCurrency.region + ' ' + yr.year + ' CPI: ' + yr.value + '%'"
-                                                :class="Math.abs(Number(inputs.inflationRate) - Math.max(0, Math.round(yr.value * 10) / 10)) < 0.05
-                                                    ? 'bg-emerald-600 text-white font-bold border-emerald-600'
-                                                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-400 border-slate-200/80 dark:border-slate-700'"
-                                                class="px-1.5 py-1 rounded-md border text-center transition-all flex flex-col items-center cursor-pointer">
-                                                <span class="text-[9px] opacity-70 font-mono">{{ yr.year }}</span>
-                                                <span class="text-[10px] font-semibold">{{ yr.value.toFixed(1) }}%</span>
-                                            </button>
-                                        </div>
+                                    <!-- Year-by-Year -->
+                                    <div v-else-if="inflationDrawerTab === 'yearly'" class="grid grid-cols-5 gap-1 max-h-28 overflow-y-auto pr-0.5">
+                                        <button v-for="yr in activeCountryProfile.history.slice(0, 15)" :key="yr.year"
+                                            @click="inputs.inflationRate = String(Math.max(0, Math.round(yr.value * 10) / 10))"
+                                            type="button"
+                                            :title="activeCurrency.region + ' ' + yr.year + ' CPI: ' + yr.value + '%'"
+                                            :class="Math.abs(Number(inputs.inflationRate) - Math.max(0, Math.round(yr.value * 10) / 10)) < 0.05
+                                                ? 'bg-emerald-600 text-white font-bold border-emerald-600'
+                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-400 border-slate-200/80 dark:border-slate-700'"
+                                            class="px-1.5 py-1 rounded-md border text-center transition-all flex flex-col items-center cursor-pointer">
+                                            <span class="text-[9px] opacity-70 font-mono">{{ yr.year }}</span>
+                                            <span class="text-[10px] font-semibold">{{ yr.value.toFixed(1) }}%</span>
+                                        </button>
                                     </div>
 
-                                    <!-- Tab 3: Global & Cross-Country 10Y Benchmarks -->
+                                    <!-- Global Peers -->
                                     <div v-else class="grid grid-cols-3 gap-1.5">
                                         <button v-for="b in globalComparisonBenchmarks" :key="b.code"
                                             @click="applyInflationBenchmark(b)"
                                             type="button"
                                             :title="b.tooltip"
                                             :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05 
-                                                ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-600' 
-                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
-                                            class="px-2 py-1.5 rounded-lg text-left transition-all text-[11px] flex items-center justify-between gap-1 cursor-pointer">
+                                                ? 'bg-emerald-600 text-white font-bold border-emerald-600' 
+                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200/80 dark:border-slate-700'"
+                                            class="px-2 py-1.5 rounded-lg border text-left transition-all text-[11px] flex items-center justify-between gap-1 cursor-pointer">
                                             <span class="font-semibold truncate">{{ b.label }}</span>
                                             <span class="text-[10px] font-bold opacity-90 shrink-0">{{ b.rate }}%</span>
                                         </button>
@@ -599,28 +513,24 @@ Updated: 2026-11-25T13:00:00+00:00
                     </div>
                 </div>
 
-                <!-- Rat Race Escape Freedom Status Banner -->
-                <div class="p-4 rounded-2xl border text-sm flex items-start gap-3 transition-colors"
-                    :class="freedomStatus.colorClass">
-                    <div class="text-xl shrink-0 mt-0.5 select-none">{{ freedomStatus.badgeIcon }}</div>
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                            <p class="font-bold text-sm tracking-tight">{{ freedomStatus.title }}</p>
-                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
-                                :class="freedomStatus.pillClass">
-                                {{ freedomStatus.tier }}
-                            </span>
-                        </div>
-                        <p class="text-xs opacity-90 mt-1 leading-relaxed">
-                            {{ freedomStatus.description }}
-                        </p>
-                        <!-- Freedom Progress Metric -->
-                        <div class="mt-2.5 pt-2 border-t border-current/10 flex items-center justify-between text-[11px]">
-                            <span>Passive Yield Coverage: <strong>{{ Math.round((monthlyReturnAmount / (effectiveInitialMonthlyWithdrawal || 1)) * 100) }}%</strong> of Year-1 draw</span>
-                            <span v-if="!isDepleted" class="font-medium">Perpetual Freedom</span>
-                            <span v-else class="font-semibold">Lasts {{ yearsLastingFunds.toFixed(1) }} yrs</span>
+                <!-- Compact Rat Race Freedom Verdict Pill -->
+                <div class="p-3.5 rounded-2xl border text-xs flex items-center justify-between gap-3 transition-colors"
+                    :class="freedomStatus.colorClass"
+                    :title="freedomStatus.description">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="text-lg shrink-0 select-none">{{ freedomStatus.badgeIcon }}</span>
+                        <div class="min-w-0">
+                            <p class="font-bold text-slate-900 dark:text-white truncate">{{ freedomStatus.tier }}</p>
+                            <p class="text-[11px] opacity-85 truncate">
+                                <span v-if="!isDepleted">Yield covers {{ Math.round((monthlyReturnAmount / (effectiveInitialMonthlyWithdrawal || 1)) * 100) }}% &bull; Forever sustainable</span>
+                                <span v-else>Corpus lasts {{ yearsLastingFunds.toFixed(1) }} yrs ({{ Math.round(yearsLastingFunds * 12) }} mos)</span>
+                            </p>
                         </div>
                     </div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border shrink-0"
+                        :class="freedomStatus.pillClass">
+                        {{ !isDepleted ? 'Free' : yearsLastingFunds.toFixed(1) + 'y' }}
+                    </span>
                 </div>
             </section>
 
