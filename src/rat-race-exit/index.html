@@ -170,7 +170,7 @@ Updated: 2026-11-25T16:30:00+00:00
             <!-- Action Controls & Unified World Currency Pill -->
             <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
                 <!-- Unified Currency Selector + FX Converter Trigger -->
-                <div class="inline-flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-xs max-w-full">
+                <div class="inline-flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-sm max-w-full">
                     <label for="currencySelect" class="sr-only">Select Currency</label>
                     <div class="flex items-center px-2 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200 min-w-0"
                         :title="currencyAutoDetected ? 'Auto-detected from your region — click to choose from 150+ world currencies' : 'Select from 150+ world currencies'">
@@ -263,25 +263,10 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <label for="initialInvestment" class="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">
                                         Initial Investment
                                     </label>
-                                    <select :value="investmentCurrency"
-                                        @change="onInvestmentCurrencyChanged($event.target.value, investmentCurrency)"
-                                        aria-label="Investment Asset Currency"
-                                        title="Currency of your invested portfolio (can differ from your local spending currency)"
-                                        :class="isCrossCurrency
-                                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-700'"
-                                        class="px-1.5 py-0.5 rounded-lg border text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer transition-colors shrink-0">
-                                        <optgroup label="Popular">
-                                            <option v-for="c in popularCurrencies" :key="'inv-pop-' + c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-                                                {{ c.code }} ({{ c.symbol }})
-                                            </option>
-                                        </optgroup>
-                                        <optgroup label="All World Currencies">
-                                            <option v-for="c in otherCurrencies" :key="'inv-all-' + c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-                                                {{ c.code }} ({{ c.symbol }})
-                                            </option>
-                                        </optgroup>
-                                    </select>
+                                    <span v-if="isCrossCurrency"
+                                        class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 shrink-0">
+                                        in {{ investmentCurrency }}
+                                    </span>
                                 </div>
                                 <div class="flex items-center w-36 shrink-0 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition-all overflow-hidden">
                                     <span class="pl-2.5 pr-1 text-slate-400 font-medium text-xs shrink-0 select-none">{{ investmentCurrencySymbol }}</span>
@@ -299,39 +284,40 @@ Updated: 2026-11-25T16:30:00+00:00
                                 class="exit-slider">
 
                             <!-- Reverse FIRE Number Solver + Exit Countdown + Cross-Border Triggers -->
-                            <div class="flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+                            <div class="flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                                 <div class="flex flex-wrap items-center gap-1.5">
                                     <template v-if="hasFixedWithdrawalTarget && requiredHorizonCorpus !== null">
+                                        <span>Min:</span>
                                         <button @click="applySolvedCorpus(requiredHorizonCorpus)" type="button"
-                                            class="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/15 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors cursor-pointer"
+                                            class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-semibold text-slate-700 dark:text-slate-200 cursor-pointer"
                                             :title="'Minimum corpus needed so funds last ' + withdrawalDuration + ' years under current returns, inflation, tax & stress'">
-                                            {{ withdrawalDuration }}y Min: <strong>{{ investmentCurrencySymbol }}{{ formatCompact(requiredHorizonCorpusInInv, investmentCurrency) }}</strong>
+                                            {{ investmentCurrencySymbol }}{{ formatCompact(requiredHorizonCorpusInInv, investmentCurrency) }} ({{ withdrawalDuration }}y)
                                         </button>
-                                        <button v-if="requiredPerpetualCorpus !== null" @click="applySolvedCorpus(requiredPerpetualCorpus)" type="button"
-                                            class="px-1.5 py-0.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-medium transition-colors cursor-pointer"
-                                            title="Minimum corpus needed so final real purchasing power equals or exceeds Day 1 without shrinking in the final year">
-                                            Perpetual: <strong>{{ investmentCurrencySymbol }}{{ formatCompact(requiredPerpetualCorpusInInv, investmentCurrency) }}</strong>
-                                        </button>
-                                        <span v-else class="text-[10px] text-amber-600 dark:text-amber-400" title="Effective real return is negative or 0% in the final phase, so infinite real preservation is not possible">
-                                            Real return &le; CPI
-                                        </span>
+                                        <template v-if="requiredPerpetualCorpus !== null">
+                                            <span class="text-slate-300 dark:text-slate-700">&middot;</span>
+                                            <button @click="applySolvedCorpus(requiredPerpetualCorpus)" type="button"
+                                                class="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold cursor-pointer"
+                                                title="Minimum corpus needed so final real purchasing power equals or exceeds Day 1 without shrinking in the final year">
+                                                {{ investmentCurrencySymbol }}{{ formatCompact(requiredPerpetualCorpusInInv, investmentCurrency) }} (Forever)
+                                            </button>
+                                        </template>
                                     </template>
                                     <button v-else-if="withdrawalMode === 'percent'" @click="lockPercentIntoFixedAndSolve" type="button"
-                                        class="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                                        class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-medium cursor-pointer"
                                         title="Switch to Fixed inflation-adjusted expenses at this starting monthly draw to use the Required Corpus solver">
                                         Solve Corpus for {{ currencySymbol }}{{ formatCompact(effectiveInitialMonthlyWithdrawal) }}/mo
                                     </button>
                                 </div>
 
-                                <div class="flex items-center gap-2 ml-auto">
+                                <div class="flex items-center gap-2.5 ml-auto shrink-0">
                                     <button @click="toggleCountdownDrawer" type="button"
-                                        :class="showCountdown ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'"
-                                        class="text-[11px] font-medium hover:underline cursor-pointer"
+                                        :class="showCountdown ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'hover:text-emerald-600 dark:hover:text-emerald-400 font-medium'"
+                                        class="hover:underline cursor-pointer"
                                         title="Calculate years left to accumulate your target exit corpus">
                                         {{ showCountdown ? 'Hide Countdown' : '⏱️ Countdown' }}
                                     </button>
                                     <button v-if="!isCrossCurrency" @click="toggleCrossCurrencyMode" type="button"
-                                        class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                                        class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                                         title="Invest in a foreign market currency while spending in your local currency with annual FX drift">
                                         + Foreign Asset
                                     </button>
@@ -373,11 +359,29 @@ Updated: 2026-11-25T16:30:00+00:00
 
                             <!-- Cross-Border FX & Currency Depreciation Panel -->
                             <div v-if="isCrossCurrency" class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-emerald-500/25 dark:border-emerald-500/20 space-y-2.5">
-                                <!-- Row 1: Local Value & Spot FX Rate -->
+                                <!-- Row 1: Foreign Asset Currency Selector, Local Value & Spot FX Rate -->
                                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-                                    <span class="text-slate-600 dark:text-slate-300">
-                                        Local Value: <strong class="text-slate-900 dark:text-white">{{ currencySymbol }}{{ formatCompact(initialInvestment) }}</strong>
-                                    </span>
+                                    <div class="flex items-center gap-1.5">
+                                        <select :value="investmentCurrency"
+                                            @change="onInvestmentCurrencyChanged($event.target.value, investmentCurrency)"
+                                            aria-label="Investment Asset Currency"
+                                            title="Currency of your invested portfolio"
+                                            class="px-1.5 py-0.5 rounded-lg border bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                                            <optgroup label="Popular">
+                                                <option v-for="c in popularCurrencies" :key="'inv-pop-' + c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                                    {{ c.code }} ({{ c.symbol }})
+                                                </option>
+                                            </optgroup>
+                                            <optgroup label="All World Currencies">
+                                                <option v-for="c in otherCurrencies" :key="'inv-all-' + c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                                    {{ c.code }} ({{ c.symbol }})
+                                                </option>
+                                            </optgroup>
+                                        </select>
+                                        <span class="text-slate-600 dark:text-slate-300">
+                                            = <strong class="text-slate-900 dark:text-white">{{ currencySymbol }}{{ formatCompact(initialInvestment) }}</strong>
+                                        </span>
+                                    </div>
                                     <div class="flex items-center gap-1 text-[11px]">
                                         <span class="text-slate-500 dark:text-slate-400 font-medium">1 {{ investmentCurrency }} =</span>
                                         <input :value="inputs.spotFxRate !== '' ? inputs.spotFxRate : formatFxRateEditable(liveSpotFxRate)"
@@ -405,8 +409,8 @@ Updated: 2026-11-25T16:30:00+00:00
                                                 <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 bottom-full mb-2 w-64 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
-                                                    Annual change in <strong>1 {{ investmentCurrency }} &rarr; {{ selectedCurrency }}</strong>. Positive (+) means {{ selectedCurrency }} weakens vs {{ investmentCurrency }} (FX tailwind for {{ investmentCurrency }} assets). Negative (&minus;) means {{ selectedCurrency }} strengthens (FX headwind). PPP estimates long-run drift from inflation differentials.
+                                                <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                                    Annual change in <strong>1 {{ investmentCurrency }} &rarr; {{ selectedCurrency }}</strong>. Positive (+) means {{ selectedCurrency }} weakens vs {{ investmentCurrency }} (FX tailwind for {{ investmentCurrency }} assets). Negative (&minus;) means {{ selectedCurrency }} strengthens (FX headwind).
                                                 </span>
                                             </span>
                                         </div>
@@ -428,21 +432,14 @@ Updated: 2026-11-25T16:30:00+00:00
                                         aria-label="Currency Depreciation Rate Slider"
                                         class="exit-slider">
 
-                                    <div class="flex flex-wrap items-center justify-between gap-1.5">
-                                        <div class="flex flex-wrap items-center gap-1">
-                                            <button v-for="preset in fxPresets" :key="preset.id"
-                                                @click="userEditedFxDrift = true; inputs.fxDepreciationRate = String(preset.rate)"
-                                                type="button"
-                                                :title="preset.desc"
-                                                :class="Math.abs(fxDepreciationRate - preset.rate) < 0.05
-                                                    ? 'bg-emerald-600 text-white font-semibold'
-                                                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 hover:border-emerald-400'"
-                                                class="px-1.5 py-0.5 rounded text-[10px] transition-colors cursor-pointer">
-                                                {{ preset.label }}
-                                            </button>
-                                        </div>
+                                    <div class="flex items-center justify-between gap-2 text-[11px]">
+                                        <button @click="userEditedFxDrift = true; inputs.fxDepreciationRate = String(pppImpliedDrift)" type="button"
+                                            class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium cursor-pointer truncate"
+                                            :title="`Apply Purchasing Power Parity drift implied by ${activeCountry.region} (${currentCountryInflationAvg}%) vs ${activeInvestmentCurrency.region} (${investmentCountryInflationAvg}%) 10Y CPI`">
+                                            PPP Implied: {{ pppImpliedDrift >= 0 ? '+' : '' }}{{ pppImpliedDrift }}%/yr
+                                        </button>
                                         <button @click="toggleCrossCurrencyMode" type="button"
-                                            class="text-[10px] font-medium text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                                            class="text-[10px] font-medium text-slate-400 hover:text-rose-500 transition-colors cursor-pointer shrink-0"
                                             title="Switch investment back to local currency">
                                             Use {{ selectedCurrency }} only
                                         </button>
@@ -467,7 +464,7 @@ Updated: 2026-11-25T16:30:00+00:00
                             </div>
                         </div>
 
-                        <!-- Monthly Withdrawal (Clean Mode Switch + Dynamic Multi-Layer Phases & FIRE Strategy Presets) -->
+                        <!-- Monthly Withdrawal (Clean Mode Switch + Dynamic Multi-Layer Phases) -->
                         <div class="space-y-2">
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-1.5">
@@ -488,7 +485,7 @@ Updated: 2026-11-25T16:30:00+00:00
                                         <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 bottom-full mb-2 w-64 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                        <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
                                             <template v-if="withdrawalMode === 'fixed'">
                                                 <strong>Fixed Inflation-Adjusted ({{ currencySymbol }}):</strong> Models classic FIRE constant-dollar withdrawals (like the Trinity 4% rule) stepping up by {{ inflationRate }}%/yr to preserve buying power.
                                             </template>
@@ -504,13 +501,13 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-[11px] font-semibold">
                                         <button @click="setWithdrawalMode('fixed')" type="button"
                                             title="Fixed starting spend in today's money (steps up yearly with inflation)"
-                                            :class="withdrawalMode === 'fixed' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                            :class="withdrawalMode === 'fixed' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                             class="px-2 py-1 rounded-md transition-all cursor-pointer">
                                             {{ currencySymbol }}
                                         </button>
                                         <button @click="setWithdrawalMode('percent')" type="button"
                                             title="Variable % of live portfolio balance (endowment rule)"
-                                            :class="withdrawalMode === 'percent' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                            :class="withdrawalMode === 'percent' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                             class="px-2 py-1 rounded-md transition-all cursor-pointer">
                                             %
                                         </button>
@@ -547,8 +544,8 @@ Updated: 2026-11-25T16:30:00+00:00
                                 aria-label="Annual Percentage Withdrawal Slider"
                                 class="exit-slider">
 
-                            <!-- Concise Sub-line + Quick Presets + Add Phase -->
-                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                            <!-- Clean Sub-line + Add Phase -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                                 <div v-if="withdrawalMode === 'fixed'" class="flex flex-wrap items-center gap-1.5">
                                     <button @click="setSustainableWithdrawal" type="button"
                                         :class="effectiveLocalAnnualReturn > inflationRate ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
@@ -563,60 +560,22 @@ Updated: 2026-11-25T16:30:00+00:00
                                     </button>
                                     <span class="text-slate-300 dark:text-slate-700">&bull;</span>
                                     <button @click="setTrinity4PercentFixed" type="button"
-                                        class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-medium cursor-pointer"
+                                        class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline font-medium cursor-pointer"
                                         title="Set Year 1 spending to 4% of initial corpus (adjusted annually by inflation — classic Trinity Study rule)">
                                         4% Trinity ({{ currencySymbol }}{{ formatCompact(trinity4PercentMonthly) }})
                                     </button>
                                 </div>
-                                <div v-else class="flex flex-wrap items-center gap-1">
-                                    <button v-for="preset in swrPresets" :key="preset.rate"
-                                        @click="inputs.withdrawalPercent = String(preset.rate)"
-                                        type="button"
-                                        :title="preset.desc"
-                                        :class="Math.abs(withdrawalPercent - preset.rate) < 0.05
-                                            ? 'bg-emerald-600 text-white font-semibold'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
-                                        class="px-1.5 py-0.5 rounded text-[10px] transition-colors cursor-pointer">
-                                        {{ preset.rate }}%
-                                    </button>
-                                    <span class="ml-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                        {{ currencySymbol }}{{ formatCompact(effectiveInitialMonthlyWithdrawal) }} &rarr; {{ currencySymbol }}{{ formatCompact(simulation.endingMonthlyWithdrawal) }}/mo
-                                        <span class="text-amber-600 dark:text-amber-400 font-medium" :title="'Ending monthly net payout in today\'s purchasing power after ' + simulation.cumulativeInflationFactor.toFixed(2) + 'x cumulative inflation'">
-                                            ({{ currencySymbol }}{{ formatCompact(simulation.endingRealMonthlyWithdrawal) }} real)
-                                        </span>
+                                <span v-else class="truncate">
+                                    {{ currencySymbol }}{{ formatCompact(effectiveInitialMonthlyWithdrawal) }} &rarr; {{ currencySymbol }}{{ formatCompact(simulation.endingMonthlyWithdrawal) }}/mo
+                                    <span class="text-amber-600 dark:text-amber-400 font-medium" :title="'Ending monthly net payout in today\'s purchasing power after ' + simulation.cumulativeInflationFactor.toFixed(2) + 'x cumulative inflation'">
+                                        ({{ currencySymbol }}{{ formatCompact(simulation.endingRealMonthlyWithdrawal) }} real)
                                     </span>
-                                </div>
+                                </span>
 
-                                <div class="flex items-center gap-2 ml-auto">
-                                    <button v-if="withdrawalPhases.length === 0" @click="showStrategyPresets = !showStrategyPresets" type="button"
-                                        class="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer"
-                                        title="Quick-load Coast FIRE, Barista FIRE, or Pension Bridge withdrawal schedules">
-                                        FIRE Presets
-                                    </button>
-                                    <button @click="addWithdrawalPhase" type="button"
-                                        class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
-                                        title="Add a future withdrawal phase (e.g. step up from 1% to 2% after 10 years)">
-                                        <span>+ Add Phase</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Quick FIRE Strategy Presets Drawer -->
-                            <div v-if="showStrategyPresets && withdrawalPhases.length === 0" class="flex flex-wrap items-center gap-1.5 pt-1">
-                                <button @click="applyStrategyPreset('coast5')" type="button"
-                                    class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/15 text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 border border-slate-200/70 dark:border-slate-700/70 cursor-pointer"
-                                    title="0 withdrawal for Years 1–5 (Coast FIRE), then 4% or full draw from Year 6">
-                                    Coast 5y &rarr; Exit Yr 6
-                                </button>
-                                <button @click="applyStrategyPreset('barista10')" type="button"
-                                    class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/15 text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 border border-slate-200/70 dark:border-slate-700/70 cursor-pointer"
-                                    title="50% part-time Barista draw for Years 1–10, stepping to full draw in Year 11">
-                                    Barista Half-Draw 10y
-                                </button>
-                                <button @click="applyStrategyPreset('pension15')" type="button"
-                                    class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-500/15 text-[10px] font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 border border-slate-200/70 dark:border-slate-700/70 cursor-pointer"
-                                    title="Full portfolio draw Years 1–14, dropping 40% in Year 15 when pension/Social Security starts">
-                                    Pension Bridge Yr 15
+                                <button @click="addWithdrawalPhase" type="button"
+                                    class="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer shrink-0 ml-auto"
+                                    title="Add a future withdrawal phase (e.g. Coast FIRE, Barista FIRE, or Pension step-down)">
+                                    <span>+ Add Phase</span>
                                 </button>
                             </div>
 
@@ -643,13 +602,13 @@ Updated: 2026-11-25T16:30:00+00:00
                                         <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/70 text-[10px] font-semibold">
                                             <button @click="setPhaseMode(phase, 'fixed')" type="button"
                                                 title="Fixed amount in today's purchasing power (auto-indexed for inflation)"
-                                                :class="phase.mode === 'fixed' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                :class="phase.mode === 'fixed' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                                 class="px-1.5 py-0.5 rounded-md transition-all cursor-pointer">
                                                 {{ currencySymbol }}
                                             </button>
                                             <button @click="setPhaseMode(phase, 'percent')" type="button"
                                                 title="Dynamic % of live portfolio balance"
-                                                :class="phase.mode === 'percent' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                :class="phase.mode === 'percent' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                                 class="px-1.5 py-0.5 rounded-md transition-all cursor-pointer">
                                                 %
                                             </button>
@@ -679,6 +638,16 @@ Updated: 2026-11-25T16:30:00+00:00
                                             </svg>
                                         </button>
                                     </div>
+                                </div>
+
+                                <!-- Quick Strategy Templates inside Phases Drawer -->
+                                <div class="flex flex-wrap items-center justify-end gap-2 text-[10px] text-slate-400 pt-0.5">
+                                    <span>Templates:</span>
+                                    <button @click="applyStrategyPreset('coast5')" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer" title="0 withdrawal for Years 1–5, then full draw from Year 6">Coast 5y</button>
+                                    <span>&middot;</span>
+                                    <button @click="applyStrategyPreset('barista10')" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer" title="50% draw for Years 1–10, full draw from Year 11">Barista 10y</button>
+                                    <span>&middot;</span>
+                                    <button @click="applyStrategyPreset('pension15')" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer" title="Full draw Years 1–14, dropping 40% in Year 15 when pension starts">Pension Yr 15</button>
                                 </div>
                             </div>
                         </div>
@@ -774,13 +743,13 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <span v-if="isLoadingInflation" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
                                 </div>
 
-                                <div class="relative w-24 shrink-0">
+                                <div class="relative w-28 shrink-0">
                                     <input v-model="inputs.inflationRate"
                                         @input="userEditedInflation = true"
                                         @blur="formatSignedOnBlur('inflationRate', -20, 500)"
                                         type="text" id="inflationRate" aria-label="Inflation Rate" inputmode="decimal"
-                                        class="w-full pl-2.5 pr-6 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
+                                        class="w-full pl-2.5 pr-7 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
                                 </div>
                             </div>
 
@@ -877,7 +846,7 @@ Updated: 2026-11-25T16:30:00+00:00
                                         type="button"
                                         :title="b.tooltip"
                                         :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05
-                                            ? 'bg-emerald-600 text-white font-bold shadow-2xs border border-emerald-600'
+                                            ? 'bg-emerald-600 text-white font-bold shadow-sm border border-emerald-600'
                                             : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
                                         class="px-1.5 py-1.5 rounded-lg text-center transition-all text-[11px] flex flex-col items-center cursor-pointer">
                                         <span class="font-semibold truncate max-w-full leading-tight">{{ b.label }}</span>
@@ -890,17 +859,17 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <div class="flex items-center justify-between gap-1">
                                         <div class="inline-flex p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-900 text-[10px] font-semibold">
                                             <button @click="inflationDrawerTab = 'regimes'" type="button"
-                                                :class="inflationDrawerTab === 'regimes' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                :class="inflationDrawerTab === 'regimes' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                                 class="px-2 py-1 rounded-md transition-all cursor-pointer">
                                                 Regimes &amp; Stress
                                             </button>
                                             <button @click="inflationDrawerTab = 'yearly'" type="button"
-                                                :class="inflationDrawerTab === 'yearly' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                :class="inflationDrawerTab === 'yearly' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                                 class="px-2 py-1 rounded-md transition-all cursor-pointer">
                                                 Year-by-Year
                                             </button>
                                             <button @click="inflationDrawerTab = 'global'" type="button"
-                                                :class="inflationDrawerTab === 'global' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                :class="inflationDrawerTab === 'global' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                                 class="px-2 py-1 rounded-md transition-all cursor-pointer">
                                                 Global Peers
                                             </button>
@@ -1009,60 +978,58 @@ Updated: 2026-11-25T16:30:00+00:00
                                         <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 bottom-full mb-2 w-64 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                        <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
                                             Applied to total withdrawals (like pre-tax retirement accounts). For taxable brokerage accounts where cost basis isn't taxed, enter a lower blended effective rate. Fixed mode grosses up withdrawals so net spending stays intact; % mode shows net take-home.
                                         </span>
                                     </span>
-                                    <div class="inline-flex items-center gap-1 ml-1">
-                                        <button v-for="t in [0, 15, 25]" :key="t" @click="inputs.taxRate = String(t)" type="button"
-                                            :class="Math.abs(taxRate - t) < 0.05 ? 'bg-emerald-600 text-white font-semibold' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
-                                            class="px-1.5 py-0.5 rounded text-[10px] transition-colors cursor-pointer">
-                                            {{ t }}%
-                                        </button>
-                                    </div>
                                 </div>
-                                <div class="relative w-20 shrink-0">
+                                <div class="relative w-24 shrink-0">
                                     <input v-model="inputs.taxRate"
                                         @blur="formatOnBlur('taxRate')"
                                         type="text" id="taxRate" inputmode="decimal" aria-label="Effective Tax Rate"
-                                        class="w-full pl-2 pr-6 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
-                                    <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                                        class="w-full pl-2.5 pr-7 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
                                 </div>
                             </div>
 
-                            <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center justify-between gap-2">
                                 <span class="text-xs font-semibold text-slate-600 dark:text-slate-300" title="Simulate an early market crash at the start of retirement (sequence-of-returns risk)">
                                     Sequence Risk Stress
                                 </span>
-                                <div class="flex items-center gap-1.5">
-                                    <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-[10px] font-semibold">
-                                        <button @click="stressScenario = 'none'" type="button"
-                                            :class="stressScenario === 'none' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
-                                            class="px-2 py-1 rounded-md transition-all cursor-pointer">
-                                            Steady
-                                        </button>
-                                        <button @click="stressScenario = 'crash30'" type="button"
-                                            title="Year 1 market drop of -30% before resuming expected return"
-                                            :class="stressScenario === 'crash30' ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
-                                            class="px-2 py-1 rounded-md transition-all cursor-pointer">
-                                            -30% Yr 1
-                                        </button>
-                                        <button @click="stressScenario = 'crash45'" type="button"
-                                            title="Two-year bear market (-45% cumulative across Yr 1–2) before resuming expected return"
-                                            :class="stressScenario === 'crash45' ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
-                                            class="px-2 py-1 rounded-md transition-all cursor-pointer">
-                                            -45% Yr 1&ndash;2
-                                        </button>
-                                    </div>
-                                    <button v-if="hasFixedWithdrawalTarget" @click="enableGuardrail = !enableGuardrail" type="button"
-                                        :class="enableGuardrail
-                                            ? 'bg-emerald-600 text-white border-emerald-600 font-semibold'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-slate-700/70 hover:text-slate-800 dark:hover:text-slate-200'"
-                                        class="px-2 py-1 rounded-lg border text-[10px] transition-all cursor-pointer"
-                                        title="Dynamic Bear-Market Guardrail: pauses inflation raises &amp; trims fixed spending by 15% whenever real corpus falls &gt;15% below start until recovery">
-                                        🛡️ Flex -15%
+                                <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-[10px] font-semibold">
+                                    <button @click="stressScenario = 'none'" type="button"
+                                        :class="stressScenario === 'none' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                        Steady
+                                    </button>
+                                    <button @click="stressScenario = 'crash30'" type="button"
+                                        title="Year 1 market drop of -30% before resuming expected return"
+                                        :class="stressScenario === 'crash30' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                        -30% Yr 1
+                                    </button>
+                                    <button @click="stressScenario = 'crash45'" type="button"
+                                        title="Two-year bear market (-45% cumulative across Yr 1–2) before resuming expected return"
+                                        :class="stressScenario === 'crash45' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
+                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                        -45% Yr 1&ndash;2
                                     </button>
                                 </div>
+                            </div>
+
+                            <div v-if="hasFixedWithdrawalTarget" class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-medium text-slate-500 dark:text-slate-400"
+                                    title="Pauses inflation raises &amp; trims fixed spending by 15% whenever real corpus falls &gt;15% below start until recovery">
+                                    Bear-Market Guardrail
+                                </span>
+                                <button @click="enableGuardrail = !enableGuardrail" type="button"
+                                    :class="enableGuardrail
+                                        ? 'bg-emerald-600 text-white border-emerald-600 font-semibold'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-slate-700/70 hover:text-slate-800 dark:hover:text-slate-200'"
+                                    class="px-2.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer"
+                                    title="Dynamic Bear-Market Guardrail: pauses inflation raises &amp; trims fixed spending by 15% whenever real corpus falls &gt;15% below start until recovery">
+                                    🛡️ {{ enableGuardrail ? 'Flex -15% On' : 'Flex -15% Off' }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1274,7 +1241,7 @@ Updated: 2026-11-25T16:30:00+00:00
                     </div>
 
                     <!-- Total Wealth Generated Footer -->
-                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                         <span>Total Interest Generated: <strong class="text-emerald-600 dark:text-emerald-400">{{ currencySymbol }}{{ formatCompact(simulation.totalInterest) }}</strong></span>
                         <span>Real Purchasing Power (Withdrawn + Final): <strong class="text-amber-600 dark:text-amber-400">{{ currencySymbol }}{{ formatCompact(simulation.totalRealWithdrawn + simulation.realFinalBalance) }}</strong> <span class="text-slate-400">({{ currencySymbol }}{{ formatCompact(actualTotalWithdrawn + finalBalance) }} nom)</span></span>
                     </div>
@@ -1284,7 +1251,7 @@ Updated: 2026-11-25T16:30:00+00:00
 
         <!-- Global Geo-Arbitrage FX Plan Converter Modal (All 220+ Countries & 150+ Currencies) -->
         <div v-if="showExchangeModal" @click.self="showExchangeModal = false"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs transition-opacity">
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-opacity">
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 <!-- Modal Header -->
                 <div class="flex items-start justify-between gap-4 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -1327,7 +1294,7 @@ Updated: 2026-11-25T16:30:00+00:00
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div class="inline-flex flex-wrap gap-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold">
                             <button v-for="tab in fxRegionTabs" :key="tab.id" @click="fxRegionFilter = tab.id" type="button"
-                                :class="fxRegionFilter === tab.id ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                :class="fxRegionFilter === tab.id ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'"
                                 class="px-2 py-1 rounded-md transition-all cursor-pointer">
                                 {{ tab.label }}
                             </button>
@@ -1361,7 +1328,7 @@ Updated: 2026-11-25T16:30:00+00:00
                         </div>
 
                         <button @click="convertPlanToCurrency(conv.code, conv.countryCode)" type="button"
-                            class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer">
+                            class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer">
                             <span>Use {{ conv.countryCode }} ({{ conv.code }})</span>
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -1548,17 +1515,9 @@ Updated: 2026-11-25T16:30:00+00:00
                     stressScenario: savedPlan && (savedPlan.s === 'crash30' || savedPlan.s === 'crash45') ? savedPlan.s : 'none',
                     enableGuardrail: Boolean(savedPlan && savedPlan.g),
                     showCountdown: Boolean(savedPlan && savedPlan.cd),
-                    showStrategyPresets: false,
                     shareCopied: false,
                     userEditedInflation: Boolean(savedPlan),
                     userEditedFxDrift: Boolean(savedPlan && savedPlan.ic && savedPlan.ic !== initialCurr.code && savedPlan.i && savedPlan.i.fxDepreciationRate !== undefined),
-                    swrPresets: [
-                        { label: '2% Endowment', rate: 2, desc: 'Conservative 2%/yr variable draw on live balance — maximum compounding' },
-                        { label: '3% Safe', rate: 3, desc: 'Conservative 3%/yr variable draw on live balance' },
-                        { label: '4% Variable', rate: 4, desc: '4%/yr of live balance (income varies with portfolio; switch to $ mode for constant-dollar Trinity 4% rule)' },
-                        { label: '5% Balanced', rate: 5, desc: '5%/yr variable yield harvest' },
-                        { label: '6% High', rate: 6, desc: '6%/yr aggressive variable draw (high risk of shrinking real income)' }
-                    ],
                     inputs: restoredInputs,
                     isLoadingInflation: false,
                     inflationDataSource: 'World Bank Open Data',
@@ -1853,21 +1812,6 @@ Updated: 2026-11-25T16:30:00+00:00
                 },
                 fxSliderMax() {
                     return this.fxDepreciationRate <= 15 ? 15 : Math.ceil(this.fxDepreciationRate / 5) * 5;
-                },
-                fxPresets() {
-                    const ppp = this.pppImpliedDrift;
-                    return [
-                        {
-                            id: 'ppp',
-                            label: 'PPP ' + (ppp >= 0 ? '+' : '') + ppp + '%',
-                            rate: ppp,
-                            desc: `Relative Purchasing Power Parity drift implied by ${this.activeCountry.region} (${this.currentCountryInflationAvg}%) vs ${this.activeInvestmentCurrency.region} (${this.investmentCountryInflationAvg}%) 10Y inflation`
-                        },
-                        { id: 'flat', label: '0% Flat', rate: 0, desc: 'Constant exchange rate over the entire horizon' },
-                        { id: 'mild', label: '+2%/yr', rate: 2, desc: 'Moderate local currency depreciation (+2%/yr FX tailwind)' },
-                        { id: 'em', label: '+3.5%/yr', rate: 3.5, desc: 'Historical emerging-market currency depreciation vs major reserve currency' },
-                        { id: 'headwind', label: '-2% Stress', rate: -2, desc: 'FX headwind stress test: foreign investment currency depreciates 2%/yr against local currency' }
-                    ];
                 },
                 foreignInitialInvestment() {
                     return this.parseNumber(this.inputs.initialInvestment);
@@ -2548,7 +2492,6 @@ Updated: 2026-11-25T16:30:00+00:00
                             this.withdrawalPhases = [{ id: this.nextPhaseId++, startYear: String(yr15), mode: 'fixed', value: this.formatWithSpaces(Math.round(fullAmt * 0.6)) }];
                         }
                     }
-                    this.showStrategyPresets = false;
                 },
                 normalizeNumericString(val) {
                     if (val === null || val === undefined) return '';
@@ -3162,7 +3105,6 @@ Updated: 2026-11-25T16:30:00+00:00
                     this.stressScenario = 'none';
                     this.enableGuardrail = false;
                     this.showCountdown = false;
-                    this.showStrategyPresets = false;
                     this.userEditedInflation = false;
                     this.userEditedFxDrift = false;
                     this.withdrawalPhases = [];
