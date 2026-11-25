@@ -328,7 +328,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 </div>
                             </div>
 
-                            <!-- Active Currency Historic Inflation Highlight & Quick Select -->
+                            <!-- Active Currency Historic Inflation Highlight & Revealable Multi-Horizon Benchmarks -->
                             <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-200/60 dark:border-slate-700/60 mt-2 space-y-2">
                                 <!-- Country-specific inflation spotlight -->
                                 <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50">
@@ -344,7 +344,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                         </div>
                                     </div>
                                     <button @click="applyCountryInflationRate" type="button"
-                                        title="Click to apply country average inflation"
+                                        title="Click to apply country 10-year average inflation"
                                         class="px-2.5 py-1 rounded-md text-xs font-bold transition-all shrink-0 flex items-center gap-1"
                                         :class="Math.abs(Number(inputs.inflationRate) - currentCountryInflationAvg) < 0.05
                                             ? 'bg-emerald-600 text-white shadow-xs'
@@ -355,27 +355,115 @@ Updated: 2026-11-25T13:00:00+00:00
                                     </button>
                                 </div>
 
-                                <!-- Other Historic Benchmarks -->
+                                <!-- Country-Related Historic Benchmarks Header + Reveal Toggle -->
                                 <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
-                                    <span class="font-medium flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <span class="font-medium flex items-center gap-1 truncate">
+                                        <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Other Historic Benchmarks (Open API)
+                                        <span class="truncate">{{ activeCurrency.region }} Historic Benchmarks</span>
                                     </span>
-                                    <span class="text-[10px] text-slate-400 font-mono">{{ inflationDataSource }}</span>
+                                    <button @click="showMoreInflation = !showMoreInflation" type="button"
+                                        class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer">
+                                        <span>{{ showMoreInflation ? 'Hide Options' : 'More Horizons & Stress' }}</span>
+                                        <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="showMoreInflation ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
                                 </div>
+
+                                <!-- Primary Country Horizon Buttons (Latest, 5Y, 10Y, 20Y) -->
                                 <div class="grid grid-cols-4 gap-1.5">
-                                    <button v-for="b in inflationBenchmarks" :key="b.code"
+                                    <button v-for="b in countryPrimaryBenchmarks" :key="b.id"
                                         @click="applyInflationBenchmark(b)"
                                         type="button"
+                                        :title="b.tooltip"
                                         :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05 
-                                            ? 'bg-emerald-600 text-white font-bold shadow-xs' 
+                                            ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-600' 
                                             : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
-                                        class="px-2 py-1.5 rounded-lg text-center transition-all text-[11px] flex flex-col items-center">
+                                        class="px-1.5 py-1.5 rounded-lg text-center transition-all text-[11px] flex flex-col items-center cursor-pointer">
                                         <span class="font-semibold truncate max-w-full leading-tight">{{ b.label }}</span>
                                         <span class="text-[10px] opacity-90">{{ b.rate }}%</span>
                                     </button>
+                                </div>
+
+                                <!-- Revealable Drawer: Multi-Way Country Regimes, Year-by-Year & Global Peers -->
+                                <div v-if="showMoreInflation" class="pt-2 border-t border-slate-200/70 dark:border-slate-700/70 space-y-2.5">
+                                    <!-- View Mode Switcher -->
+                                    <div class="flex items-center justify-between gap-1">
+                                        <div class="inline-flex p-0.5 rounded-lg bg-slate-200/70 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-[10px] font-semibold">
+                                            <button @click="inflationDrawerTab = 'regimes'" type="button"
+                                                :class="inflationDrawerTab === 'regimes' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                                Regimes &amp; Stress
+                                            </button>
+                                            <button @click="inflationDrawerTab = 'yearly'" type="button"
+                                                :class="inflationDrawerTab === 'yearly' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                                Year-by-Year
+                                            </button>
+                                            <button @click="inflationDrawerTab = 'global'" type="button"
+                                                :class="inflationDrawerTab === 'global' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                                Global Peers
+                                            </button>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-mono truncate">{{ inflationDataSource }}</span>
+                                    </div>
+
+                                    <!-- Tab 1: Country Regimes & Stress Scenarios (3Y, 30Y, Median, Peak, CB Target, Zero) -->
+                                    <div v-if="inflationDrawerTab === 'regimes'" class="grid grid-cols-3 gap-1.5">
+                                        <button v-for="b in countryExtendedBenchmarks" :key="b.id"
+                                            @click="applyInflationBenchmark(b)"
+                                            type="button"
+                                            :title="b.tooltip"
+                                            :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05 
+                                                ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-600' 
+                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
+                                            class="px-2 py-1.5 rounded-lg text-left transition-all text-[11px] flex flex-col justify-between cursor-pointer">
+                                            <div class="flex items-center justify-between w-full gap-1">
+                                                <span class="font-semibold truncate">{{ b.label }}</span>
+                                                <span class="font-bold text-[11px] shrink-0">{{ b.rate }}%</span>
+                                            </div>
+                                            <span class="text-[9px] opacity-75 truncate w-full">{{ b.sub }}</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Tab 2: Country Year-by-Year CPI History (Click any year to apply) -->
+                                    <div v-else-if="inflationDrawerTab === 'yearly'" class="space-y-1.5">
+                                        <div class="text-[10px] text-slate-400 flex items-center justify-between">
+                                            <span>Click any year in {{ activeCurrency.region }} history to test that CPI rate:</span>
+                                            <span>{{ activeCountryProfile.history.length }} yrs</span>
+                                        </div>
+                                        <div class="grid grid-cols-5 gap-1 max-h-32 overflow-y-auto pr-0.5">
+                                            <button v-for="yr in activeCountryProfile.history.slice(0, 15)" :key="yr.year"
+                                                @click="inputs.inflationRate = String(Math.max(0, Math.round(yr.value * 10) / 10))"
+                                                type="button"
+                                                :title="activeCurrency.region + ' ' + yr.year + ' CPI: ' + yr.value + '%'"
+                                                :class="Math.abs(Number(inputs.inflationRate) - Math.max(0, Math.round(yr.value * 10) / 10)) < 0.05
+                                                    ? 'bg-emerald-600 text-white font-bold border-emerald-600'
+                                                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-emerald-400 border-slate-200/80 dark:border-slate-700'"
+                                                class="px-1.5 py-1 rounded-md border text-center transition-all flex flex-col items-center cursor-pointer">
+                                                <span class="text-[9px] opacity-70 font-mono">{{ yr.year }}</span>
+                                                <span class="text-[10px] font-semibold">{{ yr.value.toFixed(1) }}%</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tab 3: Global & Cross-Country 10Y Benchmarks -->
+                                    <div v-else class="grid grid-cols-3 gap-1.5">
+                                        <button v-for="b in globalComparisonBenchmarks" :key="b.code"
+                                            @click="applyInflationBenchmark(b)"
+                                            type="button"
+                                            :title="b.tooltip"
+                                            :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05 
+                                                ? 'bg-emerald-600 text-white font-bold shadow-xs border border-emerald-600' 
+                                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
+                                            class="px-2 py-1.5 rounded-lg text-left transition-all text-[11px] flex items-center justify-between gap-1 cursor-pointer">
+                                            <span class="font-semibold truncate">{{ b.label }}</span>
+                                            <span class="text-[10px] font-bold opacity-90 shrink-0">{{ b.rate }}%</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -618,16 +706,14 @@ Updated: 2026-11-25T13:00:00+00:00
                     },
                     isLoadingInflation: false,
                     inflationDataSource: 'World Bank API',
+                    showMoreInflation: false,
+                    inflationDrawerTab: 'regimes',
+                    countryProfiles: {},
+                    globalDecadeAvg: 3.4,
                     exchangeRates: null,
                     exchangeLastUpdated: null,
                     showExchangeModal: false,
-                    comparisonCurrencies: ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD', 'JPY', 'CHF'],
-                    inflationBenchmarks: [
-                        { code: 'WLD', label: 'Global 10Y Avg', rate: 3.4 },
-                        { code: 'USA', label: 'US 10Y Avg', rate: 3.0 },
-                        { code: 'EMU', label: 'Euro 10Y Avg', rate: 2.4 },
-                        { code: 'IND', label: 'India 10Y Avg', rate: 4.9 }
-                    ]
+                    comparisonCurrencies: ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD', 'JPY', 'CHF']
                 };
             },
             computed: {
@@ -646,7 +732,125 @@ Updated: 2026-11-25T13:00:00+00:00
                     return this.activeCurrency.symbol;
                 },
                 currentCountryInflationAvg() {
-                    return this.activeCurrency.defaultRate;
+                    return this.activeCountryProfile.avg10Y ?? this.activeCurrency.defaultRate;
+                },
+                activeCountryProfile() {
+                    const code = this.activeCurrency.countryCode || 'USA';
+                    if (this.countryProfiles[code]) {
+                        return this.countryProfiles[code];
+                    }
+                    if (window.InflationSDK && typeof window.InflationSDK.getSyncCountryProfile === 'function') {
+                        return window.InflationSDK.getSyncCountryProfile(code);
+                    }
+                    const fallbackRate = this.activeCurrency.defaultRate || 3.0;
+                    return {
+                        countryCode: code,
+                        latest: { rate: fallbackRate, year: 2025 },
+                        avg3Y: fallbackRate,
+                        avg5Y: fallbackRate,
+                        avg10Y: fallbackRate,
+                        avg20Y: fallbackRate,
+                        avg30Y: fallbackRate,
+                        median: fallbackRate,
+                        cbTarget: 2.0,
+                        peak: { rate: fallbackRate, year: 2022 },
+                        low: { rate: 0, year: 2020 },
+                        history: []
+                    };
+                },
+                countryPrimaryBenchmarks() {
+                    const p = this.activeCountryProfile;
+                    const region = this.activeCurrency.region;
+                    return [
+                        {
+                            id: 'latest',
+                            label: `Latest (${p.latest.year})`,
+                            rate: Math.max(0, p.latest.rate),
+                            tooltip: `${region} most recent annual CPI (${p.latest.year}): ${p.latest.rate}%`
+                        },
+                        {
+                            id: '5y',
+                            label: '5Y Avg',
+                            rate: Math.max(0, p.avg5Y),
+                            tooltip: `${region} 5-year post-pandemic inflation average: ${p.avg5Y}%`
+                        },
+                        {
+                            id: '10y',
+                            label: '10Y Decade',
+                            rate: Math.max(0, p.avg10Y),
+                            tooltip: `${region} 10-year decade average: ${p.avg10Y}%`
+                        },
+                        {
+                            id: '20y',
+                            label: '20Y Cycle',
+                            rate: Math.max(0, p.avg20Y),
+                            tooltip: `${region} 20-year full macro cycle average: ${p.avg20Y}%`
+                        }
+                    ];
+                },
+                countryExtendedBenchmarks() {
+                    const p = this.activeCountryProfile;
+                    const region = this.activeCurrency.region;
+                    return [
+                        {
+                            id: '3y',
+                            label: '3Y Recent',
+                            rate: Math.max(0, p.avg3Y),
+                            sub: 'Short-term trend',
+                            tooltip: `${region} 3-year recent CPI average`
+                        },
+                        {
+                            id: '30y',
+                            label: '30Y Long-Run',
+                            rate: Math.max(0, p.avg30Y),
+                            sub: 'Generational avg',
+                            tooltip: `${region} 30-year generational CPI average`
+                        },
+                        {
+                            id: 'median',
+                            label: '30Y Median',
+                            rate: Math.max(0, p.median),
+                            sub: 'Outlier-resistant',
+                            tooltip: `${region} 30-year median inflation (ignores extreme shock years)`
+                        },
+                        {
+                            id: 'peak',
+                            label: `Peak (${p.peak.year})`,
+                            rate: Math.max(0, p.peak.rate),
+                            sub: 'Worst shock stress',
+                            tooltip: `Stress-test against ${region}'s highest recent inflation spike (${p.peak.year})`
+                        },
+                        {
+                            id: 'cb',
+                            label: 'CB Target',
+                            rate: p.cbTarget,
+                            sub: 'Policy anchor',
+                            tooltip: `${region} Central Bank long-term policy target`
+                        },
+                        {
+                            id: 'zero',
+                            label: 'Flat 0%',
+                            rate: 0,
+                            sub: 'Fixed nominal draw',
+                            tooltip: 'No annual inflation step-up (constant nominal withdrawal)'
+                        }
+                    ];
+                },
+                globalComparisonBenchmarks() {
+                    const peers = [
+                        { code: 'WLD', label: 'Global 10Y', rate: this.globalDecadeAvg, tooltip: 'World 10-year average CPI' }
+                    ];
+                    for (const c of this.currencies) {
+                        const prof = this.countryProfiles[c.countryCode]
+                            || (window.InflationSDK && window.InflationSDK.getSyncCountryProfile ? window.InflationSDK.getSyncCountryProfile(c.countryCode) : null);
+                        peers.push({
+                            code: c.code,
+                            label: `${c.code} 10Y`,
+                            rate: prof ? prof.avg10Y : c.defaultRate,
+                            tooltip: `${c.region} (${c.name}) 10-year average inflation`
+                        });
+                    }
+                    return peers;
                 },
                 allCurrencyConversions() {
                     const _ratesReady = this.exchangeRates;
@@ -938,20 +1142,32 @@ Updated: 2026-11-25T13:00:00+00:00
                     const curr = this.currencies.find(c => c.code === newCurrencyCode);
                     if (!curr) return;
 
-                    // Automatically update inflation input to the newly selected country's 10-year average
-                    this.inputs.inflationRate = String(curr.defaultRate);
+                    // Immediately apply cached/sync country 10Y inflation rate
+                    const syncProf = window.InflationSDK && window.InflationSDK.getSyncCountryProfile
+                        ? window.InflationSDK.getSyncCountryProfile(curr.countryCode)
+                        : null;
+                    const initialRate = syncProf ? syncProf.avg10Y : curr.defaultRate;
+                    this.inputs.inflationRate = String(initialRate);
 
-                    // Fetch latest live 10-year inflation from World Bank Open API for this country
+                    // Fetch live 30-year multi-horizon profile from World Bank Open API for this country
                     if (window.InflationSDK && curr.countryCode) {
+                        this.isLoadingInflation = true;
                         try {
-                            const res = await window.InflationSDK.getDecadeAverage(curr.countryCode, 10);
-                            if (res && res.average) {
-                                curr.defaultRate = res.average;
-                                // If the input is still reflecting this country rate, update it with live precision
-                                this.inputs.inflationRate = String(res.average);
+                            const prof = window.InflationSDK.getCountryProfile
+                                ? await window.InflationSDK.getCountryProfile(curr.countryCode)
+                                : null;
+                            if (prof) {
+                                this.countryProfiles = { ...this.countryProfiles, [curr.countryCode]: prof };
+                                curr.defaultRate = prof.avg10Y;
+                                if (this.selectedCurrency === newCurrencyCode) {
+                                    this.inputs.inflationRate = String(prof.avg10Y);
+                                }
+                                this.inflationDataSource = prof.source || 'World Bank API';
                             }
                         } catch (e) {
-                            console.warn('Could not fetch country inflation live:', e);
+                            console.warn('Could not fetch country inflation profile live:', e);
+                        } finally {
+                            this.isLoadingInflation = false;
                         }
                     }
                 },
@@ -995,40 +1211,26 @@ Updated: 2026-11-25T13:00:00+00:00
                     return window.CurrencyExchangeSDK.convert(val, this.selectedCurrency, targetCur);
                 },
                 async fetchLiveInflationData() {
-                    if (typeof root !== 'undefined' && root.InflationSDK) {
-                        // Available via window.InflationSDK
-                    }
                     if (window.InflationSDK) {
-                        this.isLoadingInflation = true;
                         try {
                             const res = await window.InflationSDK.getDecadeAverage('WLD', 10);
                             if (res && res.average) {
-                                const globalItem = this.inflationBenchmarks.find(b => b.code === 'WLD');
-                                if (globalItem) {
-                                    globalItem.rate = res.average;
-                                }
-                                // Set default inflation rate to global average if user hasn't overridden
-                                const savedInflation = localStorage.getItem('swp_user_inflation');
-                                if (!savedInflation) {
-                                    this.inputs.inflationRate = String(res.average);
-                                }
+                                this.globalDecadeAvg = res.average;
                                 this.inflationDataSource = res.source || 'World Bank API';
                             }
                         } catch (e) {
-                            console.warn('Could not load dynamic inflation average:', e);
-                        } finally {
-                            this.isLoadingInflation = false;
+                            console.warn('Could not load dynamic global inflation average:', e);
                         }
                     }
                 },
                 resetDefaults() {
-                    const globalAvg = this.inflationBenchmarks.find(b => b.code === 'WLD')?.rate || 3.4;
+                    const defaultRate = this.currentCountryInflationAvg || this.globalDecadeAvg || 3.4;
                     this.inputs = {
                         initialInvestment: '500000',
                         annualReturn: '7',
                         withdrawalDuration: '30',
                         monthlyWithdrawal: '2500',
-                        inflationRate: String(globalAvg)
+                        inflationRate: String(defaultRate)
                     };
                 },
                 applyTheme() {
