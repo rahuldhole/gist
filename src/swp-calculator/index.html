@@ -658,7 +658,7 @@ Updated: 2026-11-25T10:44:00+01:00
                 toggleDarkMode() {
                     this.isDarkMode = !this.isDarkMode;
                     document.documentElement.classList.toggle('dark', this.isDarkMode);
-                    localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
+                    localStorage.setItem('gist-theme', this.isDarkMode ? 'dark' : 'light');
                 },
                 initChart() {
                     const ctx = document.getElementById('swpChart');
@@ -766,7 +766,7 @@ Updated: 2026-11-25T10:44:00+01:00
                 }
             },
             mounted() {
-                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                if (localStorage.getItem('gist-theme') === 'dark' || (!('gist-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     this.isDarkMode = true;
                     document.documentElement.classList.add('dark');
                 } else {
