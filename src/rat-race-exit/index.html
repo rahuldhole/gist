@@ -191,6 +191,16 @@ Updated: 2026-11-25T14:35:00+00:00
                     </button>
                 </div>
 
+                <button @click="sharePlan" type="button" title="Copy shareable link to this plan"
+                    class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors flex items-center gap-1.5 cursor-pointer">
+                    <svg v-if="!shareCopied" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    <svg v-else class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{{ shareCopied ? 'Copied!' : 'Share' }}</span>
+                </button>
                 <button @click="resetDefaults" title="Reset to defaults"
                     class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors">
                     Reset
@@ -329,9 +339,15 @@ Updated: 2026-11-25T14:35:00+00:00
                             <!-- Single Concise Sub-line + Progressive Actions -->
                             <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
                                 <button v-if="withdrawalMode === 'fixed'" @click="setSustainableWithdrawal" type="button"
-                                    class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium cursor-pointer"
-                                    title="Set to real inflation-adjusted monthly return so principal preserves buying power">
-                                    Inflation-Proof Max: {{ currencySymbol }}{{ formatCompact(annualReturn > inflationRate ? realMonthlyReturnAmount : monthlyReturnAmount) }}/mo
+                                    :class="annualReturn > inflationRate ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
+                                    class="hover:underline font-medium cursor-pointer"
+                                    :title="annualReturn > inflationRate ? 'Set to exact Fisher real monthly return so principal preserves buying power' : 'Return does not beat inflation — clicking sets nominal yield only (real principal will erode)'">
+                                    <template v-if="annualReturn > inflationRate">
+                                        Inflation-Proof Max: {{ currencySymbol }}{{ formatCompact(realMonthlyReturnAmount) }}/mo
+                                    </template>
+                                    <template v-else>
+                                        Real yield &le; 0% (Nominal max: {{ currencySymbol }}{{ formatCompact(monthlyReturnAmount) }}/mo)
+                                    </template>
                                 </button>
                                 <div v-else class="flex flex-wrap items-center gap-1">
                                     <button v-for="preset in swrPresets" :key="preset.rate"
@@ -378,7 +394,7 @@ Updated: 2026-11-25T14:35:00+00:00
                                     <div class="flex items-center gap-1.5">
                                         <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/70 text-[10px] font-semibold">
                                             <button @click="setPhaseMode(phase, 'fixed')" type="button"
-                                                title="Fixed amount (steps up yearly with inflation)"
+                                                title="Fixed amount in today's purchasing power (auto-indexed for inflation)"
                                                 :class="phase.mode === 'fixed' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
                                                 class="px-1.5 py-0.5 rounded-md transition-all cursor-pointer">
                                                 {{ currencySymbol }}
@@ -395,6 +411,7 @@ Updated: 2026-11-25T14:35:00+00:00
                                             <span class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-[11px]">{{ currencySymbol }}</span>
                                             <input v-model="phase.value"
                                                 @blur="formatPhaseValue(phase)"
+                                                title="Amount in today's money (auto-adjusted for inflation up to this year)"
                                                 type="text" inputmode="decimal" aria-label="Phase fixed monthly withdrawal"
                                                 class="w-full pl-5 pr-2 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                         </div>
@@ -503,6 +520,7 @@ Updated: 2026-11-25T14:35:00+00:00
 
                                 <div class="relative w-24 shrink-0">
                                     <input v-model="inputs.inflationRate"
+                                        @input="userEditedInflation = true"
                                         @blur="formatOnBlur('inflationRate')"
                                         type="text" id="inflationRate" aria-label="Inflation Rate" inputmode="decimal"
                                         class="w-full pl-2.5 pr-6 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -513,7 +531,7 @@ Updated: 2026-11-25T14:35:00+00:00
                             <input type="range" min="0" :max="inflationSliderMax" step="0.1"
                                 :value="Math.min(inflationRate, inflationSliderMax)"
                                 :style="{ '--fill': sliderFill(inflationRate, 0, inflationSliderMax) }"
-                                @input="updateFromSlider('inflationRate', $event.target.value)"
+                                @input="userEditedInflation = true; updateFromSlider('inflationRate', $event.target.value)"
                                 aria-label="Annual Inflation Rate Slider"
                                 class="exit-slider">
 
@@ -646,7 +664,7 @@ Updated: 2026-11-25T14:35:00+00:00
                                     <!-- Year-by-Year -->
                                     <div v-else-if="inflationDrawerTab === 'yearly'" class="grid grid-cols-5 gap-1 max-h-28 overflow-y-auto pr-0.5">
                                         <button v-for="yr in activeCountryProfile.history.slice(0, 15)" :key="yr.year"
-                                            @click="inputs.inflationRate = String(Math.max(0, Math.round(yr.value * 10) / 10))"
+                                            @click="userEditedInflation = true; inputs.inflationRate = String(Math.max(0, Math.round(yr.value * 10) / 10))"
                                             type="button"
                                             :title="activeCurrency.region + ' ' + yr.year + ' CPI: ' + yr.value + '%'"
                                             :class="Math.abs(Number(inputs.inflationRate) - Math.max(0, Math.round(yr.value * 10) / 10)) < 0.05
@@ -703,6 +721,64 @@ Updated: 2026-11-25T14:35:00+00:00
                                 aria-label="Time Horizon Slider"
                                 class="exit-slider">
                         </div>
+
+                        <!-- Tax & Crash Stress (Realism Levers) -->
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5">
+                                    <label for="taxRate" class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                        Effective Tax Drag
+                                    </label>
+                                    <span class="group relative inline-flex items-center cursor-help">
+                                        <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
+                                            Fixed mode grosses up withdrawals so your net spendable lifestyle stays intact; % mode shows net take-home after tax.
+                                        </span>
+                                    </span>
+                                    <div class="inline-flex items-center gap-1 ml-1">
+                                        <button v-for="t in [0, 15, 25]" :key="t" @click="inputs.taxRate = String(t)" type="button"
+                                            :class="Math.abs(taxRate - t) < 0.05 ? 'bg-emerald-600 text-white font-semibold' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                                            class="px-1.5 py-0.5 rounded text-[10px] transition-colors cursor-pointer">
+                                            {{ t }}%
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="relative w-20 shrink-0">
+                                    <input v-model="inputs.taxRate"
+                                        @blur="formatOnBlur('taxRate')"
+                                        type="text" id="taxRate" inputmode="decimal" aria-label="Effective Tax Rate"
+                                        class="w-full pl-2 pr-6 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                    <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300" title="Simulate an early market crash at the start of retirement (sequence-of-returns risk)">
+                                    Sequence Risk Stress
+                                </span>
+                                <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70 text-[10px] font-semibold">
+                                    <button @click="stressScenario = 'none'" type="button"
+                                        :class="stressScenario === 'none' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                        Steady
+                                    </button>
+                                    <button @click="stressScenario = 'crash30'" type="button"
+                                        title="Year 1 market drop of -30% before resuming expected return"
+                                        :class="stressScenario === 'crash30' ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                        -30% Yr 1
+                                    </button>
+                                    <button @click="stressScenario = 'crash45'" type="button"
+                                        title="Two-year bear market (-45% cumulative across Yr 1–2) before resuming expected return"
+                                        :class="stressScenario === 'crash45' ? 'bg-rose-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                        class="px-2 py-1 rounded-md transition-all cursor-pointer">
+                                        -45% Yr 1&ndash;2
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -713,8 +789,8 @@ Updated: 2026-11-25T14:35:00+00:00
                     <div class="flex items-center gap-2.5 min-w-0">
                         <span class="text-lg shrink-0 select-none">{{ freedomStatus.badgeIcon }}</span>
                         <div class="min-w-0">
-                            <p class="font-bold text-slate-900 dark:text-white truncate">{{ freedomStatus.tier }}</p>
-                            <p class="text-[11px] opacity-85 truncate">
+                            <p class="font-bold text-slate-900 dark:text-white leading-snug">{{ freedomStatus.tier }}</p>
+                            <p class="text-[11px] opacity-85 leading-snug">
                                 <span v-if="!isDepleted && simulation.realFinalBalance >= initialInvestment * 0.995">
                                     Real wealth {{ realNetChangePct >= 0 ? '+' : '' }}{{ realNetChangePct.toFixed(0) }}% vs inflation &bull; Forever sustainable
                                 </span>
@@ -750,12 +826,14 @@ Updated: 2026-11-25T14:35:00+00:00
 
                     <!-- Card 2: Total Withdrawn -->
                     <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
-                        <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Withdrawn</span>
+                        <span class="text-xs font-medium uppercase tracking-wider text-slate-400">
+                            {{ taxRate > 0 ? 'Net Withdrawn' : 'Total Withdrawn' }}
+                        </span>
                         <div class="mt-1.5 font-display text-2xl font-bold text-sky-600 dark:text-sky-400 truncate" :title="currencySymbol + formatCurrency(actualTotalWithdrawn)">
                             {{ currencySymbol }}{{ formatCompact(actualTotalWithdrawn) }}
                         </div>
                         <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-                            Worth <strong class="text-slate-700 dark:text-slate-200">{{ currencySymbol }}{{ formatCompact(simulation.totalRealWithdrawn) }}</strong> today ({{ simulation.monthsCompleted }} mos)
+                            Worth <strong class="text-slate-700 dark:text-slate-200">{{ currencySymbol }}{{ formatCompact(simulation.totalRealWithdrawn) }}</strong> today ({{ simulation.monthsCompleted }} mos)<span v-if="taxRate > 0" class="block text-[11px] text-rose-500 dark:text-rose-400">net after {{ currencySymbol }}{{ formatCompact(simulation.totalTaxesPaid) }} tax</span>
                         </span>
                     </div>
 
@@ -793,8 +871,8 @@ Updated: 2026-11-25T14:35:00+00:00
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
-                            <!-- Nominal / Real Schedule Toggle -->
-                            <div v-if="activeTab === 'table'" class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
+                            <!-- Nominal / Real Toggle (applies to Chart & Schedule) -->
+                            <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
                                 <button @click="valueDisplayMode = 'nominal'" type="button"
                                     :class="valueDisplayMode === 'nominal' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
                                     class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer">
@@ -836,7 +914,7 @@ Updated: 2026-11-25T14:35:00+00:00
                                     <th class="py-3 px-4">Year</th>
                                     <th class="py-3 px-4 text-right">Mo. Payout</th>
                                     <th class="py-3 px-4 text-right">Annual Drawn</th>
-                                    <th class="py-3 px-4 text-right">Interest Earned</th>
+                                    <th class="py-3 px-4 text-right">{{ valueDisplayMode === 'real' ? 'Real Gain' : 'Interest Earned' }}</th>
                                     <th class="py-3 px-4 text-right">Ending Balance</th>
                                 </tr>
                             </thead>
@@ -847,11 +925,13 @@ Updated: 2026-11-25T14:35:00+00:00
                                             <span>Year {{ row.year }}</span>
                                             <span v-for="(tag, idx) in row.phaseTags" :key="idx"
                                                 title="New phase begins this year"
-                                                :class="tag.kind === 'return'
-                                                    ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300'
-                                                    : (tag.kind === 'inflation'
-                                                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
-                                                        : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300')"
+                                                :class="tag.kind === 'stress'
+                                                    ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                                                    : (tag.kind === 'return'
+                                                        ? 'bg-sky-500/15 text-sky-700 dark:text-sky-300'
+                                                        : (tag.kind === 'inflation'
+                                                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                                                            : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'))"
                                                 class="px-1.5 py-0.5 rounded text-[10px] font-semibold">
                                                 {{ tag.label }}
                                             </span>
@@ -868,9 +948,10 @@ Updated: 2026-11-25T14:35:00+00:00
                                         :title="'Nominal: ' + currencySymbol + formatCurrency(row.withdrawn, 0) + ' | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realWithdrawn, 0)">
                                         {{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realWithdrawn : row.withdrawn) }}
                                     </td>
-                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400"
-                                        :title="'+' + currencySymbol + formatCurrency(valueDisplayMode === 'real' ? row.realInterest : row.interest, 0)">
-                                        +{{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realInterest : row.interest) }}
+                                    <td class="py-2.5 px-4 text-right font-medium"
+                                        :class="(valueDisplayMode === 'real' ? row.realGain : row.interest) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'"
+                                        :title="valueDisplayMode === 'real' ? ('Real investment gain/loss in today\'s ' + currencySymbol + ': ' + (row.realGain >= 0 ? '+' : '-') + currencySymbol + formatCurrency(Math.abs(row.realGain), 0)) : ((row.interest >= 0 ? '+' : '-') + currencySymbol + formatCurrency(Math.abs(row.interest), 0))">
+                                        {{ (valueDisplayMode === 'real' ? row.realGain : row.interest) >= 0 ? '+' : '-' }}{{ currencySymbol }}{{ formatCompact(Math.abs(valueDisplayMode === 'real' ? row.realGain : row.interest)) }}
                                     </td>
                                     <td class="py-2.5 px-4 text-right font-semibold"
                                         :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'"
@@ -983,14 +1064,40 @@ Updated: 2026-11-25T14:35:00+00:00
                     { code: 'AED', symbol: 'AED', name: 'UAE Dirham', countryCode: 'ARE', region: 'UAE', defaultRate: 1.3, defaultCorpus: '2000000', defaultMonthly: '10000' }
                 ];
 
-                let initialCurrency = null;
-                let currencyAutoDetected = false;
+                let savedPlan = null;
                 try {
-                    const savedCurrency = localStorage.getItem('rre_preferred_currency') || localStorage.getItem('swp_preferred_currency');
-                    if (savedCurrency && currencies.some(c => c.code === savedCurrency)) {
-                        initialCurrency = savedCurrency;
+                    const hash = typeof window !== 'undefined' && window.location && window.location.hash ? window.location.hash : '';
+                    if (hash.startsWith('#plan=')) {
+                        const b64 = hash.slice(6).replace(/-/g, '+').replace(/_/g, '/');
+                        const padded = b64 + '==='.slice((b64.length + 3) % 4);
+                        const jsonStr = decodeURIComponent(escape(atob(padded)));
+                        const parsed = JSON.parse(jsonStr);
+                        if (parsed && typeof parsed === 'object') savedPlan = parsed;
                     }
                 } catch (e) {}
+
+                if (!savedPlan) {
+                    try {
+                        const raw = localStorage.getItem('rre_saved_plan_v1');
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            if (parsed && typeof parsed === 'object') savedPlan = parsed;
+                        }
+                    } catch (e) {}
+                }
+
+                let initialCurrency = null;
+                let currencyAutoDetected = false;
+                if (savedPlan && savedPlan.c && currencies.some(c => c.code === savedPlan.c)) {
+                    initialCurrency = savedPlan.c;
+                } else {
+                    try {
+                        const savedCurrency = localStorage.getItem('rre_preferred_currency') || localStorage.getItem('swp_preferred_currency');
+                        if (savedCurrency && currencies.some(c => c.code === savedCurrency)) {
+                            initialCurrency = savedCurrency;
+                        }
+                    } catch (e) {}
+                }
 
                 if (!initialCurrency && typeof window !== 'undefined' && window.CurrencyExchangeSDK && typeof window.CurrencyExchangeSDK.detectUserCurrency === 'function') {
                     const detected = window.CurrencyExchangeSDK.detectUserCurrency(currencies.map(c => c.code));
@@ -1001,20 +1108,49 @@ Updated: 2026-11-25T14:35:00+00:00
                 }
 
                 const initialCurr = currencies.find(c => c.code === initialCurrency) || currencies[0];
+                const defaultInputs = {
+                    initialInvestment: initialCurr.defaultCorpus,
+                    annualReturn: '6',
+                    withdrawalDuration: '30',
+                    monthlyWithdrawal: initialCurr.defaultMonthly,
+                    withdrawalPercent: '2',
+                    inflationRate: String(initialCurr.defaultRate),
+                    taxRate: '0'
+                };
+                const restoredInputs = savedPlan && savedPlan.i && typeof savedPlan.i === 'object'
+                    ? { ...defaultInputs, ...savedPlan.i }
+                    : defaultInputs;
+
+                const sanitizePhases = (arr, withMode) => Array.isArray(arr)
+                    ? arr.map((p, idx) => ({
+                        id: Number(p && p.id) || (idx + 1),
+                        startYear: String((p && p.startYear) || '2'),
+                        ...(withMode ? { mode: p && p.mode === 'percent' ? 'percent' : 'fixed' } : {}),
+                        value: String((p && p.value) ?? '0')
+                    }))
+                    : [];
+
+                const restoredWp = sanitizePhases(savedPlan && savedPlan.wp, true);
+                const restoredRp = sanitizePhases(savedPlan && savedPlan.rp, false);
+                const restoredIp = sanitizePhases(savedPlan && savedPlan.ip, false);
+                const maxPhaseId = [...restoredWp, ...restoredRp, ...restoredIp].reduce((m, p) => Math.max(m, p.id || 0), 0);
 
                 return {
                     themePreference: 'system', // 'light' | 'dark' | 'system'
                     systemPrefersDark: false,
                     activeTab: 'chart',
-                    valueDisplayMode: 'nominal', // 'nominal' | 'real'
+                    valueDisplayMode: savedPlan && savedPlan.v === 'real' ? 'real' : 'nominal', // 'nominal' | 'real'
                     selectedCurrency: initialCurr.code,
                     currencyAutoDetected,
                     currencies,
-                    withdrawalMode: 'percent', // 'fixed' | 'percent'
-                    withdrawalPhases: [],
-                    returnPhases: [],
-                    inflationPhases: [],
-                    nextPhaseId: 1,
+                    withdrawalMode: savedPlan && (savedPlan.m === 'fixed' || savedPlan.m === 'percent') ? savedPlan.m : 'percent',
+                    withdrawalPhases: restoredWp,
+                    returnPhases: restoredRp,
+                    inflationPhases: restoredIp,
+                    nextPhaseId: maxPhaseId + 1,
+                    stressScenario: savedPlan && (savedPlan.s === 'crash30' || savedPlan.s === 'crash45') ? savedPlan.s : 'none',
+                    shareCopied: false,
+                    userEditedInflation: Boolean(savedPlan),
                     swrPresets: [
                         { label: '2% Ultra-Safe', rate: 2, desc: 'Ultra-conservative 2% endowment draw — maximum capital growth' },
                         { label: '3% Safe', rate: 3, desc: 'Ultra-safe 3% perpetual rule — strong capital compounding' },
@@ -1022,14 +1158,7 @@ Updated: 2026-11-25T14:35:00+00:00
                         { label: '5% Balanced', rate: 5, desc: '5% balanced yield harvest' },
                         { label: '6% High', rate: 6, desc: '6% aggressive cashflow draw' }
                     ],
-                    inputs: {
-                        initialInvestment: initialCurr.defaultCorpus,
-                        annualReturn: '6',
-                        withdrawalDuration: '30',
-                        monthlyWithdrawal: initialCurr.defaultMonthly,
-                        withdrawalPercent: '2',
-                        inflationRate: String(initialCurr.defaultRate)
-                    },
+                    inputs: restoredInputs,
                     isLoadingInflation: false,
                     inflationDataSource: 'World Bank API',
                     showMoreInflation: false,
@@ -1038,8 +1167,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     globalDecadeAvg: 3.4,
                     exchangeRates: null,
                     exchangeLastUpdated: null,
-                    showExchangeModal: false,
-                    comparisonCurrencies: ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD', 'JPY', 'CHF']
+                    showExchangeModal: false
                 };
             },
             computed: {
@@ -1213,8 +1341,8 @@ Updated: 2026-11-25T14:35:00+00:00
                 withdrawalPercent() {
                     return this.parseNumber(this.inputs.withdrawalPercent);
                 },
-                allPercentWithdrawal() {
-                    return this.withdrawalMode === 'percent' && this.withdrawalPhases.every(p => p.mode === 'percent');
+                taxRate() {
+                    return Math.min(60, this.parseNumber(this.inputs.taxRate));
                 },
                 effectiveInitialMonthlyWithdrawal() {
                     if (this.withdrawalMode === 'percent') {
@@ -1325,18 +1453,15 @@ Updated: 2026-11-25T14:35:00+00:00
                     return this.withdrawalDuration <= 60 ? 60 : Math.ceil(this.withdrawalDuration / 25) * 25;
                 },
                 monthlyReturn() {
-                    return this.annualReturn / 12;
+                    return (Math.pow(1 + this.annualReturn / 100, 1 / 12) - 1) * 100;
                 },
                 monthlyReturnAmount() {
-                    return (this.monthlyReturn / 100) * this.initialInvestment;
+                    return (Math.pow(1 + this.annualReturn / 100, 1 / 12) - 1) * this.initialInvestment;
                 },
                 realMonthlyReturnAmount() {
-                    const netRealAnnualPct = Math.max(0, this.annualReturn - this.inflationRate);
-                    return (netRealAnnualPct / 12 / 100) * this.initialInvestment;
-                },
-                monthlyWithdrawalPercentage() {
-                    if (this.initialInvestment <= 0) return 0;
-                    return (this.monthlyWithdrawal / this.initialInvestment) * 100;
+                    if (this.annualReturn <= this.inflationRate) return 0;
+                    const effRealMonthlyRate = Math.pow((1 + this.annualReturn / 100) / (1 + this.inflationRate / 100), 1 / 12) - 1;
+                    return effRealMonthlyRate * this.initialInvestment;
                 },
                 // Complete month-by-month simulation engine (supports Multi-Layer Withdrawal, Return & Inflation Phases)
                 simulation() {
@@ -1370,26 +1495,31 @@ Updated: 2026-11-25T14:35:00+00:00
                     }));
 
                     let balance = this.initialInvestment;
-                    let activeMonthlyRate = this.annualReturn / 100 / 12;
+                    let activeMonthlyRate = Math.pow(1 + this.annualReturn / 100, 1 / 12) - 1;
                     let activeInflationRate = this.inflationRate;
                     let activeMode = this.withdrawalMode;
                     let activeMonthlyFrac = (this.withdrawalPercent / 100) / 12;
                     let activeFixedMonthly = this.monthlyWithdrawal;
                     let fixedPhaseStartMonth = 1;
                     let cumulativeInflationFactor = 1;
+                    const taxFrac = this.taxRate / 100;
 
                     let totalWithdrawn = 0;
                     let totalRealWithdrawn = 0;
+                    let totalTaxesPaid = 0;
                     let totalInterest = 0;
                     let monthsCompleted = 0;
                     let depletedMonth = null;
                     let endingMonthlyWithdrawal = activeMode === 'percent'
-                        ? (this.initialInvestment * activeMonthlyFrac)
+                        ? (this.initialInvestment * activeMonthlyFrac) * (1 - taxFrac)
                         : activeFixedMonthly;
 
                     const yearlyData = [];
+                    let yearStartRealBalance = this.initialInvestment;
                     let yearWithdrawn = 0;
                     let yearRealWithdrawn = 0;
+                    let yearRealGrossOutflow = 0;
+                    let yearTaxesPaid = 0;
                     let yearInterest = 0;
                     let yearMonthsCount = 0;
                     let yearPhaseTags = [];
@@ -1397,7 +1527,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     for (let m = 1; m <= totalMonths; m++) {
                         if (returnPhaseByMonth.has(m)) {
                             const rp = returnPhaseByMonth.get(m);
-                            activeMonthlyRate = rp.value / 100 / 12;
+                            activeMonthlyRate = Math.pow(1 + rp.value / 100, 1 / 12) - 1;
                             yearPhaseTags.push({ label: `Ret ${rp.value}%`, kind: 'return' });
                         }
 
@@ -1407,6 +1537,7 @@ Updated: 2026-11-25T14:35:00+00:00
                             yearPhaseTags.push({ label: `Inf ${ip.value}%`, kind: 'inflation' });
                         }
 
+                        const startOfMonthInflationFactor = cumulativeInflationFactor;
                         if (activeInflationRate > 0) {
                             cumulativeInflationFactor *= Math.pow(1 + activeInflationRate / 100, 1 / 12);
                         }
@@ -1418,7 +1549,7 @@ Updated: 2026-11-25T14:35:00+00:00
                                 activeMonthlyFrac = (phase.value / 100) / 12;
                                 yearPhaseTags.push({ label: `${phase.value}%/yr`, kind: 'withdrawal' });
                             } else {
-                                activeFixedMonthly = phase.value;
+                                activeFixedMonthly = phase.value * startOfMonthInflationFactor;
                                 fixedPhaseStartMonth = m;
                                 yearPhaseTags.push({ label: `${this.currencySymbol}${this.formatCompact(phase.value)}/mo`, kind: 'withdrawal' });
                             }
@@ -1427,26 +1558,41 @@ Updated: 2026-11-25T14:35:00+00:00
                             activeFixedMonthly *= (1 + activeInflationRate / 100);
                         }
 
+                        let effectiveMonthlyRate = activeMonthlyRate;
+                        if (this.stressScenario === 'crash30' && m <= 12) {
+                            effectiveMonthlyRate = Math.pow(0.70, 1 / 12) - 1;
+                            if (m === 1) yearPhaseTags.push({ label: 'Crash -30%', kind: 'stress' });
+                        } else if (this.stressScenario === 'crash45' && m <= 24) {
+                            effectiveMonthlyRate = Math.pow(0.55, 1 / 24) - 1;
+                            if (m === 1) yearPhaseTags.push({ label: 'Bear -45%', kind: 'stress' });
+                        }
+
                         if (balance > 0) {
-                            const interestEarned = balance * activeMonthlyRate;
-                            balance += interestEarned;
+                            const interestEarned = balance * effectiveMonthlyRate;
+                            balance = Math.max(0, balance + interestEarned);
                             totalInterest += interestEarned;
                             yearInterest += interestEarned;
 
-                            const plannedWithdrawal = activeMode === 'percent'
+                            const plannedGrossWithdrawal = activeMode === 'percent'
                                 ? balance * activeMonthlyFrac
-                                : activeFixedMonthly;
+                                : (taxFrac < 1 ? activeFixedMonthly / (1 - taxFrac) : activeFixedMonthly);
 
-                            const actualWithdrawal = Math.min(balance, plannedWithdrawal);
-                            const realWithdrawal = actualWithdrawal / cumulativeInflationFactor;
-                            balance -= actualWithdrawal;
-                            totalWithdrawn += actualWithdrawal;
-                            totalRealWithdrawn += realWithdrawal;
-                            yearWithdrawn += actualWithdrawal;
-                            yearRealWithdrawn += realWithdrawal;
+                            const actualGrossWithdrawal = Math.min(balance, plannedGrossWithdrawal);
+                            const taxPaid = actualGrossWithdrawal * taxFrac;
+                            const actualNetWithdrawal = actualGrossWithdrawal - taxPaid;
+                            const realNetWithdrawal = actualNetWithdrawal / cumulativeInflationFactor;
+
+                            balance = Math.max(0, balance - actualGrossWithdrawal);
+                            totalWithdrawn += actualNetWithdrawal;
+                            totalRealWithdrawn += realNetWithdrawal;
+                            totalTaxesPaid += taxPaid;
+                            yearWithdrawn += actualNetWithdrawal;
+                            yearRealWithdrawn += realNetWithdrawal;
+                            yearRealGrossOutflow += actualGrossWithdrawal / cumulativeInflationFactor;
+                            yearTaxesPaid += taxPaid;
                             yearMonthsCount++;
                             monthsCompleted = m;
-                            endingMonthlyWithdrawal = actualWithdrawal;
+                            endingMonthlyWithdrawal = actualNetWithdrawal;
 
                             if (balance <= 0.01) {
                                 balance = 0;
@@ -1458,6 +1604,8 @@ Updated: 2026-11-25T14:35:00+00:00
                         }
 
                         if (m % 12 === 0 || m === totalMonths) {
+                            const realEndingBalance = balance / cumulativeInflationFactor;
+                            const realGain = (realEndingBalance - yearStartRealBalance) + yearRealGrossOutflow;
                             yearlyData.push({
                                 year: Math.ceil(m / 12),
                                 inflationFactor: cumulativeInflationFactor,
@@ -1465,18 +1613,22 @@ Updated: 2026-11-25T14:35:00+00:00
                                 realAvgMonthlyPayout: yearMonthsCount > 0 ? yearRealWithdrawn / yearMonthsCount : 0,
                                 withdrawn: yearWithdrawn,
                                 realWithdrawn: yearRealWithdrawn,
+                                taxesPaid: yearTaxesPaid,
                                 interest: yearInterest,
-                                realInterest: yearInterest / cumulativeInflationFactor,
+                                realGain,
                                 endingBalance: balance,
-                                realEndingBalance: balance / cumulativeInflationFactor,
+                                realEndingBalance,
                                 cumulativeWithdrawn: totalWithdrawn,
                                 realCumulativeWithdrawn: totalRealWithdrawn,
                                 breakEvenBalance: this.initialInvestment * cumulativeInflationFactor,
                                 phaseTags: yearPhaseTags,
                                 phaseTag: yearPhaseTags.length ? yearPhaseTags.map(t => t.label).join(' · ') : null
                             });
+                            yearStartRealBalance = realEndingBalance;
                             yearWithdrawn = 0;
                             yearRealWithdrawn = 0;
+                            yearRealGrossOutflow = 0;
+                            yearTaxesPaid = 0;
                             yearInterest = 0;
                             yearMonthsCount = 0;
                             yearPhaseTags = [];
@@ -1492,6 +1644,7 @@ Updated: 2026-11-25T14:35:00+00:00
                         purchasingPowerLostPct: (1 - 1 / cumulativeInflationFactor) * 100,
                         totalWithdrawn,
                         totalRealWithdrawn,
+                        totalTaxesPaid,
                         totalInterest,
                         monthsCompleted,
                         depletedMonth,
@@ -1531,8 +1684,13 @@ Updated: 2026-11-25T14:35:00+00:00
                 simulation: {
                     handler() {
                         this.updateChart();
+                        this.savePlanToStorage();
                     },
                     deep: true
+                },
+                valueDisplayMode() {
+                    this.updateChart();
+                    this.savePlanToStorage();
                 },
                 isDarkMode() {
                     this.updateChart();
@@ -1544,18 +1702,42 @@ Updated: 2026-11-25T14:35:00+00:00
                     } catch (e) {}
                     this.updateChart();
                     this.onCurrencyChanged(newVal);
+                    this.savePlanToStorage();
                 }
             },
             methods: {
+                normalizeNumericString(val) {
+                    if (val === null || val === undefined) return '';
+                    let s = String(val).trim().replace(/[\s_]/g, '');
+                    if (!s) return '';
+                    const hasComma = s.includes(',');
+                    const hasDot = s.includes('.');
+                    if (hasComma && hasDot) {
+                        if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+                            s = s.replace(/\./g, '').replace(/,/g, '.');
+                        } else {
+                            s = s.replace(/,/g, '');
+                        }
+                    } else if (hasComma) {
+                        const commaCount = (s.match(/,/g) || []).length;
+                        if (commaCount > 1 || /^-?\d{1,3},\d{3}$/.test(s)) {
+                            s = s.replace(/,/g, '');
+                        } else {
+                            s = s.replace(/,/g, '.');
+                        }
+                    }
+                    return s;
+                },
                 parseNumber(val) {
                     if (val === null || val === undefined || val === '') return 0;
-                    const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
+                    const cleaned = this.normalizeNumericString(val);
                     const parsed = parseFloat(cleaned);
                     return isNaN(parsed) ? 0 : Math.max(0, parsed);
                 },
                 formatCurrency(value, decimals = 2) {
                     const num = Number(value) || 0;
-                    return num.toLocaleString('en-US', {
+                    const locale = this.selectedCurrency === 'INR' ? 'en-IN' : 'en-US';
+                    return num.toLocaleString(locale, {
                         minimumFractionDigits: decimals,
                         maximumFractionDigits: decimals
                     });
@@ -1576,6 +1758,11 @@ Updated: 2026-11-25T14:35:00+00:00
                         if (val >= 10) return val.toFixed(1);
                         return val.toFixed(2);
                     };
+
+                    if (this.selectedCurrency === 'INR') {
+                        if (absNum >= 1.0e7) return sign + formatDec(absNum / 1.0e7) + ' Cr';
+                        return sign + formatDec(absNum / 1.0e5) + ' L';
+                    }
 
                     const abbreviations = [
                         [1.0e230, "Ct"], [1.0e207, "DuVg"], [1.0e204, "UnVg"], [1.0e180, "Vg"],
@@ -1598,8 +1785,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     if (val === '' || val === null || val === undefined) {
                         this.inputs[key] = '0';
                     } else {
-                        // Strip whitespace or stray invalid characters on blur
-                        const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
+                        const cleaned = this.normalizeNumericString(val);
                         if (!isNaN(parseFloat(cleaned))) {
                             this.inputs[key] = cleaned;
                         }
@@ -1722,17 +1908,20 @@ Updated: 2026-11-25T14:35:00+00:00
                     const yr = Math.max(2, Math.round(this.parseNumber(phase.startYear)));
                     const prevRow = this.simulation.yearlyData.find(r => r.year === yr - 1);
                     const refBalance = prevRow ? prevRow.endingBalance : this.initialInvestment;
+                    const refRealBalance = prevRow ? prevRow.realEndingBalance : this.initialInvestment;
                     const currentVal = this.parseNumber(phase.value);
 
                     if (newMode === 'percent') {
-                        if (refBalance > 0 && currentVal > 0) {
-                            const impliedPct = Math.round(((currentVal * 12) / refBalance) * 1000) / 10;
+                        if (refRealBalance > 0 && currentVal > 0) {
+                            const impliedPct = Math.round(((currentVal * 12) / refRealBalance) * 1000) / 10;
                             phase.value = String(impliedPct);
                         } else {
                             phase.value = '4';
                         }
                     } else {
-                        if (refBalance > 0 && currentVal > 0) {
+                        if (refRealBalance > 0 && currentVal > 0) {
+                            phase.value = String(Math.round((refRealBalance * (currentVal / 100)) / 12));
+                        } else if (refBalance > 0 && currentVal > 0) {
                             phase.value = String(Math.round((refBalance * (currentVal / 100)) / 12));
                         } else {
                             phase.value = String(Math.round(this.effectiveInitialMonthlyWithdrawal));
@@ -1755,7 +1944,7 @@ Updated: 2026-11-25T14:35:00+00:00
                         phase.value = '0';
                         return;
                     }
-                    const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
+                    const cleaned = this.normalizeNumericString(val);
                     if (!isNaN(parseFloat(cleaned))) {
                         phase.value = cleaned;
                     }
@@ -1770,21 +1959,29 @@ Updated: 2026-11-25T14:35:00+00:00
                     this.inputs.withdrawalDuration = String(Math.max(1, Math.floor(this.yearsLastingFunds)));
                 },
                 applyInflationBenchmark(b) {
+                    this.userEditedInflation = true;
                     this.inputs.inflationRate = String(b.rate);
                 },
                 applyCountryInflationRate() {
+                    this.userEditedInflation = true;
                     this.inputs.inflationRate = String(this.currentCountryInflationAvg);
                 },
-                async onCurrencyChanged(newCurrencyCode) {
+                async onCurrencyChanged(newCurrencyCode, options = {}) {
                     const curr = this.currencies.find(c => c.code === newCurrencyCode);
                     if (!curr) return;
 
-                    // Immediately apply cached/sync country 10Y inflation rate
+                    if (!options.initialLoad) {
+                        this.userEditedInflation = false;
+                    }
+
+                    // Immediately apply cached/sync country 10Y inflation rate unless user already set/restored a rate
                     const syncProf = window.InflationSDK && window.InflationSDK.getSyncCountryProfile
                         ? window.InflationSDK.getSyncCountryProfile(curr.countryCode)
                         : null;
                     const initialRate = syncProf ? syncProf.avg10Y : curr.defaultRate;
-                    this.inputs.inflationRate = String(initialRate);
+                    if (!this.userEditedInflation) {
+                        this.inputs.inflationRate = String(initialRate);
+                    }
 
                     // Fetch live 30-year multi-horizon profile from World Bank Open API for this country
                     if (window.InflationSDK && curr.countryCode) {
@@ -1796,7 +1993,7 @@ Updated: 2026-11-25T14:35:00+00:00
                             if (prof) {
                                 this.countryProfiles = { ...this.countryProfiles, [curr.countryCode]: prof };
                                 curr.defaultRate = prof.avg10Y;
-                                if (this.selectedCurrency === newCurrencyCode) {
+                                if (this.selectedCurrency === newCurrencyCode && !this.userEditedInflation) {
                                     this.inputs.inflationRate = String(prof.avg10Y);
                                 }
                                 this.inflationDataSource = prof.source || 'World Bank API';
@@ -1825,7 +2022,7 @@ Updated: 2026-11-25T14:35:00+00:00
 
                     if (rate && rate > 0) {
                         const convertedCorpus = Math.round(this.initialInvestment * rate);
-                        const convertedMonthly = Math.round(this.monthlyWithdrawal * rate);
+                        const convertedMonthly = Math.round(this.effectiveInitialMonthlyWithdrawal * rate);
                         this.inputs.initialInvestment = String(convertedCorpus);
                         this.inputs.monthlyWithdrawal = String(convertedMonthly);
 
@@ -1866,9 +2063,68 @@ Updated: 2026-11-25T14:35:00+00:00
                         }
                     }
                 },
+                serializePlan() {
+                    return {
+                        c: this.selectedCurrency,
+                        m: this.withdrawalMode,
+                        i: { ...this.inputs },
+                        wp: this.withdrawalPhases.map(p => ({ ...p })),
+                        rp: this.returnPhases.map(p => ({ ...p })),
+                        ip: this.inflationPhases.map(p => ({ ...p })),
+                        s: this.stressScenario,
+                        v: this.valueDisplayMode
+                    };
+                },
+                savePlanToStorage() {
+                    try {
+                        localStorage.setItem('rre_saved_plan_v1', JSON.stringify(this.serializePlan()));
+                    } catch (e) {}
+                },
+                async sharePlan() {
+                    try {
+                        const json = JSON.stringify(this.serializePlan());
+                        const b64 = btoa(unescape(encodeURIComponent(json)))
+                            .replace(/\+/g, '-')
+                            .replace(/\//g, '_')
+                            .replace(/=+$/, '');
+                        const newHash = '#plan=' + b64;
+                        if (window.history && window.history.replaceState) {
+                            window.history.replaceState(null, '', newHash);
+                        } else {
+                            window.location.hash = newHash;
+                        }
+                        const url = window.location.href;
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(url);
+                        } else {
+                            const ta = document.createElement('textarea');
+                            ta.value = url;
+                            ta.style.position = 'fixed';
+                            ta.style.opacity = '0';
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                        }
+                        this.shareCopied = true;
+                        setTimeout(() => { this.shareCopied = false; }, 2000);
+                    } catch (e) {
+                        console.warn('Could not share plan:', e);
+                    }
+                },
                 resetDefaults() {
                     const defaultRate = this.currentCountryInflationAvg || this.globalDecadeAvg || 3.4;
+                    try {
+                        localStorage.removeItem('rre_saved_plan_v1');
+                    } catch (e) {}
+                    try {
+                        if (window.location.hash && window.location.hash.startsWith('#plan=') && window.history && window.history.replaceState) {
+                            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                        }
+                    } catch (e) {}
                     this.withdrawalMode = 'percent';
+                    this.stressScenario = 'none';
+                    this.userEditedInflation = false;
                     this.withdrawalPhases = [];
                     this.returnPhases = [];
                     this.inflationPhases = [];
@@ -1878,7 +2134,8 @@ Updated: 2026-11-25T14:35:00+00:00
                         withdrawalDuration: '30',
                         monthlyWithdrawal: this.activeCurrency.defaultMonthly || '2500',
                         withdrawalPercent: '2',
-                        inflationRate: String(defaultRate)
+                        inflationRate: String(defaultRate),
+                        taxRate: '0'
                     };
                 },
                 applyTheme() {
@@ -2003,17 +2260,20 @@ Updated: 2026-11-25T14:35:00+00:00
                 updateChart() {
                     if (!chartInstance) return;
 
+                    const isRealMode = this.valueDisplayMode === 'real';
                     const labels = ['Start', ...this.simulation.yearlyData.map(d => `Yr ${d.year}`)];
                     const balances = [this.initialInvestment, ...this.simulation.yearlyData.map(d => Math.round(d.endingBalance))];
                     const realBalances = [this.initialInvestment, ...this.simulation.yearlyData.map(d => Math.round(d.realEndingBalance))];
-                    const withdrawn = [0, ...this.simulation.yearlyData.map(d => Math.round(d.cumulativeWithdrawn))];
+                    const withdrawn = [0, ...this.simulation.yearlyData.map(d => Math.round(isRealMode ? d.realCumulativeWithdrawn : d.cumulativeWithdrawn))];
 
                     const textColor = this.isDarkMode ? '#94a3b8' : '#64748b';
                     const gridColor = this.isDarkMode ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)';
 
                     chartInstance.data.labels = labels;
                     chartInstance.data.datasets[0].data = balances;
+                    chartInstance.data.datasets[0].hidden = isRealMode;
                     chartInstance.data.datasets[1].data = realBalances;
+                    chartInstance.data.datasets[2].label = isRealMode ? "Cumulative Withdrawn (Today's Buying Power)" : 'Cumulative Withdrawn';
                     chartInstance.data.datasets[2].data = withdrawn;
 
                     chartInstance.options.plugins.legend.labels.color = textColor;
@@ -2054,9 +2314,9 @@ Updated: 2026-11-25T14:35:00+00:00
                     this.initChart();
                     this.fetchLiveInflationData();
                     this.fetchExchangeRates();
-                    // Load live data for the active currency's country
+                    // Load live data for the active currency's country without clobbering restored/edited inflation
                     if (this.activeCurrency && this.activeCurrency.countryCode) {
-                        this.onCurrencyChanged(this.selectedCurrency);
+                        this.onCurrencyChanged(this.selectedCurrency, { initialLoad: true });
                     }
                 });
             }

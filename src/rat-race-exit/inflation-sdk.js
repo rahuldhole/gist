@@ -40,12 +40,12 @@
             { year: 2000, value: 3.43 }, { year: 1999, value: 3.04 }, { year: 1998, value: 5.10 }, { year: 1997, value: 5.55 }, { year: 1996, value: 6.53 }
         ],
         USA: [
-            { year: 2024, value: 2.95 }, { year: 2023, value: 4.12 }, { year: 2022, value: 8.00 }, { year: 2021, value: 4.70 }, { year: 2020, value: 1.23 },
-            { year: 2019, value: 1.81 }, { year: 2018, value: 2.44 }, { year: 2017, value: 2.13 }, { year: 2016, value: 1.26 }, { year: 2015, value: 0.12 },
-            { year: 2014, value: 1.62 }, { year: 2013, value: 1.46 }, { year: 2012, value: 2.07 }, { year: 2011, value: 3.16 }, { year: 2010, value: 1.64 },
-            { year: 2009, value: -0.36 }, { year: 2008, value: 3.84 }, { year: 2007, value: 2.85 }, { year: 2006, value: 3.23 }, { year: 2005, value: 3.39 },
-            { year: 2004, value: 2.68 }, { year: 2003, value: 2.27 }, { year: 2002, value: 1.59 }, { year: 2001, value: 2.83 }, { year: 2000, value: 3.38 },
-            { year: 1999, value: 2.19 }, { year: 1998, value: 1.55 }, { year: 1997, value: 2.34 }, { year: 1996, value: 2.93 }, { year: 1995, value: 2.81 }
+            { year: 2025, value: 2.70 }, { year: 2024, value: 2.95 }, { year: 2023, value: 4.12 }, { year: 2022, value: 8.00 }, { year: 2021, value: 4.70 },
+            { year: 2020, value: 1.23 }, { year: 2019, value: 1.81 }, { year: 2018, value: 2.44 }, { year: 2017, value: 2.13 }, { year: 2016, value: 1.26 },
+            { year: 2015, value: 0.12 }, { year: 2014, value: 1.62 }, { year: 2013, value: 1.46 }, { year: 2012, value: 2.07 }, { year: 2011, value: 3.16 },
+            { year: 2010, value: 1.64 }, { year: 2009, value: -0.36 }, { year: 2008, value: 3.84 }, { year: 2007, value: 2.85 }, { year: 2006, value: 3.23 },
+            { year: 2005, value: 3.39 }, { year: 2004, value: 2.68 }, { year: 2003, value: 2.27 }, { year: 2002, value: 1.59 }, { year: 2001, value: 2.83 },
+            { year: 2000, value: 3.38 }, { year: 1999, value: 2.19 }, { year: 1998, value: 1.55 }, { year: 1997, value: 2.34 }, { year: 1996, value: 2.93 }
         ],
         EMU: [
             { year: 2025, value: 2.47 }, { year: 2024, value: 2.26 }, { year: 2023, value: 5.95 }, { year: 2022, value: 8.55 }, { year: 2021, value: 2.53 },
