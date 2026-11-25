@@ -953,7 +953,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     selectedCurrency: initialCurr.code,
                     currencyAutoDetected,
                     currencies,
-                    withdrawalMode: 'fixed', // 'fixed' | 'percent'
+                    withdrawalMode: 'percent', // 'fixed' | 'percent'
                     withdrawalPhases: [],
                     returnPhases: [],
                     inflationPhases: [],
@@ -1756,7 +1756,7 @@ Updated: 2026-11-25T14:35:00+00:00
                 },
                 resetDefaults() {
                     const defaultRate = this.currentCountryInflationAvg || this.globalDecadeAvg || 3.4;
-                    this.withdrawalMode = 'fixed';
+                    this.withdrawalMode = 'percent';
                     this.withdrawalPhases = [];
                     this.returnPhases = [];
                     this.inflationPhases = [];
