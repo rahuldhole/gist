@@ -1107,18 +1107,32 @@ Updated: 2026-11-25T14:35:00+00:00
                     }
                 }
 
+                const formatInitSpaces = (v) => {
+                    if (v === null || v === undefined) return '';
+                    let s = String(v).trim().replace(/[\s_]/g, '');
+                    if (!s) return '';
+                    const parts = s.split('.');
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                    return parts.join('.');
+                };
+
                 const initialCurr = currencies.find(c => c.code === initialCurrency) || currencies[0];
                 const defaultInputs = {
-                    initialInvestment: initialCurr.defaultCorpus,
+                    initialInvestment: formatInitSpaces(initialCurr.defaultCorpus),
                     annualReturn: '6',
                     withdrawalDuration: '30',
-                    monthlyWithdrawal: initialCurr.defaultMonthly,
+                    monthlyWithdrawal: formatInitSpaces(initialCurr.defaultMonthly),
                     withdrawalPercent: '2',
                     inflationRate: String(initialCurr.defaultRate),
                     taxRate: '0'
                 };
                 const restoredInputs = savedPlan && savedPlan.i && typeof savedPlan.i === 'object'
-                    ? { ...defaultInputs, ...savedPlan.i }
+                    ? {
+                        ...defaultInputs,
+                        ...savedPlan.i,
+                        initialInvestment: formatInitSpaces(savedPlan.i.initialInvestment ?? defaultInputs.initialInvestment),
+                        monthlyWithdrawal: formatInitSpaces(savedPlan.i.monthlyWithdrawal ?? defaultInputs.monthlyWithdrawal)
+                    }
                     : defaultInputs;
 
                 const sanitizePhases = (arr, withMode) => Array.isArray(arr)
@@ -1126,7 +1140,7 @@ Updated: 2026-11-25T14:35:00+00:00
                         id: Number(p && p.id) || (idx + 1),
                         startYear: String((p && p.startYear) || '2'),
                         ...(withMode ? { mode: p && p.mode === 'percent' ? 'percent' : 'fixed' } : {}),
-                        value: String((p && p.value) ?? '0')
+                        value: (withMode && p && p.mode === 'fixed') ? formatInitSpaces(p.value ?? '0') : String((p && p.value) ?? '0')
                     }))
                     : [];
 
@@ -1780,6 +1794,17 @@ Updated: 2026-11-25T14:35:00+00:00
                     }
                     return sign + num.toFixed(0);
                 },
+                formatWithSpaces(val) {
+                    if (val === null || val === undefined) return '';
+                    const cleaned = this.normalizeNumericString(val);
+                    if (!cleaned || isNaN(parseFloat(cleaned))) return '';
+                    let s = cleaned;
+                    const isNegative = s.startsWith('-');
+                    if (isNegative) s = s.slice(1);
+                    const parts = s.split('.');
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                    return (isNegative ? '-' : '') + parts.join('.');
+                },
                 formatOnBlur(key) {
                     let val = this.inputs[key];
                     if (val === '' || val === null || val === undefined) {
@@ -1787,7 +1812,11 @@ Updated: 2026-11-25T14:35:00+00:00
                     } else {
                         const cleaned = this.normalizeNumericString(val);
                         if (!isNaN(parseFloat(cleaned))) {
-                            this.inputs[key] = cleaned;
+                            if (key === 'initialInvestment' || key === 'monthlyWithdrawal') {
+                                this.inputs[key] = this.formatWithSpaces(cleaned);
+                            } else {
+                                this.inputs[key] = cleaned;
+                            }
                         }
                     }
                 },
@@ -1812,7 +1841,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     const min = 1000;
                     const max = this.investmentSliderCap;
                     const raw = min + (max - min) * Math.pow(p, 2.6);
-                    this.inputs.initialInvestment = String(Math.max(1000, this.smartRound(raw)));
+                    this.inputs.initialInvestment = this.formatWithSpaces(Math.max(1000, this.smartRound(raw)));
                 },
                 onWithdrawalSlider(pos) {
                     const p = Number(pos) / 1000;
@@ -1822,7 +1851,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     }
                     const max = this.withdrawalSliderCap;
                     const raw = max * Math.pow(p, 2.0);
-                    this.inputs.monthlyWithdrawal = String(this.smartRound(raw));
+                    this.inputs.monthlyWithdrawal = this.formatWithSpaces(this.smartRound(raw));
                 },
                 setWithdrawalMode(mode) {
                     if (mode === this.withdrawalMode) return;
@@ -1946,7 +1975,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     }
                     const cleaned = this.normalizeNumericString(val);
                     if (!isNaN(parseFloat(cleaned))) {
-                        phase.value = cleaned;
+                        phase.value = phase.mode === 'fixed' ? this.formatWithSpaces(cleaned) : cleaned;
                     }
                 },
                 setSustainableWithdrawal() {
@@ -2023,12 +2052,12 @@ Updated: 2026-11-25T14:35:00+00:00
                     if (rate && rate > 0) {
                         const convertedCorpus = Math.round(this.initialInvestment * rate);
                         const convertedMonthly = Math.round(this.effectiveInitialMonthlyWithdrawal * rate);
-                        this.inputs.initialInvestment = String(convertedCorpus);
-                        this.inputs.monthlyWithdrawal = String(convertedMonthly);
+                        this.inputs.initialInvestment = this.formatWithSpaces(convertedCorpus);
+                        this.inputs.monthlyWithdrawal = this.formatWithSpaces(convertedMonthly);
 
                         for (const p of this.withdrawalPhases) {
                             if (p.mode === 'fixed') {
-                                p.value = String(Math.round(this.parseNumber(p.value) * rate));
+                                p.value = this.formatWithSpaces(Math.round(this.parseNumber(p.value) * rate));
                             }
                         }
                     }
@@ -2129,10 +2158,10 @@ Updated: 2026-11-25T14:35:00+00:00
                     this.returnPhases = [];
                     this.inflationPhases = [];
                     this.inputs = {
-                        initialInvestment: this.activeCurrency.defaultCorpus || '500000',
+                        initialInvestment: this.formatWithSpaces(this.activeCurrency.defaultCorpus || '500000'),
                         annualReturn: '6',
                         withdrawalDuration: '30',
-                        monthlyWithdrawal: this.activeCurrency.defaultMonthly || '2500',
+                        monthlyWithdrawal: this.formatWithSpaces(this.activeCurrency.defaultMonthly || '2500'),
                         withdrawalPercent: '2',
                         inflationRate: String(defaultRate),
                         taxRate: '0'
