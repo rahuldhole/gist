@@ -249,7 +249,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 class="swp-slider">
                         </div>
 
-                        <!-- Monthly Withdrawal (Clean Mode Switch + Progressive Target Goal) -->
+                        <!-- Monthly Withdrawal (Clean Mode Switch + Dynamic Multi-Layer Phases) -->
                         <div class="space-y-2">
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-1.5">
@@ -257,6 +257,10 @@ Updated: 2026-11-25T13:00:00+00:00
                                         class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                         Monthly Withdrawal
                                     </label>
+                                    <span v-if="withdrawalPhases.length > 0"
+                                        class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                        Yr 1+
+                                    </span>
                                     <!-- Subtle Info Tooltip Icon -->
                                     <span class="group relative inline-flex items-center cursor-help">
                                         <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,10 +268,10 @@ Updated: 2026-11-25T13:00:00+00:00
                                         </svg>
                                         <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 bottom-full mb-2 w-60 p-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[11px] leading-relaxed shadow-xl z-30 border border-slate-700 font-normal">
                                             <template v-if="withdrawalMode === 'fixed'">
-                                                <strong>Inflation-Adjusted:</strong> Steps up by {{ inflationRate }}%/yr every year to preserve real buying power.
+                                                <strong>Inflation-Adjusted ({{ currencySymbol }}):</strong> Fixed phases step up by {{ inflationRate }}%/yr every year to preserve real buying power.
                                             </template>
                                             <template v-else>
-                                                <strong>No Extra Step-Up:</strong> Scales purely with live balance ({{ withdrawalPercent }}%/yr). Beats {{ inflationRate }}% inflation when net growth ({{ (annualReturn - withdrawalPercent).toFixed(1) }}%) &ge; {{ inflationRate }}%.
+                                                <strong>Live Balance (%):</strong> Scales purely with live balance ({{ withdrawalPercent }}%/yr), with no extra inflation step-up. Beats {{ inflationRate }}% inflation when net growth ({{ (annualReturn - withdrawalPercent).toFixed(1) }}%) &ge; {{ inflationRate }}%.
                                             </template>
                                         </span>
                                     </span>
@@ -344,34 +348,68 @@ Updated: 2026-11-25T13:00:00+00:00
                                     </span>
                                 </div>
 
-                                <button @click="toggleTargetMilestone" type="button"
-                                    class="text-[11px] font-medium hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
-                                    :class="showTargetMilestone ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-400'">
-                                    <span>🎯 {{ showTargetMilestone ? 'Hide Goal' : 'Target Goal' }}</span>
+                                <button @click="addWithdrawalPhase" type="button"
+                                    class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+                                    title="Add a future withdrawal phase (e.g. step up from 1% to 2% after 10 years)">
+                                    <span>+ Add Phase</span>
                                 </button>
                             </div>
 
-                            <!-- Revealable Target Monthly Income Goal -->
-                            <div v-if="showTargetMilestone" class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                                <div class="flex items-center justify-between gap-2">
-                                    <label for="targetMonthlyWithdrawal" class="text-xs font-medium text-slate-600 dark:text-slate-300">
-                                        Target Monthly Income
-                                    </label>
-                                    <div class="relative w-32">
-                                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">{{ currencySymbol }}</span>
-                                        <input v-model="inputs.targetMonthlyWithdrawal"
-                                            @blur="formatOnBlur('targetMonthlyWithdrawal')"
-                                            type="text" id="targetMonthlyWithdrawal" inputmode="decimal"
-                                            class="w-full pl-6 pr-2.5 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <!-- Dynamic Multi-Layer Withdrawal Phases -->
+                            <div v-if="withdrawalPhases.length > 0" class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                                <div v-for="phase in withdrawalPhases" :key="phase.id"
+                                    class="flex items-center justify-between gap-1.5 py-1 px-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">From Yr</span>
+                                        <input v-model="phase.startYear"
+                                            @blur="formatPhaseYear(phase)"
+                                            type="text" inputmode="numeric" aria-label="Phase start year"
+                                            :title="parseNumber(phase.startYear) > withdrawalDuration ? 'Starts after current Time Horizon' : 'Year when this withdrawal phase starts'"
+                                            :class="parseNumber(phase.startYear) > withdrawalDuration
+                                                ? 'text-amber-600 dark:text-amber-400 border-amber-400 dark:border-amber-500/70'
+                                                : 'text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-700'"
+                                            class="w-12 px-1 py-1 text-center font-semibold text-xs bg-white dark:bg-slate-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     </div>
-                                </div>
-                                <div class="px-2.5 py-2 rounded-xl text-[11px] border flex items-center justify-between gap-2"
-                                    :class="targetMilestoneStatus.colorClass"
-                                    :title="targetMilestoneStatus.detail">
-                                    <span class="font-semibold truncate">{{ targetMilestoneStatus.headline }}</span>
-                                    <span v-if="targetMilestoneStatus.timeBadge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 shrink-0">
-                                        {{ targetMilestoneStatus.timeBadge }}
-                                    </span>
+
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/70 text-[10px] font-semibold">
+                                            <button @click="setPhaseMode(phase, 'fixed')" type="button"
+                                                title="Fixed amount (steps up yearly with inflation)"
+                                                :class="phase.mode === 'fixed' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                class="px-1.5 py-0.5 rounded-md transition-all cursor-pointer">
+                                                {{ currencySymbol }}
+                                            </button>
+                                            <button @click="setPhaseMode(phase, 'percent')" type="button"
+                                                title="Dynamic % of live portfolio balance"
+                                                :class="phase.mode === 'percent' ? 'bg-emerald-600 text-white shadow-2xs' : 'text-slate-500 dark:text-slate-400'"
+                                                class="px-1.5 py-0.5 rounded-md transition-all cursor-pointer">
+                                                %
+                                            </button>
+                                        </div>
+
+                                        <div v-if="phase.mode === 'fixed'" class="relative w-24">
+                                            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-[11px]">{{ currencySymbol }}</span>
+                                            <input v-model="phase.value"
+                                                @blur="formatPhaseValue(phase)"
+                                                type="text" inputmode="decimal" aria-label="Phase fixed monthly withdrawal"
+                                                class="w-full pl-5 pr-2 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                        </div>
+                                        <div v-else class="relative w-24">
+                                            <input v-model="phase.value"
+                                                @blur="formatPhaseValue(phase)"
+                                                type="text" inputmode="decimal" aria-label="Phase annual percentage withdrawal"
+                                                class="w-full pl-2 pr-7 py-1 text-right font-semibold text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-[10px]">%/yr</span>
+                                        </div>
+
+                                        <button @click="removeWithdrawalPhase(phase.id)" type="button"
+                                            aria-label="Remove phase" title="Remove phase"
+                                            class="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -432,9 +470,9 @@ Updated: 2026-11-25T13:00:00+00:00
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-1.5">
                                         <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                            {{ withdrawalMode === 'percent' ? 'Reference Inflation' : 'Annual Inflation' }}
+                                            {{ allPercentWithdrawal ? 'Reference Inflation' : 'Annual Inflation' }}
                                         </span>
-                                        <span v-if="withdrawalMode === 'percent'"
+                                        <span v-if="allPercentWithdrawal"
                                             title="Not added onto % withdrawal — used as real-purchasing-power benchmark"
                                             class="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                             Ref Only
@@ -568,7 +606,8 @@ Updated: 2026-11-25T13:00:00+00:00
                         <div class="min-w-0">
                             <p class="font-bold text-slate-900 dark:text-white truncate">{{ freedomStatus.tier }}</p>
                             <p class="text-[11px] opacity-85 truncate">
-                                <span v-if="!isDepleted">Yield covers {{ Math.round((monthlyReturnAmount / (effectiveInitialMonthlyWithdrawal || 1)) * 100) }}% &bull; Forever sustainable</span>
+                                <span v-if="!isDepleted && effectiveInitialMonthlyWithdrawal <= 0">100% compounding in Yr 1 &bull; Sustainable</span>
+                                <span v-else-if="!isDepleted">Yield covers {{ Math.round((monthlyReturnAmount / effectiveInitialMonthlyWithdrawal) * 100) }}% &bull; Forever sustainable</span>
                                 <span v-else>Corpus lasts {{ yearsLastingFunds.toFixed(1) }} yrs ({{ Math.round(yearsLastingFunds * 12) }} mos)</span>
                             </p>
                         </div>
@@ -667,10 +706,13 @@ Updated: 2026-11-25T13:00:00+00:00
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 <tr v-for="row in simulation.yearlyData" :key="row.year" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                                     <td class="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-300">
-                                        <span class="inline-flex items-center gap-1">
+                                        <span class="inline-flex items-center gap-1.5">
                                             <span>Year {{ row.year }}</span>
-                                            <span v-if="showTargetMilestone && simulation.targetHitMonth && Math.ceil(simulation.targetHitMonth / 12) === row.year"
-                                                title="Target Monthly Income Reached!" class="text-xs">🎯</span>
+                                            <span v-if="row.phaseTag"
+                                                title="New withdrawal phase begins this year"
+                                                class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold">
+                                                {{ row.phaseTag }}
+                                            </span>
                                         </span>
                                     </td>
                                     <td class="py-2.5 px-4 text-right text-slate-700 dark:text-slate-200 font-medium" :title="currencySymbol + formatCurrency(row.avgMonthlyPayout, 0) + '/mo'">
@@ -793,7 +835,8 @@ Updated: 2026-11-25T13:00:00+00:00
                         { code: 'AED', symbol: 'AED', name: 'UAE Dirham', countryCode: 'ARE', region: 'UAE', defaultRate: 1.3 }
                     ],
                     withdrawalMode: 'fixed', // 'fixed' | 'percent'
-                    showTargetMilestone: false,
+                    withdrawalPhases: [],
+                    nextPhaseId: 1,
                     swrPresets: [
                         { label: '3% Safe', rate: 3, desc: 'Ultra-safe 3% perpetual rule — strong capital compounding' },
                         { label: '4% Trinity', rate: 4, desc: 'Classic 4% FIRE benchmark' },
@@ -806,7 +849,6 @@ Updated: 2026-11-25T13:00:00+00:00
                         withdrawalDuration: '30',
                         monthlyWithdrawal: '2500',
                         withdrawalPercent: '4',
-                        targetMonthlyWithdrawal: '5000',
                         inflationRate: '3.4'
                     },
                     isLoadingInflation: false,
@@ -992,8 +1034,8 @@ Updated: 2026-11-25T13:00:00+00:00
                 withdrawalPercent() {
                     return this.parseNumber(this.inputs.withdrawalPercent);
                 },
-                targetMonthlyWithdrawal() {
-                    return this.parseNumber(this.inputs.targetMonthlyWithdrawal);
+                allPercentWithdrawal() {
+                    return this.withdrawalMode === 'percent' && this.withdrawalPhases.every(p => p.mode === 'percent');
                 },
                 effectiveInitialMonthlyWithdrawal() {
                     if (this.withdrawalMode === 'percent') {
@@ -1007,62 +1049,6 @@ Updated: 2026-11-25T13:00:00+00:00
                 inflationRate() {
                     return this.parseNumber(this.inputs.inflationRate);
                 },
-                targetMilestoneStatus() {
-                    const target = this.targetMonthlyWithdrawal;
-                    const startPayout = this.effectiveInitialMonthlyWithdrawal;
-                    if (!target || target <= 0) {
-                        return {
-                            headline: 'Enter a target monthly income above',
-                            timeBadge: '',
-                            detail: 'See how many years & months until your monthly payout reaches your lifestyle goal.',
-                            colorClass: 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-                        };
-                    }
-
-                    if (startPayout >= target) {
-                        return {
-                            headline: 'Already Achieved on Month 1! 🎉',
-                            timeBadge: '0 yrs 1 mo',
-                            detail: `Your starting payout (${this.currencySymbol}${this.formatCompact(startPayout)}/mo) already meets or beats ${this.currencySymbol}${this.formatCompact(target)}/mo.`,
-                            colorClass: 'bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-800 dark:text-emerald-200'
-                        };
-                    }
-
-                    const hitM = this.simulation.targetHitMonth;
-                    if (hitM !== null) {
-                        const yrs = Math.floor((hitM - 1) / 12);
-                        const mos = ((hitM - 1) % 12) + 1;
-                        const badge = yrs > 0 ? `${yrs}y ${mos}m (Mo ${hitM})` : `${mos} mos`;
-                        const withinHorizon = hitM <= Math.round(this.withdrawalDuration * 12);
-                        return {
-                            headline: withinHorizon
-                                ? `Target Reached in ${yrs > 0 ? yrs + ' yrs ' : ''}${mos} mos 🎯`
-                                : `Reached Beyond Horizon (${(hitM / 12).toFixed(1)} yrs)`,
-                            timeBadge: badge,
-                            detail: this.withdrawalMode === 'percent'
-                                ? `At ${this.withdrawalPercent}%/yr, your corpus reaches ${this.currencySymbol}${this.formatCompact((target * 12) / (this.withdrawalPercent / 100 || 1))} to unlock ${this.currencySymbol}${this.formatCompact(target)}/mo.`
-                                : `Via ${this.inflationRate}% annual step-ups, monthly draw crosses ${this.currencySymbol}${this.formatCompact(target)}/mo on month ${hitM}.`,
-                            colorClass: withinHorizon
-                                ? 'bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-800 dark:text-emerald-200'
-                                : 'bg-amber-500/10 dark:bg-amber-950/40 border-amber-500/30 text-amber-800 dark:text-amber-200'
-                        };
-                    }
-
-                    // Not reached even over extended projection — explain why & what corpus/return is needed
-                    const neededCorpusAtReturn = this.annualReturn > 0
-                        ? (target * 12) / (this.annualReturn / 100)
-                        : 0;
-                    return {
-                        headline: 'Target Not Reached Under Current Trajectory',
-                        timeBadge: 'Unreached',
-                        detail: this.withdrawalMode === 'percent'
-                            ? `Withdrawal rate (${this.withdrawalPercent}%/yr) >= return (${this.annualReturn}%/yr), so balance doesn't compound up. Lower % below ${this.annualReturn}% or grow corpus toward ${this.currencySymbol}${this.formatCompact(neededCorpusAtReturn)}.`
-                            : (this.inflationRate <= 0
-                                ? `With 0% step-up in Fixed mode, payout stays flat at ${this.currencySymbol}${this.formatCompact(startPayout)}/mo. Switch to "% of Balance" mode so payouts grow with your portfolio!`
-                                : `Corpus depletes before step-ups reach ${this.currencySymbol}${this.formatCompact(target)}/mo. Try "% of Balance" mode at a rate below ${this.annualReturn}%/yr.`),
-                        colorClass: 'bg-rose-500/10 dark:bg-rose-950/40 border-rose-500/30 text-rose-800 dark:text-rose-200'
-                    };
-                },
                 // Rat Race Escape Freedom Status
                 freedomStatus() {
                     const monthlyPassive = this.monthlyReturnAmount;
@@ -1072,9 +1058,14 @@ Updated: 2026-11-25T13:00:00+00:00
                     const netGrowth = this.finalBalance >= this.initialInvestment;
 
                     if (!depleted && netGrowth) {
-                        const growMsg = this.withdrawalMode === 'percent'
-                            ? `Withdrawing ${this.withdrawalPercent}%/yr scales your income from ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo up to ${this.currencySymbol}${this.formatCompact(this.simulation.endingMonthlyWithdrawal)}/mo while growing principal.`
-                            : `Your monthly return of ${this.currencySymbol}${this.formatCompact(monthlyPassive)} outpaces your draw of ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo — capital compounds forever.`;
+                        let growMsg;
+                        if (this.withdrawalPhases.length > 0) {
+                            growMsg = `Across ${this.withdrawalPhases.length + 1} withdrawal phases, your income evolves from ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo to ${this.currencySymbol}${this.formatCompact(this.simulation.endingMonthlyWithdrawal)}/mo while growing principal.`;
+                        } else if (this.withdrawalMode === 'percent') {
+                            growMsg = `Withdrawing ${this.withdrawalPercent}%/yr scales your income from ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo up to ${this.currencySymbol}${this.formatCompact(this.simulation.endingMonthlyWithdrawal)}/mo while growing principal.`;
+                        } else {
+                            growMsg = `Your monthly return of ${this.currencySymbol}${this.formatCompact(monthlyPassive)} outpaces your draw of ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo — capital compounds forever.`;
+                        }
                         return {
                             tier: 'Rat Race Crushed 🏆',
                             title: 'Complete Financial Nirvana (Forever Free)',
@@ -1150,110 +1141,113 @@ Updated: 2026-11-25T13:00:00+00:00
                     if (this.initialInvestment <= 0) return 0;
                     return (this.monthlyWithdrawal / this.initialInvestment) * 100;
                 },
-                // Complete month-by-month simulation engine (supports Fixed + Dynamic % + Milestone lookahead)
+                // Complete month-by-month simulation engine (supports Multi-Layer Fixed & Dynamic % Phases)
                 simulation() {
                     const monthlyRate = this.annualReturn / 100 / 12;
-                    const isPercentMode = this.withdrawalMode === 'percent';
-                    const dynamicMonthlyFrac = (this.withdrawalPercent / 100) / 12;
-                    const targetPayout = this.targetMonthlyWithdrawal;
-
                     // Safeguard against browser freeze on astronomical durations (> 120,000 months / 10,000 yrs)
                     const totalMonths = Math.min(Math.round(this.withdrawalDuration * 12), 120000);
-                    const maxSearchMonths = Math.max(totalMonths, 1200); // Look ahead up to 100 yrs for milestone detection
+
+                    const normalizedPhases = (this.withdrawalPhases || [])
+                        .map(p => ({
+                            startYear: Math.round(this.parseNumber(p.startYear)),
+                            mode: p.mode === 'percent' ? 'percent' : 'fixed',
+                            value: this.parseNumber(p.value)
+                        }))
+                        .filter(p => p.startYear >= 2)
+                        .sort((a, b) => a.startYear - b.startYear);
+
+                    const phaseByStartMonth = new Map();
+                    for (const p of normalizedPhases) {
+                        phaseByStartMonth.set((p.startYear - 1) * 12 + 1, p);
+                    }
 
                     let balance = this.initialInvestment;
-                    let currentMonthlyWithdrawal = this.monthlyWithdrawal;
+                    let activeMode = this.withdrawalMode;
+                    let activeMonthlyFrac = (this.withdrawalPercent / 100) / 12;
+                    let activeFixedMonthly = this.monthlyWithdrawal;
+                    let fixedPhaseStartMonth = 1;
+
                     let totalWithdrawn = 0;
                     let totalInterest = 0;
                     let monthsCompleted = 0;
                     let depletedMonth = null;
-                    let targetHitMonth = null;
-                    let endingMonthlyWithdrawal = isPercentMode
-                        ? (this.initialInvestment * dynamicMonthlyFrac)
-                        : this.monthlyWithdrawal;
+                    let endingMonthlyWithdrawal = activeMode === 'percent'
+                        ? (this.initialInvestment * activeMonthlyFrac)
+                        : activeFixedMonthly;
 
                     const yearlyData = [];
                     let yearWithdrawn = 0;
                     let yearInterest = 0;
                     let yearMonthsCount = 0;
+                    let yearPhaseTag = null;
 
-                    for (let m = 1; m <= maxSearchMonths; m++) {
-                        const inHorizon = m <= totalMonths;
-
-                        // In Fixed mode, apply annual inflation step-up at the start of each new year (month 13, 25, etc.)
-                        if (!isPercentMode && m > 1 && (m - 1) % 12 === 0 && this.inflationRate > 0) {
-                            currentMonthlyWithdrawal *= (1 + this.inflationRate / 100);
+                    for (let m = 1; m <= totalMonths; m++) {
+                        if (phaseByStartMonth.has(m)) {
+                            const phase = phaseByStartMonth.get(m);
+                            activeMode = phase.mode;
+                            if (activeMode === 'percent') {
+                                activeMonthlyFrac = (phase.value / 100) / 12;
+                                yearPhaseTag = `${phase.value}%/yr`;
+                            } else {
+                                activeFixedMonthly = phase.value;
+                                fixedPhaseStartMonth = m;
+                                yearPhaseTag = `${this.currencySymbol}${this.formatCompact(phase.value)}/mo`;
+                            }
+                        } else if (activeMode === 'fixed' && m > fixedPhaseStartMonth && (m - fixedPhaseStartMonth) % 12 === 0 && this.inflationRate > 0) {
+                            // Annual inflation step-up anchored to when the current fixed phase began
+                            activeFixedMonthly *= (1 + this.inflationRate / 100);
                         }
 
-                        let actualWithdrawal = 0;
                         if (balance > 0) {
                             const interestEarned = balance * monthlyRate;
                             balance += interestEarned;
+                            totalInterest += interestEarned;
+                            yearInterest += interestEarned;
 
-                            const plannedWithdrawal = isPercentMode
-                                ? balance * dynamicMonthlyFrac
-                                : currentMonthlyWithdrawal;
+                            const plannedWithdrawal = activeMode === 'percent'
+                                ? balance * activeMonthlyFrac
+                                : activeFixedMonthly;
 
-                            actualWithdrawal = Math.min(balance, plannedWithdrawal);
+                            const actualWithdrawal = Math.min(balance, plannedWithdrawal);
                             balance -= actualWithdrawal;
-
-                            if (targetHitMonth === null && targetPayout > 0 && actualWithdrawal >= targetPayout - 0.01) {
-                                targetHitMonth = m;
-                            }
-
-                            if (inHorizon) {
-                                totalInterest += interestEarned;
-                                yearInterest += interestEarned;
-                                totalWithdrawn += actualWithdrawal;
-                                yearWithdrawn += actualWithdrawal;
-                                yearMonthsCount++;
-                                monthsCompleted = m;
-                                endingMonthlyWithdrawal = actualWithdrawal;
-                            }
+                            totalWithdrawn += actualWithdrawal;
+                            yearWithdrawn += actualWithdrawal;
+                            yearMonthsCount++;
+                            monthsCompleted = m;
+                            endingMonthlyWithdrawal = actualWithdrawal;
 
                             if (balance <= 0.01) {
                                 balance = 0;
-                                if (inHorizon && depletedMonth === null) depletedMonth = m;
-                                if (inHorizon) endingMonthlyWithdrawal = 0;
+                                if (depletedMonth === null) depletedMonth = m;
+                                endingMonthlyWithdrawal = 0;
                             }
-                        } else if (inHorizon) {
+                        } else {
                             endingMonthlyWithdrawal = 0;
                         }
 
-                        if (inHorizon && (m % 12 === 0 || m === totalMonths)) {
+                        if (m % 12 === 0 || m === totalMonths) {
                             yearlyData.push({
                                 year: Math.ceil(m / 12),
                                 avgMonthlyPayout: yearMonthsCount > 0 ? yearWithdrawn / yearMonthsCount : 0,
                                 withdrawn: yearWithdrawn,
                                 interest: yearInterest,
                                 endingBalance: balance,
-                                cumulativeWithdrawn: totalWithdrawn
+                                cumulativeWithdrawn: totalWithdrawn,
+                                phaseTag: yearPhaseTag
                             });
                             yearWithdrawn = 0;
                             yearInterest = 0;
                             yearMonthsCount = 0;
-                        }
-
-                        // Stop lookahead early once past horizon and either milestone is found or balance is zero/shrinking
-                        if (!inHorizon) {
-                            if (targetHitMonth !== null || balance <= 0 || targetPayout <= 0) break;
-                            if (isPercentMode && monthlyRate <= dynamicMonthlyFrac) break;
-                            if (!isPercentMode && this.inflationRate <= 0) break;
+                            yearPhaseTag = null;
                         }
                     }
 
-                    // Restore exact balance at end of user's chosen horizon
-                    const horizonFinalBalance = yearlyData.length > 0
-                        ? yearlyData[yearlyData.length - 1].endingBalance
-                        : this.initialInvestment;
-
                     return {
-                        finalBalance: horizonFinalBalance,
+                        finalBalance: balance,
                         totalWithdrawn,
                         totalInterest,
                         monthsCompleted,
                         depletedMonth,
-                        targetHitMonth,
                         endingMonthlyWithdrawal,
                         yearlyData
                     };
@@ -1401,11 +1395,85 @@ Updated: 2026-11-25T13:00:00+00:00
                     }
                     this.withdrawalMode = mode;
                 },
-                toggleTargetMilestone() {
-                    this.showTargetMilestone = !this.showTargetMilestone;
-                    if (this.showTargetMilestone && (!this.targetMonthlyWithdrawal || this.targetMonthlyWithdrawal <= this.effectiveInitialMonthlyWithdrawal)) {
-                        const suggestedTarget = Math.max(100, Math.round((this.effectiveInitialMonthlyWithdrawal * 2) / 100) * 100);
-                        this.inputs.targetMonthlyWithdrawal = String(suggestedTarget);
+                addWithdrawalPhase() {
+                    const lastPhase = this.withdrawalPhases[this.withdrawalPhases.length - 1];
+                    const horizon = Math.max(2, Math.floor(this.withdrawalDuration));
+                    let defaultStartYear;
+
+                    if (!lastPhase) {
+                        defaultStartYear = horizon >= 15 ? 11 : Math.max(2, Math.ceil(horizon / 2));
+                    } else {
+                        const lastYr = Math.max(2, Math.round(this.parseNumber(lastPhase.startYear)));
+                        if (lastYr + 10 <= horizon) {
+                            defaultStartYear = lastYr + 10;
+                        } else if (lastYr < horizon) {
+                            defaultStartYear = Math.min(horizon, lastYr + 5);
+                        } else {
+                            defaultStartYear = lastYr + 5;
+                        }
+                    }
+
+                    const mode = lastPhase ? lastPhase.mode : this.withdrawalMode;
+                    let value;
+                    if (mode === 'percent') {
+                        const lastRate = lastPhase ? this.parseNumber(lastPhase.value) : this.withdrawalPercent;
+                        value = String(Math.round((lastRate + 1) * 100) / 100);
+                    } else {
+                        const lastAmt = lastPhase ? this.parseNumber(lastPhase.value) : this.monthlyWithdrawal;
+                        value = String(Math.max(100, Math.round((lastAmt * 1.5) / 100) * 100));
+                    }
+
+                    this.withdrawalPhases.push({
+                        id: this.nextPhaseId++,
+                        startYear: String(defaultStartYear),
+                        mode,
+                        value
+                    });
+                },
+                removeWithdrawalPhase(id) {
+                    this.withdrawalPhases = this.withdrawalPhases.filter(p => p.id !== id);
+                },
+                setPhaseMode(phase, newMode) {
+                    if (phase.mode === newMode) return;
+                    const yr = Math.max(2, Math.round(this.parseNumber(phase.startYear)));
+                    const prevRow = this.simulation.yearlyData.find(r => r.year === yr - 1);
+                    const refBalance = prevRow ? prevRow.endingBalance : this.initialInvestment;
+                    const currentVal = this.parseNumber(phase.value);
+
+                    if (newMode === 'percent') {
+                        if (refBalance > 0 && currentVal > 0) {
+                            const impliedPct = Math.round(((currentVal * 12) / refBalance) * 1000) / 10;
+                            phase.value = String(impliedPct);
+                        } else {
+                            phase.value = '4';
+                        }
+                    } else {
+                        if (refBalance > 0 && currentVal > 0) {
+                            phase.value = String(Math.round((refBalance * (currentVal / 100)) / 12));
+                        } else {
+                            phase.value = String(Math.round(this.effectiveInitialMonthlyWithdrawal));
+                        }
+                    }
+                    phase.mode = newMode;
+                },
+                formatPhaseYear(phase) {
+                    const cleaned = String(phase.startYear ?? '').replace(/[^0-9]/g, '');
+                    if (!cleaned) {
+                        phase.startYear = '2';
+                        return;
+                    }
+                    const yr = Math.max(2, parseInt(cleaned, 10) || 2);
+                    phase.startYear = String(yr);
+                },
+                formatPhaseValue(phase) {
+                    const val = phase.value;
+                    if (val === '' || val === null || val === undefined) {
+                        phase.value = '0';
+                        return;
+                    }
+                    const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
+                    if (!isNaN(parseFloat(cleaned))) {
+                        phase.value = cleaned;
                     }
                 },
                 setSustainableWithdrawal() {
@@ -1472,11 +1540,13 @@ Updated: 2026-11-25T13:00:00+00:00
                     if (rate && rate > 0) {
                         const convertedCorpus = Math.round(this.initialInvestment * rate);
                         const convertedMonthly = Math.round(this.monthlyWithdrawal * rate);
-                        const convertedTarget = Math.round(this.targetMonthlyWithdrawal * rate);
                         this.inputs.initialInvestment = String(convertedCorpus);
                         this.inputs.monthlyWithdrawal = String(convertedMonthly);
-                        if (convertedTarget > 0) {
-                            this.inputs.targetMonthlyWithdrawal = String(convertedTarget);
+
+                        for (const p of this.withdrawalPhases) {
+                            if (p.mode === 'fixed') {
+                                p.value = String(Math.round(this.parseNumber(p.value) * rate));
+                            }
                         }
                     }
                     this.selectedCurrency = targetCode;
@@ -1513,14 +1583,13 @@ Updated: 2026-11-25T13:00:00+00:00
                 resetDefaults() {
                     const defaultRate = this.currentCountryInflationAvg || this.globalDecadeAvg || 3.4;
                     this.withdrawalMode = 'fixed';
-                    this.showTargetMilestone = false;
+                    this.withdrawalPhases = [];
                     this.inputs = {
                         initialInvestment: '500000',
                         annualReturn: '7',
                         withdrawalDuration: '30',
                         monthlyWithdrawal: '2500',
                         withdrawalPercent: '4',
-                        targetMonthlyWithdrawal: '5000',
                         inflationRate: String(defaultRate)
                     };
                 },
@@ -1594,6 +1663,18 @@ Updated: 2026-11-25T13:00:00+00:00
                                     callbacks: {
                                         label: (context) => {
                                             return ` ${context.dataset.label}: ${this.currencySymbol}${Number(context.raw).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                                        },
+                                        afterBody: (items) => {
+                                            if (!items || !items.length) return [];
+                                            const idx = items[0].dataIndex;
+                                            if (idx <= 0) return [];
+                                            const row = this.simulation.yearlyData[idx - 1];
+                                            if (!row) return [];
+                                            const extra = [` Monthly Payout: ${this.currencySymbol}${Math.round(row.avgMonthlyPayout).toLocaleString('en-US')}/mo`];
+                                            if (row.phaseTag) {
+                                                extra.push(` Phase Starts: ${row.phaseTag}`);
+                                            }
+                                            return extra;
                                         }
                                     }
                                 }
