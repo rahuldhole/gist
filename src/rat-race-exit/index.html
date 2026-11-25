@@ -330,10 +330,10 @@ Updated: 2026-11-25T14:35:00+00:00
                             <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
                                 <button v-if="withdrawalMode === 'fixed'" @click="setSustainableWithdrawal" type="button"
                                     class="text-emerald-600 dark:text-emerald-400 hover:underline font-medium cursor-pointer"
-                                    title="Set to monthly interest earned so principal stays intact">
-                                    Max Perpetual: {{ currencySymbol }}{{ formatCompact(monthlyReturnAmount) }}/mo
+                                    title="Set to real inflation-adjusted monthly return so principal preserves buying power">
+                                    Inflation-Proof Max: {{ currencySymbol }}{{ formatCompact(annualReturn > inflationRate ? realMonthlyReturnAmount : monthlyReturnAmount) }}/mo
                                 </button>
-                                <div v-else class="flex items-center gap-1">
+                                <div v-else class="flex flex-wrap items-center gap-1">
                                     <button v-for="preset in swrPresets" :key="preset.rate"
                                         @click="inputs.withdrawalPercent = String(preset.rate)"
                                         type="button"
@@ -346,6 +346,9 @@ Updated: 2026-11-25T14:35:00+00:00
                                     </button>
                                     <span class="ml-1 text-[11px] text-slate-500 dark:text-slate-400">
                                         {{ currencySymbol }}{{ formatCompact(effectiveInitialMonthlyWithdrawal) }} &rarr; {{ currencySymbol }}{{ formatCompact(simulation.endingMonthlyWithdrawal) }}/mo
+                                        <span class="text-amber-600 dark:text-amber-400 font-medium" :title="'Ending monthly payout in today\'s purchasing power after ' + simulation.cumulativeInflationFactor.toFixed(2) + 'x cumulative inflation'">
+                                            ({{ currencySymbol }}{{ formatCompact(simulation.endingRealMonthlyWithdrawal) }} real)
+                                        </span>
                                     </span>
                                 </div>
 
@@ -484,21 +487,16 @@ Updated: 2026-11-25T14:35:00+00:00
                             </div>
                         </div>
 
-                        <!-- Annual Inflation (Minimal Default Row + Expandable Country Benchmarks + Phases) -->
+                        <!-- Annual Inflation (Minimal Default Row + Slider + Erosion Reality + Benchmarks + Phases) -->
                         <div class="space-y-2">
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-1.5 min-w-0">
-                                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                        {{ allPercentWithdrawal ? 'Reference Inflation' : 'Annual Inflation' }}
-                                    </span>
+                                    <label for="inflationRate" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        Annual Inflation
+                                    </label>
                                     <span v-if="inflationPhases.length > 0"
                                         class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
                                         Yr 1+
-                                    </span>
-                                    <span v-if="allPercentWithdrawal"
-                                        title="Not added onto % withdrawal — used as real-purchasing-power benchmark"
-                                        class="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
-                                        Ref Only
                                     </span>
                                     <span v-if="isLoadingInflation" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
                                 </div>
@@ -506,11 +504,18 @@ Updated: 2026-11-25T14:35:00+00:00
                                 <div class="relative w-24 shrink-0">
                                     <input v-model="inputs.inflationRate"
                                         @blur="formatOnBlur('inflationRate')"
-                                        type="text" aria-label="Inflation Rate" inputmode="decimal"
+                                        type="text" id="inflationRate" aria-label="Inflation Rate" inputmode="decimal"
                                         class="w-full pl-2.5 pr-6 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
                                 </div>
                             </div>
+
+                            <input type="range" min="0" :max="inflationSliderMax" step="0.1"
+                                :value="Math.min(inflationRate, inflationSliderMax)"
+                                :style="{ '--fill': sliderFill(inflationRate, 0, inflationSliderMax) }"
+                                @input="updateFromSlider('inflationRate', $event.target.value)"
+                                aria-label="Annual Inflation Rate Slider"
+                                class="exit-slider">
 
                             <div class="flex items-center justify-between gap-2 text-xs">
                                 <div class="flex items-center gap-2 min-w-0">
@@ -532,6 +537,18 @@ Updated: 2026-11-25T14:35:00+00:00
                                     title="Add a future inflation regime (e.g. higher near-term inflation moderating later)">
                                     <span>+ Add Phase</span>
                                 </button>
+                            </div>
+
+                            <!-- Visceral Inflation Erosion Strip -->
+                            <div v-if="simulation.cumulativeInflationFactor > 1.001"
+                                class="px-2.5 py-2 rounded-xl bg-amber-500/10 dark:bg-amber-950/35 border border-amber-500/25 text-[11px] text-amber-900 dark:text-amber-200/90 leading-snug flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                                <span>
+                                    <strong>{{ simulation.cumulativeInflationFactor.toFixed(2) }}&times; price rise</strong> over {{ withdrawalDuration }}y &bull;
+                                    <strong>-{{ Math.round(simulation.purchasingPowerLostPct) }}%</strong> buying power
+                                </span>
+                                <span class="text-amber-800/90 dark:text-amber-300/90 font-medium">
+                                    {{ currencySymbol }}100 &rarr; buys {{ currencySymbol }}{{ Math.round(100 / simulation.cumulativeInflationFactor) }}
+                                </span>
                             </div>
 
                             <!-- Dynamic Inflation Phases -->
@@ -698,15 +715,19 @@ Updated: 2026-11-25T14:35:00+00:00
                         <div class="min-w-0">
                             <p class="font-bold text-slate-900 dark:text-white truncate">{{ freedomStatus.tier }}</p>
                             <p class="text-[11px] opacity-85 truncate">
-                                <span v-if="!isDepleted && effectiveInitialMonthlyWithdrawal <= 0">100% compounding in Yr 1 &bull; Sustainable</span>
-                                <span v-else-if="!isDepleted">Yield covers {{ Math.round((monthlyReturnAmount / effectiveInitialMonthlyWithdrawal) * 100) }}% &bull; Forever sustainable</span>
+                                <span v-if="!isDepleted && simulation.realFinalBalance >= initialInvestment * 0.995">
+                                    Real wealth {{ realNetChangePct >= 0 ? '+' : '' }}{{ realNetChangePct.toFixed(0) }}% vs inflation &bull; Forever sustainable
+                                </span>
+                                <span v-else-if="!isDepleted">
+                                    Nominal {{ nominalNetChangePct >= 0 ? '+' : '' }}{{ nominalNetChangePct.toFixed(0) }}%, but {{ realNetChangePct.toFixed(0) }}% in today's {{ currencySymbol }} ({{ simulation.cumulativeInflationFactor.toFixed(1) }}&times; CPI)
+                                </span>
                                 <span v-else>Corpus lasts {{ yearsLastingFunds.toFixed(1) }} yrs ({{ Math.round(yearsLastingFunds * 12) }} mos)</span>
                             </p>
                         </div>
                     </div>
                     <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border shrink-0"
                         :class="freedomStatus.pillClass">
-                        {{ !isDepleted ? 'Free' : yearsLastingFunds.toFixed(1) + 'y' }}
+                        {{ !isDepleted ? (simulation.realFinalBalance >= initialInvestment * 0.995 ? 'Real +' : 'Eroding') : yearsLastingFunds.toFixed(1) + 'y' }}
                     </span>
                 </div>
             </section>
@@ -722,7 +743,9 @@ Updated: 2026-11-25T14:35:00+00:00
                         <div class="mt-1.5 font-display text-2xl font-bold text-slate-900 dark:text-white truncate" :title="currencySymbol + formatCurrency(initialInvestment)">
                             {{ currencySymbol }}{{ formatCompact(initialInvestment) }}
                         </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">Starting nest egg</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block" :title="'To match today\'s purchasing power in Year ' + withdrawalDuration">
+                            Needs {{ currencySymbol }}{{ formatCompact(simulation.breakEvenBalance) }} in Yr {{ withdrawalDuration }} ({{ simulation.cumulativeInflationFactor.toFixed(2) }}&times; CPI)
+                        </span>
                     </div>
 
                     <!-- Card 2: Total Withdrawn -->
@@ -732,7 +755,7 @@ Updated: 2026-11-25T14:35:00+00:00
                             {{ currencySymbol }}{{ formatCompact(actualTotalWithdrawn) }}
                         </div>
                         <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-                            Across {{ simulation.monthsCompleted }} months
+                            Worth <strong class="text-slate-700 dark:text-slate-200">{{ currencySymbol }}{{ formatCompact(simulation.totalRealWithdrawn) }}</strong> today ({{ simulation.monthsCompleted }} mos)
                         </span>
                     </div>
 
@@ -744,9 +767,15 @@ Updated: 2026-11-25T14:35:00+00:00
                             :title="currencySymbol + formatCurrency(finalBalance)">
                             {{ currencySymbol }}{{ formatCompact(finalBalance) }}
                         </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-                            {{ finalBalance >= initialInvestment ? '+' : '' }}{{ initialInvestment > 0 ? ((finalBalance - initialInvestment) / initialInvestment * 100).toFixed(1) : 0 }}% net change
-                        </span>
+                        <div class="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs">
+                            <span class="font-semibold"
+                                :class="simulation.realFinalBalance >= initialInvestment * 0.995 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
+                                Today's {{ currencySymbol }}: {{ currencySymbol }}{{ formatCompact(simulation.realFinalBalance) }} ({{ realNetChangePct >= 0 ? '+' : '' }}{{ realNetChangePct.toFixed(1) }}% real)
+                            </span>
+                            <span class="text-[11px] text-slate-400">
+                                {{ nominalNetChangePct >= 0 ? '+' : '' }}{{ nominalNetChangePct.toFixed(0) }}% nom
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -760,21 +789,37 @@ Updated: 2026-11-25T14:35:00+00:00
                                     {{ withdrawalDuration }} Years Horizon
                                 </span>
                             </div>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Remaining portfolio trajectory vs. cumulative cash drawn to live free</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Nominal trajectory vs. real purchasing power (in today's {{ currencySymbol }}) &amp; cumulative cash drawn</p>
                         </div>
 
-                        <!-- View Switcher -->
-                        <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
-                            <button @click="activeTab = 'chart'"
-                                :class="activeTab === 'chart' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
-                                class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all">
-                                Growth Chart
-                            </button>
-                            <button @click="activeTab = 'table'"
-                                :class="activeTab === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
-                                class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all">
-                                Yearly Schedule
-                            </button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Nominal / Real Schedule Toggle -->
+                            <div v-if="activeTab === 'table'" class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
+                                <button @click="valueDisplayMode = 'nominal'" type="button"
+                                    :class="valueDisplayMode === 'nominal' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                                    class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer">
+                                    Nominal
+                                </button>
+                                <button @click="valueDisplayMode = 'real'" type="button"
+                                    :class="valueDisplayMode === 'real' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                                    class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer">
+                                    Today's {{ currencySymbol }} (Real)
+                                </button>
+                            </div>
+
+                            <!-- View Switcher -->
+                            <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
+                                <button @click="activeTab = 'chart'"
+                                    :class="activeTab === 'chart' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                                    class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                                    Growth Chart
+                                </button>
+                                <button @click="activeTab = 'table'"
+                                    :class="activeTab === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'"
+                                    class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                                    Yearly Schedule
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -812,17 +857,28 @@ Updated: 2026-11-25T14:35:00+00:00
                                             </span>
                                         </span>
                                     </td>
-                                    <td class="py-2.5 px-4 text-right text-slate-700 dark:text-slate-200 font-medium" :title="currencySymbol + formatCurrency(row.avgMonthlyPayout, 0) + '/mo'">
-                                        {{ currencySymbol }}{{ formatCompact(row.avgMonthlyPayout) }}/mo
+                                    <td class="py-2.5 px-4 text-right text-slate-700 dark:text-slate-200 font-medium"
+                                        :title="'Nominal: ' + currencySymbol + formatCurrency(row.avgMonthlyPayout, 0) + '/mo | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realAvgMonthlyPayout, 0) + '/mo'">
+                                        <div>{{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realAvgMonthlyPayout : row.avgMonthlyPayout) }}/mo</div>
+                                        <div v-if="valueDisplayMode === 'nominal' && row.inflationFactor > 1.01" class="text-[10px] text-amber-600 dark:text-amber-400 font-normal">
+                                            Today's {{ currencySymbol }}: {{ currencySymbol }}{{ formatCompact(row.realAvgMonthlyPayout) }}
+                                        </div>
                                     </td>
-                                    <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium" :title="currencySymbol + formatCurrency(row.withdrawn, 0)">
-                                        {{ currencySymbol }}{{ formatCompact(row.withdrawn) }}
+                                    <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium"
+                                        :title="'Nominal: ' + currencySymbol + formatCurrency(row.withdrawn, 0) + ' | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realWithdrawn, 0)">
+                                        {{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realWithdrawn : row.withdrawn) }}
                                     </td>
-                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400" :title="'+' + currencySymbol + formatCurrency(row.interest, 0)">
-                                        +{{ currencySymbol }}{{ formatCompact(row.interest) }}
+                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400"
+                                        :title="'+' + currencySymbol + formatCurrency(valueDisplayMode === 'real' ? row.realInterest : row.interest, 0)">
+                                        +{{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realInterest : row.interest) }}
                                     </td>
-                                    <td class="py-2.5 px-4 text-right font-semibold" :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'" :title="currencySymbol + formatCurrency(row.endingBalance, 0)">
-                                        {{ currencySymbol }}{{ formatCompact(row.endingBalance) }}
+                                    <td class="py-2.5 px-4 text-right font-semibold"
+                                        :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'"
+                                        :title="'Nominal: ' + currencySymbol + formatCurrency(row.endingBalance, 0) + ' | Today\'s ' + currencySymbol + ': ' + currencySymbol + formatCurrency(row.realEndingBalance, 0)">
+                                        <div>{{ currencySymbol }}{{ formatCompact(valueDisplayMode === 'real' ? row.realEndingBalance : row.endingBalance) }}</div>
+                                        <div v-if="valueDisplayMode === 'nominal' && row.inflationFactor > 1.01 && row.endingBalance > 0" class="text-[10px] text-amber-600 dark:text-amber-400 font-normal">
+                                            Today's {{ currencySymbol }}: {{ currencySymbol }}{{ formatCompact(row.realEndingBalance) }}
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -832,7 +888,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     <!-- Total Wealth Generated Footer -->
                     <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                         <span>Total Interest Generated: <strong class="text-emerald-600 dark:text-emerald-400">{{ currencySymbol }}{{ formatCompact(simulation.totalInterest) }}</strong></span>
-                        <span>Total Freedom Harvest (Withdrawn + Final): <strong class="text-slate-800 dark:text-slate-200">{{ currencySymbol }}{{ formatCompact(actualTotalWithdrawn + finalBalance) }}</strong></span>
+                        <span>Real Purchasing Power (Withdrawn + Final): <strong class="text-amber-600 dark:text-amber-400">{{ currencySymbol }}{{ formatCompact(simulation.totalRealWithdrawn + simulation.realFinalBalance) }}</strong> <span class="text-slate-400">({{ currencySymbol }}{{ formatCompact(actualTotalWithdrawn + finalBalance) }} nom)</span></span>
                     </div>
                 </div>
             </section>
@@ -950,6 +1006,7 @@ Updated: 2026-11-25T14:35:00+00:00
                     themePreference: 'system', // 'light' | 'dark' | 'system'
                     systemPrefersDark: false,
                     activeTab: 'chart',
+                    valueDisplayMode: 'nominal', // 'nominal' | 'real'
                     selectedCurrency: initialCurr.code,
                     currencyAutoDetected,
                     currencies,
@@ -1171,36 +1228,49 @@ Updated: 2026-11-25T14:35:00+00:00
                 inflationRate() {
                     return this.parseNumber(this.inputs.inflationRate);
                 },
+                inflationSliderMax() {
+                    return this.inflationRate <= 15 ? 15 : Math.ceil(this.inflationRate / 5) * 5;
+                },
                 // Rat Race Escape Freedom Status
                 freedomStatus() {
                     const monthlyPassive = this.monthlyReturnAmount;
                     const monthlyDraw = this.effectiveInitialMonthlyWithdrawal;
                     const depleted = this.isDepleted;
                     const years = this.yearsLastingFunds;
-                    const netGrowth = this.finalBalance >= this.initialInvestment;
+                    const nominalGrowth = this.finalBalance >= this.initialInvestment;
+                    const realGrowth = this.simulation.realFinalBalance >= this.initialInvestment * 0.995;
 
-                    if (!depleted && netGrowth) {
+                    if (!depleted && realGrowth) {
                         let growMsg;
                         if (this.withdrawalPhases.length > 0) {
-                            growMsg = `Across ${this.withdrawalPhases.length + 1} withdrawal phases, your income evolves from ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo to ${this.currencySymbol}${this.formatCompact(this.simulation.endingMonthlyWithdrawal)}/mo while growing principal.`;
+                            growMsg = `Across ${this.withdrawalPhases.length + 1} withdrawal phases, your real income reaches ${this.currencySymbol}${this.formatCompact(this.simulation.endingRealMonthlyWithdrawal)}/mo in today's money while growing purchasing power (${this.realNetChangePct >= 0 ? '+' : ''}${this.realNetChangePct.toFixed(1)}% real, ${this.currencySymbol}${this.formatCompact(this.simulation.realFinalBalance)} real / ${this.currencySymbol}${this.formatCompact(this.finalBalance)} nominal).`;
                         } else if (this.withdrawalMode === 'percent') {
-                            growMsg = `Withdrawing ${this.withdrawalPercent}%/yr scales your income from ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo up to ${this.currencySymbol}${this.formatCompact(this.simulation.endingMonthlyWithdrawal)}/mo while growing principal.`;
+                            growMsg = `Withdrawing ${this.withdrawalPercent}%/yr grows your real income to ${this.currencySymbol}${this.formatCompact(this.simulation.endingRealMonthlyWithdrawal)}/mo in today's money while beating inflation (${this.realNetChangePct >= 0 ? '+' : ''}${this.realNetChangePct.toFixed(1)}% real, ${this.currencySymbol}${this.formatCompact(this.simulation.realFinalBalance)} real / ${this.currencySymbol}${this.formatCompact(this.finalBalance)} nominal).`;
                         } else {
-                            growMsg = `Your monthly return of ${this.currencySymbol}${this.formatCompact(monthlyPassive)} outpaces your draw of ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo — capital compounds forever.`;
+                            growMsg = `Your monthly return of ${this.currencySymbol}${this.formatCompact(monthlyPassive)} outpaces your inflation-adjusted draw of ${this.currencySymbol}${this.formatCompact(monthlyDraw)}/mo — real wealth grows ${this.realNetChangePct >= 0 ? '+' : ''}${this.realNetChangePct.toFixed(1)}% (${this.currencySymbol}${this.formatCompact(this.simulation.realFinalBalance)} in today's money).`;
                         }
                         return {
                             tier: 'Rat Race Crushed 🏆',
-                            title: 'Complete Financial Nirvana (Forever Free)',
+                            title: 'Real Wealth Compounding',
                             description: growMsg,
                             badgeIcon: '🚀',
                             colorClass: 'bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-900 dark:text-emerald-200',
                             pillClass: 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30'
                         };
+                    } else if (!depleted && nominalGrowth && !realGrowth) {
+                        return {
+                            tier: 'Purchasing Power Eroding 📉',
+                            title: 'Nominal Gain, Real Inflation Loss',
+                            description: `Money illusion: balance grows on paper to ${this.currencySymbol}${this.formatCompact(this.finalBalance)}, but ${this.simulation.cumulativeInflationFactor.toFixed(2)}× inflation reduces its real buying power to ${this.currencySymbol}${this.formatCompact(this.simulation.realFinalBalance)} (${this.realNetChangePct.toFixed(1)}% in today's money).`,
+                            badgeIcon: '📉',
+                            colorClass: 'bg-amber-500/10 dark:bg-amber-950/40 border-amber-500/30 text-amber-900 dark:text-amber-200',
+                            pillClass: 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30'
+                        };
                     } else if (!depleted) {
                         return {
                             tier: 'Rat Race Escaped 🏁',
-                            title: 'Sustainable Independence',
-                            description: `Your corpus survives all ${this.withdrawalDuration} years, ending with ${this.currencySymbol}${this.formatCompact(this.finalBalance)}. You are fully insulated from the corporate treadmill.`,
+                            title: 'Corpus Survives, Real Value Drawn Down',
+                            description: `Your corpus survives all ${this.withdrawalDuration} years, ending at ${this.currencySymbol}${this.formatCompact(this.finalBalance)} nominal (${this.currencySymbol}${this.formatCompact(this.simulation.realFinalBalance)} in today's purchasing power).`,
                             badgeIcon: '🏝️',
                             colorClass: 'bg-teal-500/10 dark:bg-teal-950/40 border-teal-500/30 text-teal-900 dark:text-teal-200',
                             pillClass: 'bg-teal-500/20 text-teal-800 dark:text-teal-300 border-teal-500/30'
@@ -1260,6 +1330,10 @@ Updated: 2026-11-25T14:35:00+00:00
                 monthlyReturnAmount() {
                     return (this.monthlyReturn / 100) * this.initialInvestment;
                 },
+                realMonthlyReturnAmount() {
+                    const netRealAnnualPct = Math.max(0, this.annualReturn - this.inflationRate);
+                    return (netRealAnnualPct / 12 / 100) * this.initialInvestment;
+                },
                 monthlyWithdrawalPercentage() {
                     if (this.initialInvestment <= 0) return 0;
                     return (this.monthlyWithdrawal / this.initialInvestment) * 100;
@@ -1302,8 +1376,10 @@ Updated: 2026-11-25T14:35:00+00:00
                     let activeMonthlyFrac = (this.withdrawalPercent / 100) / 12;
                     let activeFixedMonthly = this.monthlyWithdrawal;
                     let fixedPhaseStartMonth = 1;
+                    let cumulativeInflationFactor = 1;
 
                     let totalWithdrawn = 0;
+                    let totalRealWithdrawn = 0;
                     let totalInterest = 0;
                     let monthsCompleted = 0;
                     let depletedMonth = null;
@@ -1313,6 +1389,7 @@ Updated: 2026-11-25T14:35:00+00:00
 
                     const yearlyData = [];
                     let yearWithdrawn = 0;
+                    let yearRealWithdrawn = 0;
                     let yearInterest = 0;
                     let yearMonthsCount = 0;
                     let yearPhaseTags = [];
@@ -1328,6 +1405,10 @@ Updated: 2026-11-25T14:35:00+00:00
                             const ip = inflationPhaseByMonth.get(m);
                             activeInflationRate = ip.value;
                             yearPhaseTags.push({ label: `Inf ${ip.value}%`, kind: 'inflation' });
+                        }
+
+                        if (activeInflationRate > 0) {
+                            cumulativeInflationFactor *= Math.pow(1 + activeInflationRate / 100, 1 / 12);
                         }
 
                         if (withdrawalPhaseByMonth.has(m)) {
@@ -1357,9 +1438,12 @@ Updated: 2026-11-25T14:35:00+00:00
                                 : activeFixedMonthly;
 
                             const actualWithdrawal = Math.min(balance, plannedWithdrawal);
+                            const realWithdrawal = actualWithdrawal / cumulativeInflationFactor;
                             balance -= actualWithdrawal;
                             totalWithdrawn += actualWithdrawal;
+                            totalRealWithdrawn += realWithdrawal;
                             yearWithdrawn += actualWithdrawal;
+                            yearRealWithdrawn += realWithdrawal;
                             yearMonthsCount++;
                             monthsCompleted = m;
                             endingMonthlyWithdrawal = actualWithdrawal;
@@ -1376,15 +1460,23 @@ Updated: 2026-11-25T14:35:00+00:00
                         if (m % 12 === 0 || m === totalMonths) {
                             yearlyData.push({
                                 year: Math.ceil(m / 12),
+                                inflationFactor: cumulativeInflationFactor,
                                 avgMonthlyPayout: yearMonthsCount > 0 ? yearWithdrawn / yearMonthsCount : 0,
+                                realAvgMonthlyPayout: yearMonthsCount > 0 ? yearRealWithdrawn / yearMonthsCount : 0,
                                 withdrawn: yearWithdrawn,
+                                realWithdrawn: yearRealWithdrawn,
                                 interest: yearInterest,
+                                realInterest: yearInterest / cumulativeInflationFactor,
                                 endingBalance: balance,
+                                realEndingBalance: balance / cumulativeInflationFactor,
                                 cumulativeWithdrawn: totalWithdrawn,
+                                realCumulativeWithdrawn: totalRealWithdrawn,
+                                breakEvenBalance: this.initialInvestment * cumulativeInflationFactor,
                                 phaseTags: yearPhaseTags,
                                 phaseTag: yearPhaseTags.length ? yearPhaseTags.map(t => t.label).join(' · ') : null
                             });
                             yearWithdrawn = 0;
+                            yearRealWithdrawn = 0;
                             yearInterest = 0;
                             yearMonthsCount = 0;
                             yearPhaseTags = [];
@@ -1393,16 +1485,34 @@ Updated: 2026-11-25T14:35:00+00:00
 
                     return {
                         finalBalance: balance,
+                        realFinalBalance: balance / cumulativeInflationFactor,
+                        breakEvenBalance: this.initialInvestment * cumulativeInflationFactor,
+                        cumulativeInflationFactor,
+                        purchasingPowerRetainedPct: (1 / cumulativeInflationFactor) * 100,
+                        purchasingPowerLostPct: (1 - 1 / cumulativeInflationFactor) * 100,
                         totalWithdrawn,
+                        totalRealWithdrawn,
                         totalInterest,
                         monthsCompleted,
                         depletedMonth,
                         endingMonthlyWithdrawal,
+                        endingRealMonthlyWithdrawal: endingMonthlyWithdrawal / cumulativeInflationFactor,
                         yearlyData
                     };
                 },
                 finalBalance() {
                     return this.simulation.finalBalance;
+                },
+                realFinalBalance() {
+                    return this.simulation.realFinalBalance;
+                },
+                nominalNetChangePct() {
+                    if (this.initialInvestment <= 0) return 0;
+                    return ((this.finalBalance - this.initialInvestment) / this.initialInvestment) * 100;
+                },
+                realNetChangePct() {
+                    if (this.initialInvestment <= 0) return 0;
+                    return ((this.simulation.realFinalBalance - this.initialInvestment) / this.initialInvestment) * 100;
                 },
                 actualTotalWithdrawn() {
                     return this.simulation.totalWithdrawn;
@@ -1651,8 +1761,10 @@ Updated: 2026-11-25T14:35:00+00:00
                     }
                 },
                 setSustainableWithdrawal() {
-                    const maxMonthly = Math.floor(this.monthlyReturnAmount);
-                    this.inputs.monthlyWithdrawal = String(maxMonthly);
+                    const target = this.annualReturn > this.inflationRate
+                        ? this.realMonthlyReturnAmount
+                        : this.monthlyReturnAmount;
+                    this.inputs.monthlyWithdrawal = String(Math.floor(target));
                 },
                 setMaxDuration() {
                     this.inputs.withdrawalDuration = String(Math.max(1, Math.floor(this.yearsLastingFunds)));
@@ -1789,10 +1901,21 @@ Updated: 2026-11-25T14:35:00+00:00
                             labels: [],
                             datasets: [
                                 {
-                                    label: 'Remaining Balance',
+                                    label: 'Nominal Balance',
                                     data: [],
                                     borderColor: '#10b981',
                                     backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                    borderWidth: 2.5,
+                                    fill: true,
+                                    tension: 0.35,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 5
+                                },
+                                {
+                                    label: "Real Balance (Today's Buying Power)",
+                                    data: [],
+                                    borderColor: '#f59e0b',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.10)',
                                     borderWidth: 2.5,
                                     fill: true,
                                     tension: 0.35,
@@ -1846,7 +1969,10 @@ Updated: 2026-11-25T14:35:00+00:00
                                             if (idx <= 0) return [];
                                             const row = this.simulation.yearlyData[idx - 1];
                                             if (!row) return [];
-                                            const extra = [` Monthly Payout: ${this.currencySymbol}${Math.round(row.avgMonthlyPayout).toLocaleString('en-US')}/mo`];
+                                            const extra = [
+                                                ` Monthly Payout: ${this.currencySymbol}${Math.round(row.avgMonthlyPayout).toLocaleString('en-US')}/mo (${this.currencySymbol}${Math.round(row.realAvgMonthlyPayout).toLocaleString('en-US')} in today's ${this.currencySymbol})`,
+                                                ` Cumulative Inflation: ${row.inflationFactor.toFixed(2)}× prices (-${Math.round((1 - 1 / row.inflationFactor) * 100)}% buying power)`
+                                            ];
                                             if (row.phaseTag) {
                                                 extra.push(` Phase Starts: ${row.phaseTag}`);
                                             }
@@ -1879,6 +2005,7 @@ Updated: 2026-11-25T14:35:00+00:00
 
                     const labels = ['Start', ...this.simulation.yearlyData.map(d => `Yr ${d.year}`)];
                     const balances = [this.initialInvestment, ...this.simulation.yearlyData.map(d => Math.round(d.endingBalance))];
+                    const realBalances = [this.initialInvestment, ...this.simulation.yearlyData.map(d => Math.round(d.realEndingBalance))];
                     const withdrawn = [0, ...this.simulation.yearlyData.map(d => Math.round(d.cumulativeWithdrawn))];
 
                     const textColor = this.isDarkMode ? '#94a3b8' : '#64748b';
@@ -1886,7 +2013,8 @@ Updated: 2026-11-25T14:35:00+00:00
 
                     chartInstance.data.labels = labels;
                     chartInstance.data.datasets[0].data = balances;
-                    chartInstance.data.datasets[1].data = withdrawn;
+                    chartInstance.data.datasets[1].data = realBalances;
+                    chartInstance.data.datasets[2].data = withdrawn;
 
                     chartInstance.options.plugins.legend.labels.color = textColor;
                     chartInstance.options.scales.x.ticks.color = textColor;
