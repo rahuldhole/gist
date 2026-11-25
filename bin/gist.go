@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"net/url"
@@ -22,13 +23,14 @@ import (
 // ── Configuration ─────────────────────────────────────────────────────────────
 
 const (
-	srcDir     = "src"
-	distDir    = "dist"
-	headerFile = "helpers/header.html"
-	footerFile = "helpers/footer.html"
-	pwaFile    = "helpers/pwa.html"
-	maxWorkers = 10
-	baseURL    = "https://gist.rahuldhole.com/"
+	srcDir        = "src"
+	distDir       = "dist"
+	headerFile    = "helpers/header.html"
+	footerFile    = "helpers/footer.html"
+	pwaFile       = "helpers/pwa.html"
+	redirectsFile = "src/redirects.json"
+	maxWorkers    = 10
+	baseURL       = "https://gist.rahuldhole.com/"
 )
 
 // Pre-compiled regexes for performance
@@ -446,6 +448,101 @@ func generateRSSFeed(apps []AppMeta) []byte {
 	return b.Bytes()
 }
 
+// ── Static Redirects ─────────────────────────────────────────────────────────
+
+func generateRedirectHTML(targetHref, canonicalURL string) []byte {
+	hrefEsc := html.EscapeString(targetHref)
+	canonEsc := html.EscapeString(canonicalURL)
+	targetJSON, _ := json.Marshal(targetHref)
+
+	var b bytes.Buffer
+	b.WriteString("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n")
+	b.WriteString("  <meta charset=\"UTF-8\">\n")
+	b.WriteString("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n")
+	b.WriteString("  <meta name=\"robots\" content=\"noindex, follow\">\n")
+	fmt.Fprintf(&b, "  <link rel=\"canonical\" href=\"%s\">\n", canonEsc)
+	fmt.Fprintf(&b, "  <meta http-equiv=\"refresh\" content=\"0; url=%s\">\n", hrefEsc)
+	b.WriteString("  <title>Redirecting…</title>\n")
+	b.WriteString("  <style>body{font-family:system-ui,-apple-system,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#f8fafc;color:#334155}@media(prefers-color-scheme:dark){body{background:#020617;color:#cbd5e1}a{color:#34d399}}a{color:#059669;font-weight:600}</style>\n")
+	fmt.Fprintf(&b, "  <script>window.location.replace(%s + window.location.search + window.location.hash);</script>\n", string(targetJSON))
+	b.WriteString("</head>\n<body>\n")
+	fmt.Fprintf(&b, "  <p>Redirecting to <a href=\"%s\">%s</a>…</p>\n", hrefEsc, hrefEsc)
+	b.WriteString("</body>\n</html>\n")
+	return b.Bytes()
+}
+
+func processRedirects() error {
+	raw, err := os.ReadFile(redirectsFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	var redirects map[string]string
+	if err := json.Unmarshal(raw, &redirects); err != nil {
+		logError("  Failed to parse %s: %v", redirectsFile, err)
+		return err
+	}
+
+	keys := make([]string, 0, len(redirects))
+	for k := range redirects {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, rawFrom := range keys {
+		rawTo := strings.TrimSpace(redirects[rawFrom])
+		fromSlug := strings.Trim(strings.TrimSpace(rawFrom), "/")
+		if fromSlug == "" || strings.Contains(fromSlug, "..") {
+			logWarn("  Skipped invalid redirect source: %q", rawFrom)
+			continue
+		}
+		if rawTo == "" {
+			logWarn("  Skipped empty redirect target for: %s", fromSlug)
+			continue
+		}
+
+		// Protect active app directories in src/ from being overwritten by a redirect
+		if info, err := os.Stat(filepath.Join(srcDir, fromSlug)); err == nil && info.IsDir() {
+			logWarn("  Skipped redirect %q: active app exists in %s/", fromSlug, srcDir)
+			continue
+		}
+
+		var targetHref, canonicalURL string
+		if strings.HasPrefix(rawTo, "http://") || strings.HasPrefix(rawTo, "https://") {
+			targetHref = rawTo
+			canonicalURL = rawTo
+		} else {
+			toSlug := strings.Trim(rawTo, "/")
+			if toSlug == "" {
+				targetHref = "/"
+				canonicalURL = baseURL
+			} else if filepath.Ext(toSlug) != "" {
+				targetHref = "/" + toSlug
+				canonicalURL = baseURL + toSlug
+			} else {
+				targetHref = "/" + toSlug + "/"
+				canonicalURL = baseURL + toSlug + "/"
+			}
+		}
+
+		outPath := filepath.Join(distDir, filepath.FromSlash(fromSlug), "index.html")
+		if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+			logError("  Failed to create redirect dir for %s: %v", fromSlug, err)
+			continue
+		}
+		if err := os.WriteFile(outPath, generateRedirectHTML(targetHref, canonicalURL), 0644); err != nil {
+			logError("  Failed to write redirect %s: %v", outPath, err)
+			continue
+		}
+		logSuccess("  Redirect: /%s/ -> %s", fromSlug, targetHref)
+	}
+
+	return nil
+}
+
 // ── Command Implementation ───────────────────────────────────────────────────
 
 func cmdBuild() {
@@ -536,6 +633,9 @@ func cmdBuild() {
 	} else {
 		logError("  Failed to read index.html for hydration")
 	}
+
+	// Phase 2.5: Backward-Compatible Static Redirects
+	_ = processRedirects()
 
 	// Phase 3: SEO Assets
 	sitemapData := generateSitemap(apps)

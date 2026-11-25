@@ -1,13 +1,13 @@
 <!-- APP-META
-Title: SWP Calculator & Freedom Engine
-Description: Systematic Withdrawal Plan (SWP) calculator and corpus projection simulator with inflation adjustment, open-source inflation data SDK, multi-currency support, and Rat Race Exit metrics.
+Title: Rat Race Exit
+Description: Plan your financial freedom and multi-phase wealth drawdown with live global inflation benchmarks, phased returns & withdrawals, and instant FX geo-arbitrage conversion.
 Category: Finance
-Icon: fa-solid fa-chart-line
+Icon: fa-solid fa-rocket
 Image: https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80&w=800
 Status: published
 Disable-Footer: false
 Disable-PWA: false
-Updated: 2026-11-25T13:00:00+00:00
+Updated: 2026-11-25T14:35:00+00:00
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -15,9 +15,9 @@ Updated: 2026-11-25T13:00:00+00:00
 <head>
     <meta charset="UTF-8">
     <meta name="description"
-        content="SWP Calculator & Rat Race Escape Simulator: Calculate your systematic withdrawal plan, protect against inflation with live global benchmarks, and achieve financial freedom.">
+        content="Rat Race Exit: Multi-phase financial freedom and wealth drawdown planner with global inflation benchmarks, phased returns, and live FX conversion.">
     <meta name="keywords"
-        content="swp, calculator, simulator, systematic withdrawal plan, exit rat race, financial freedom, fire, investment, finance, inflation">
+        content="rat race exit, financial freedom, fire, wealth drawdown, retirement planner, swp, systematic withdrawal plan, inflation, geo arbitrage, finance">
     <meta name="color-scheme" content="dark light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -26,7 +26,7 @@ Updated: 2026-11-25T13:00:00+00:00
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
-    <title>SWP Calculator &bull; Exit The Rat Race</title>
+    <title>Rat Race Exit &bull; Financial Freedom Planner</title>
     
     <!-- Tailwind CSS with Dark Mode Class Configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -57,7 +57,7 @@ Updated: 2026-11-25T13:00:00+00:00
 
     <style>
         /* Modern Minimalist Range Slider with Active Fill Progress */
-        input[type="range"].swp-slider {
+        input[type="range"].exit-slider {
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
@@ -70,17 +70,17 @@ Updated: 2026-11-25T13:00:00+00:00
             transition: height 0.15s ease;
         }
 
-        .dark input[type="range"].swp-slider {
+        .dark input[type="range"].exit-slider {
             background: linear-gradient(to right, #10b981 0%, #10b981 var(--fill, 0%), #1e293b var(--fill, 0%), #1e293b 100%);
         }
 
-        input[type="range"].swp-slider::-webkit-slider-runnable-track {
+        input[type="range"].exit-slider::-webkit-slider-runnable-track {
             height: 4px;
             border-radius: 999px;
             background: transparent;
         }
 
-        input[type="range"].swp-slider::-webkit-slider-thumb {
+        input[type="range"].exit-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
             height: 15px;
@@ -93,27 +93,27 @@ Updated: 2026-11-25T13:00:00+00:00
             transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
         }
 
-        .dark input[type="range"].swp-slider::-webkit-slider-thumb {
+        .dark input[type="range"].exit-slider::-webkit-slider-thumb {
             background: #0f172a;
             border-color: #10b981;
             box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
         }
 
-        input[type="range"].swp-slider:hover::-webkit-slider-thumb,
-        input[type="range"].swp-slider:focus-visible::-webkit-slider-thumb {
+        input[type="range"].exit-slider:hover::-webkit-slider-thumb,
+        input[type="range"].exit-slider:focus-visible::-webkit-slider-thumb {
             transform: scale(1.18);
             background: #10b981;
             box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
         }
 
         /* Firefox Support */
-        input[type="range"].swp-slider::-moz-range-track {
+        input[type="range"].exit-slider::-moz-range-track {
             height: 4px;
             border-radius: 999px;
             background: transparent;
         }
 
-        input[type="range"].swp-slider::-moz-range-thumb {
+        input[type="range"].exit-slider::-moz-range-thumb {
             height: 15px;
             width: 15px;
             border-radius: 50%;
@@ -123,7 +123,7 @@ Updated: 2026-11-25T13:00:00+00:00
             transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
         }
 
-        .dark input[type="range"].swp-slider::-moz-range-thumb {
+        .dark input[type="range"].exit-slider::-moz-range-thumb {
             background: #0f172a;
         }
 
@@ -158,12 +158,12 @@ Updated: 2026-11-25T13:00:00+00:00
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">SWP Calculator</h1>
+                        <h1 class="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">Rat Race Exit</h1>
                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-gradient-to-r from-amber-500/15 to-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                            Rat Race Exit
+                            Freedom Engine
                         </span>
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Systematic Withdrawal Plan &bull; Your Roadmap to Financial Freedom</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Multi-Phase Financial Independence &amp; Drawdown Planner</p>
                 </div>
             </div>
 
@@ -221,7 +221,7 @@ Updated: 2026-11-25T13:00:00+00:00
             <section class="lg:col-span-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col justify-between space-y-5">
                 <div>
                     <div class="flex items-center justify-between mb-5">
-                        <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white">Plan Parameters</h2>
+                        <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white">Exit Blueprint</h2>
                         <span class="text-[11px] font-medium text-slate-400">
                             {{ activeCurrency.region }} &middot; {{ selectedCurrency }}
                         </span>
@@ -247,7 +247,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 :style="{ '--fill': (investmentSliderPos / 10) + '%' }"
                                 @input="onInvestmentSlider($event.target.value)"
                                 aria-label="Initial Investment Slider"
-                                class="swp-slider">
+                                class="exit-slider">
                         </div>
 
                         <!-- Monthly Withdrawal (Clean Mode Switch + Dynamic Multi-Layer Phases) -->
@@ -318,13 +318,13 @@ Updated: 2026-11-25T13:00:00+00:00
                                 :style="{ '--fill': (withdrawalSliderPos / 10) + '%' }"
                                 @input="onWithdrawalSlider($event.target.value)"
                                 aria-label="Monthly Withdrawal Slider"
-                                class="swp-slider">
+                                class="exit-slider">
                             <input v-else type="range" min="0.5" :max="percentWithdrawalSliderMax" step="0.25"
                                 :value="Math.min(withdrawalPercent, percentWithdrawalSliderMax)"
                                 :style="{ '--fill': sliderFill(withdrawalPercent, 0.5, percentWithdrawalSliderMax) }"
                                 @input="updateFromSlider('withdrawalPercent', $event.target.value)"
                                 aria-label="Annual Percentage Withdrawal Slider"
-                                class="swp-slider">
+                                class="exit-slider">
 
                             <!-- Single Concise Sub-line + Progressive Actions -->
                             <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
@@ -440,7 +440,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 :style="{ '--fill': sliderFill(annualReturn, 0, returnSliderMax) }"
                                 @input="updateFromSlider('annualReturn', $event.target.value)"
                                 aria-label="Expected Annual Return Slider"
-                                class="swp-slider">
+                                class="exit-slider">
                             <div class="flex items-center justify-end">
                                 <button @click="addReturnPhase" type="button"
                                     class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 cursor-pointer"
@@ -684,7 +684,7 @@ Updated: 2026-11-25T13:00:00+00:00
                                 :style="{ '--fill': sliderFill(withdrawalDuration, 1, durationSliderMax) }"
                                 @input="updateFromSlider('withdrawalDuration', $event.target.value)"
                                 aria-label="Time Horizon Slider"
-                                class="swp-slider">
+                                class="exit-slider">
                         </div>
                     </div>
                 </div>
@@ -755,7 +755,7 @@ Updated: 2026-11-25T13:00:00+00:00
                     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white">Corpus Projection</h3>
+                                <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white">Freedom Projection</h3>
                                 <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
                                     {{ withdrawalDuration }} Years Horizon
                                 </span>
@@ -780,7 +780,7 @@ Updated: 2026-11-25T13:00:00+00:00
 
                     <!-- Chart View -->
                     <div v-show="activeTab === 'chart'" class="relative w-full h-72 sm:h-80">
-                        <canvas id="swpChart"></canvas>
+                        <canvas id="exitChart"></canvas>
                     </div>
 
                     <!-- Yearly Schedule Table View -->
@@ -930,7 +930,7 @@ Updated: 2026-11-25T13:00:00+00:00
                 let initialCurrency = null;
                 let currencyAutoDetected = false;
                 try {
-                    const savedCurrency = localStorage.getItem('swp_preferred_currency');
+                    const savedCurrency = localStorage.getItem('rre_preferred_currency') || localStorage.getItem('swp_preferred_currency');
                     if (savedCurrency && currencies.some(c => c.code === savedCurrency)) {
                         initialCurrency = savedCurrency;
                     }
@@ -1429,7 +1429,7 @@ Updated: 2026-11-25T13:00:00+00:00
                 selectedCurrency(newVal) {
                     this.currencyAutoDetected = false;
                     try {
-                        localStorage.setItem('swp_preferred_currency', newVal);
+                        localStorage.setItem('rre_preferred_currency', newVal);
                     } catch (e) {}
                     this.updateChart();
                     this.onCurrencyChanged(newVal);
@@ -1779,7 +1779,7 @@ Updated: 2026-11-25T13:00:00+00:00
                     this.applyTheme();
                 },
                 initChart() {
-                    const ctx = document.getElementById('swpChart');
+                    const ctx = document.getElementById('exitChart');
                     if (!ctx) return;
 
                     chartInstance = new Chart(ctx, {

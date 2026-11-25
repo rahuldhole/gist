@@ -4,6 +4,7 @@ A zero-dependency directory of single-page HTML apps.
 
 ## Structure
 - `src/`: Source apps. Individual folders containing `index.html`.
+- `src/redirects.json`: Maps old slugs to new paths for backward-compatible static redirects.
 - `helpers/`: Shared `header.html` and `footer.html`.
 - `dist/`: Generated build output.
 
