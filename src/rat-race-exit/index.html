@@ -357,9 +357,10 @@ Updated: 2026-11-25T16:30:00+00:00
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
                                     Target: <strong>{{ investmentCurrencySymbol }}{{ formatCompact(countdownTargetInInv, investmentCurrency) }}</strong>
-                                    ({{ countdownTargetLabel }}) growing at {{ effectiveLocalRealReturn.toFixed(1) }}%/yr real return<span v-if="currentAge > 0 && countdownResult.reachable && !countdownResult.alreadyFunded"> &bull; Exit at Age <strong>{{ (currentAge + countdownResult.years).toFixed(1) }}</strong></span>.
+                                    ({{ countdownTargetLabel }}) compounding at {{ effectiveLocalRealReturn.toFixed(1) }}%/yr real return<span v-if="currentAge > 0 && countdownResult.reachable && !countdownResult.alreadyFunded"> &bull; Exit at Age <strong>{{ (currentAge + countdownResult.years).toFixed(1) }}</strong></span>.
+                                    <span class="block text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">Assumes monthly savings are inflation-indexed to preserve real contribution power.</span>
                                 </p>
                             </div>
 
@@ -745,6 +746,8 @@ Updated: 2026-11-25T16:30:00+00:00
                                     <button @click="applyStrategyPreset('barista10')" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer" title="50% draw for Years 1–10, full draw from Year 11">Barista 10y</button>
                                     <span>&middot;</span>
                                     <button @click="applyStrategyPreset('pension15')" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer" title="Full draw Years 1–14, dropping 40% in Year 15 when pension starts">Pension Yr 15</button>
+                                    <span>&middot;</span>
+                                    <button @click="applyStrategyPreset('smile')" type="button" class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline cursor-pointer" title="Blanchett Retirement Spending Smile: Active Go-Go (100%), Slow-Go dip (Yr 11 at 80%), late-life medical care rebound (Yr 25 at 95%)">Spending Smile</button>
                                 </div>
                             </div>
                         </div>
@@ -1081,12 +1084,21 @@ Updated: 2026-11-25T16:30:00+00:00
                                             </span>
                                         </span>
                                     </div>
-                                    <div class="relative w-24 shrink-0">
-                                        <input v-model="inputs.taxRate"
-                                            @blur="formatOnBlur('taxRate')"
-                                            type="text" id="taxRate" inputmode="decimal" aria-label="Effective Tax Rate"
-                                            class="w-full pl-2.5 pr-7 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
-                                        <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <select v-model="inputs.taxTreatment"
+                                            aria-label="Tax Treatment"
+                                            title="Cost-basis SWP: only capital gains portion is taxed. Pre-Tax: full withdrawal taxed."
+                                            class="px-1.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                                            <option value="swp">Brokerage SWP (Gains Only)</option>
+                                            <option value="gross">Pre-Tax Account (100% Gross)</option>
+                                        </select>
+                                        <div class="relative w-20 shrink-0">
+                                            <input v-model="inputs.taxRate"
+                                                @blur="formatOnBlur('taxRate')"
+                                                type="text" id="taxRate" inputmode="decimal" aria-label="Tax Rate"
+                                                class="w-full pl-2 pr-6 py-1 text-right font-semibold text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1165,6 +1177,12 @@ Updated: 2026-11-25T16:30:00+00:00
                                                 -30% Yr 1
                                             </button>
                                             <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+                                            <button @click="applyStressPreset('stagflation')" type="button"
+                                                title="Stagflation Squeeze: -20% Year 1 crash, followed by 3 years of 0% stagnation and high inflation"
+                                                class="text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:underline font-medium cursor-pointer">
+                                                Stagflation
+                                            </button>
+                                            <span class="text-slate-300 dark:text-slate-700">&bull;</span>
                                             <button @click="applyStressPreset('cycles')" type="button"
                                                 title="Simulate recurring -25% 1-year crashes every 10 years"
                                                 class="text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:underline font-medium cursor-pointer">
@@ -1238,6 +1256,8 @@ Updated: 2026-11-25T16:30:00+00:00
                                         <button @click="applyStressPreset('bear45')" type="button" class="hover:text-rose-500 hover:underline cursor-pointer">2Y Bear (-45%)</button>
                                         <span>&middot;</span>
                                         <button @click="applyStressPreset('rebound')" type="button" class="hover:text-emerald-500 hover:underline cursor-pointer">V-Rebound (-30%/+25%)</button>
+                                        <span>&middot;</span>
+                                        <button @click="applyStressPreset('stagflation')" type="button" class="hover:text-rose-500 hover:underline cursor-pointer" title="4-year stagflation squeeze (-20% Yr 1, then flat 0% Yrs 2-4)">Stagflation</button>
                                         <span>&middot;</span>
                                         <button @click="applyStressPreset('cycles')" type="button" class="hover:text-rose-500 hover:underline cursor-pointer">Decade Cycles</button>
                                     </div>
@@ -1692,6 +1712,7 @@ Updated: 2026-11-25T16:30:00+00:00
                     withdrawalPercent: '2',
                     inflationRate: String(syncInfRate),
                     taxRate: '0',
+                    taxTreatment: 'swp',
                     fxDepreciationRate: '0',
                     spotFxRate: '',
                     currentAge: '',
@@ -2203,6 +2224,12 @@ Updated: 2026-11-25T16:30:00+00:00
                 taxRate() {
                     return Math.min(60, this.parseNumber(this.inputs.taxRate));
                 },
+                taxTreatment() {
+                    return this.inputs.taxTreatment === 'gross' ? 'gross' : 'swp';
+                },
+                isSwpTaxMode() {
+                    return this.taxTreatment === 'swp';
+                },
                 planGainShare() {
                     const r = Math.max(0.01, this.effectiveLocalAnnualReturn / 100);
                     const midYr = Math.max(1, this.withdrawalDuration / 2);
@@ -2361,7 +2388,7 @@ Updated: 2026-11-25T16:30:00+00:00
                 },
                 effectiveInitialMonthlyWithdrawal() {
                     if (this.withdrawalMode === 'percent') {
-                        const taxFrac = this.taxRate / 100;
+                        const taxFrac = this.isSwpTaxMode ? 0 : this.taxRate / 100;
                         return ((this.initialInvestment * (this.withdrawalPercent / 100)) / 12) * (1 - taxFrac);
                     }
                     return this.monthlyWithdrawal;
@@ -2732,6 +2759,8 @@ Updated: 2026-11-25T16:30:00+00:00
                     let fixedPhaseStartMonth = 1;
                     let cumulativeInflationFactor = 1;
                     const taxFrac = this.taxRate / 100;
+                    const isSwpTax = this.isSwpTaxMode;
+                    let costBasis = startLocal;
 
                     let totalWithdrawn = 0;
                     let totalRealWithdrawn = 0;
@@ -2830,12 +2859,30 @@ Updated: 2026-11-25T16:30:00+00:00
                                 }
                             }
 
-                            const plannedGrossWithdrawal = activeMode === 'percent'
-                                ? balance * activeMonthlyFrac
-                                : (taxFrac < 1 ? targetNetFixed / (1 - taxFrac) : targetNetFixed);
+                            let plannedGrossWithdrawal;
+                            if (activeMode === 'percent') {
+                                plannedGrossWithdrawal = balance * activeMonthlyFrac;
+                            } else {
+                                if (isSwpTax) {
+                                    const gainFracBefore = balance > 0.01 ? Math.max(0, (balance - costBasis) / balance) : 0;
+                                    const effTaxFrac = gainFracBefore * taxFrac;
+                                    plannedGrossWithdrawal = effTaxFrac < 0.999 ? targetNetFixed / (1 - effTaxFrac) : targetNetFixed;
+                                } else {
+                                    plannedGrossWithdrawal = taxFrac < 1 ? targetNetFixed / (1 - taxFrac) : targetNetFixed;
+                                }
+                            }
 
                             const actualGrossWithdrawal = Math.min(balance, plannedGrossWithdrawal);
-                            const taxPaid = actualGrossWithdrawal * taxFrac;
+                            let taxPaid = 0;
+                            if (isSwpTax) {
+                                const gainFraction = balance > 0.01 ? Math.max(0, (balance - costBasis) / balance) : 0;
+                                const taxableGainPart = actualGrossWithdrawal * gainFraction;
+                                taxPaid = taxableGainPart * taxFrac;
+                                costBasis = Math.max(0, costBasis - (actualGrossWithdrawal - taxableGainPart));
+                            } else {
+                                taxPaid = actualGrossWithdrawal * taxFrac;
+                                costBasis = Math.max(0, balance > 0 ? costBasis * (1 - actualGrossWithdrawal / balance) : 0);
+                            }
                             const actualNetWithdrawal = actualGrossWithdrawal - taxPaid;
                             const realNetWithdrawal = actualNetWithdrawal / cumulativeInflationFactor;
 
@@ -2990,6 +3037,7 @@ Updated: 2026-11-25T16:30:00+00:00
                     const yr6 = Math.min(horizon, 6);
                     const yr11 = Math.min(horizon, 11);
                     const yr15 = Math.min(horizon, 15);
+                    const yr25 = Math.min(horizon, 25);
                     if (kind === 'coast5') {
                         if (this.withdrawalMode === 'percent') {
                             this.inputs.withdrawalPercent = '0';
@@ -3016,6 +3064,25 @@ Updated: 2026-11-25T16:30:00+00:00
                         } else {
                             const fullAmt = Math.max(100, this.monthlyWithdrawal || 2500);
                             this.withdrawalPhases = [{ id: this.nextPhaseId++, startYear: String(yr15), mode: 'fixed', value: this.formatWithSpaces(Math.round(fullAmt * 0.6)) }];
+                        }
+                    } else if (kind === 'smile') {
+                        // David Blanchett Retirement Spending Smile: Active Go-Go (Y1-10 @ 100%), Slow-Go dip (Y11-24 @ 80%), late-life medical care rebound (Y25+ @ 95%)
+                        if (this.withdrawalMode === 'percent') {
+                            const basePct = Math.max(2, this.withdrawalPercent || 4);
+                            const slowPct = String(Math.round((basePct * 0.8) * 10) / 10);
+                            const latePct = String(Math.round((basePct * 0.95) * 10) / 10);
+                            this.withdrawalPhases = [
+                                { id: this.nextPhaseId++, startYear: String(yr11), mode: 'percent', value: slowPct },
+                                { id: this.nextPhaseId++, startYear: String(yr25), mode: 'percent', value: latePct }
+                            ];
+                        } else {
+                            const baseAmt = Math.max(100, this.monthlyWithdrawal || 2500);
+                            const slowAmt = Math.round(baseAmt * 0.8);
+                            const lateAmt = Math.round(baseAmt * 0.95);
+                            this.withdrawalPhases = [
+                                { id: this.nextPhaseId++, startYear: String(yr11), mode: 'fixed', value: this.formatWithSpaces(slowAmt) },
+                                { id: this.nextPhaseId++, startYear: String(yr25), mode: 'fixed', value: this.formatWithSpaces(lateAmt) }
+                            ];
                         }
                     }
                 },
@@ -3325,6 +3392,12 @@ Updated: 2026-11-25T16:30:00+00:00
                         this.stressPhases = [
                             { id: this.nextPhaseId++, startYear: '1', duration: '1', value: '-30' },
                             { id: this.nextPhaseId++, startYear: '2', duration: '1', value: '25' }
+                        ];
+                    } else if (kind === 'stagflation') {
+                        // 4-year stagflation squeeze: severe -20% initial drop followed by 3 years of 0% stagnant returns while inflation eats buying power
+                        this.stressPhases = [
+                            { id: this.nextPhaseId++, startYear: '1', duration: '1', value: '-20' },
+                            { id: this.nextPhaseId++, startYear: '2', duration: '3', value: '0' }
                         ];
                     } else if (kind === 'cycles') {
                         const horizon = Math.max(10, Math.round(this.withdrawalDuration));
@@ -3735,6 +3808,7 @@ Updated: 2026-11-25T16:30:00+00:00
                         withdrawalPercent: '2',
                         inflationRate: String(defaultRate),
                         taxRate: '0',
+                        taxTreatment: 'swp',
                         fxDepreciationRate: '0',
                         spotFxRate: '',
                         currentAge: '',
