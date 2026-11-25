@@ -1,13 +1,13 @@
 <!-- APP-META
-Title: SWP Calculator
-Description: Systematic Withdrawal Plan (SWP) calculator and corpus projection simulator with inflation adjustment and interactive charts.
+Title: SWP Calculator & Freedom Engine
+Description: Systematic Withdrawal Plan (SWP) calculator and corpus projection simulator with inflation adjustment, open-source inflation data SDK, multi-currency support, and Rat Race Exit metrics.
 Category: Finance
 Icon: fa-solid fa-chart-line
 Image: https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80&w=800
 Status: published
 Disable-Footer: false
 Disable-PWA: false
-Updated: 2026-11-25T10:44:00+01:00
+Updated: 2026-11-25T13:00:00+00:00
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -15,9 +15,9 @@ Updated: 2026-11-25T10:44:00+01:00
 <head>
     <meta charset="UTF-8">
     <meta name="description"
-        content="SWP Calculator: Calculate your systematic withdrawal plan with ease using this interactive SWP calculator and corpus simulator.">
+        content="SWP Calculator & Rat Race Escape Simulator: Calculate your systematic withdrawal plan, protect against inflation with live global benchmarks, and achieve financial freedom.">
     <meta name="keywords"
-        content="swp, calculator, simulator, systematic withdrawal plan, investment, finance">
+        content="swp, calculator, simulator, systematic withdrawal plan, exit rat race, financial freedom, fire, investment, finance, inflation">
     <meta name="color-scheme" content="dark light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -26,7 +26,7 @@ Updated: 2026-11-25T10:44:00+01:00
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
-    <title>SWP Calculator</title>
+    <title>SWP Calculator &bull; Exit The Rat Race</title>
     
     <!-- Tailwind CSS with Dark Mode Class Configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,9 +49,10 @@ Updated: 2026-11-25T10:44:00+01:00
         }
     </script>
 
-    <!-- Vue 3 & Chart.js -->
+    <!-- Vue 3, Chart.js & Open Source Inflation SDK -->
     <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="inflation-sdk.js"></script>
 
     <style>
         /* Custom Range Slider Styling */
@@ -110,28 +111,47 @@ Updated: 2026-11-25T10:44:00+01:00
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 antialiased selection:bg-emerald-500 selection:text-white">
     <div id="app" class="min-h-screen flex flex-col justify-start py-6 px-4 sm:px-6 lg:px-8">
         
-        <!-- Top Navigation Header -->
-        <header class="max-w-6xl w-full mx-auto flex items-center justify-between mb-8">
+        <!-- Top Navigation Header with Rat Race Escape Branding & Currency Selector -->
+        <header class="max-w-6xl w-full mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-2xl bg-emerald-600 dark:bg-emerald-500/20 border border-emerald-500/30 shadow-sm">
-                    <svg class="h-6 w-6 text-white dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-500/20 border border-emerald-400/30">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                 </div>
                 <div>
-                    <h1 class="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">SWP Calculator</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Systematic Withdrawal Plan Simulator</p>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white leading-tight">SWP Calculator</h1>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase bg-gradient-to-r from-amber-500/15 to-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                            Rat Race Exit
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Systematic Withdrawal Plan &bull; Your Roadmap to Financial Freedom</p>
                 </div>
             </div>
 
-            <!-- Action Controls -->
-            <div class="flex items-center gap-2 sm:gap-3">
+            <!-- Action Controls & Currency Selector -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+                <!-- Currency Selector -->
+                <div class="relative">
+                    <label for="currencySelect" class="sr-only">Select Currency</label>
+                    <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                        <span class="text-emerald-600 dark:text-emerald-400 font-bold mr-1.5">{{ currencySymbol }}</span>
+                        <select id="currencySelect" v-model="selectedCurrency" aria-label="Select Currency"
+                            class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-1">
+                            <option v-for="c in currencies" :key="c.code" :value="c.code" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                {{ c.symbol }} {{ c.code }} ({{ c.name }})
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
                 <button @click="resetDefaults" title="Reset to defaults"
-                    class="px-3 py-2 text-xs sm:text-sm font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors">
+                    class="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors">
                     Reset
                 </button>
                 <button @click="cycleTheme" :title="'Theme: ' + themeLabel" aria-label="Cycle Theme"
-                    class="px-2.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+                    class="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                     <!-- Sun Icon (Light) -->
                     <svg v-if="themePreference === 'light'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -155,8 +175,13 @@ Updated: 2026-11-25T10:44:00+01:00
             <!-- Left Column: Interactive Parameters (5 cols) -->
             <section class="lg:col-span-5 bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col justify-between space-y-6">
                 <div>
-                    <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white mb-1">Plan Parameters</h2>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Adjust your corpus, expected returns, and withdrawal strategy.</p>
+                    <div class="flex items-center justify-between mb-1">
+                        <h2 class="font-display text-lg font-bold text-slate-900 dark:text-white">Plan Parameters</h2>
+                        <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800/50">
+                            {{ selectedCurrency }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Adjust your corpus, returns, inflation protection, and withdrawal strategy.</p>
 
                     <div class="space-y-6">
                         <!-- Initial Investment -->
@@ -166,19 +191,20 @@ Updated: 2026-11-25T10:44:00+01:00
                                     Initial Investment
                                 </label>
                                 <div class="relative w-40">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
-                                    <input v-model="inputs.initialInvestment" @input="handleTextInput('initialInvestment')"
-                                        type="text" id="initialInvestment" inputmode="decimal"
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ currencySymbol }}</span>
+                                    <input v-model="inputs.initialInvestment" 
+                                        @blur="formatOnBlur('initialInvestment')"
+                                        type="number" id="initialInvestment" inputmode="decimal"
                                         class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
                             <input type="range" min="1000" :max="investmentSliderMax" :step="investmentSliderStep"
                                 :value="initialInvestment"
-                                @input="updateFromSlider('initialInvestment', $event.target.value, true)"
+                                @input="updateFromSlider('initialInvestment', $event.target.value)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
-                                <span>$1K</span>
-                                <span>${{ formatCompact(investmentSliderMax) }}</span>
+                                <span>{{ currencySymbol }}1K</span>
+                                <span>{{ currencySymbol }}{{ formatCompact(investmentSliderMax) }}</span>
                             </div>
                         </div>
 
@@ -192,19 +218,20 @@ Updated: 2026-11-25T10:44:00+01:00
                                     <button @click="setSustainableWithdrawal" type="button"
                                         class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-0.5"
                                         title="Set to exact monthly interest earned so principal never shrinks">
-                                        <span>Max Perpetual: ${{ formatCompact(monthlyReturnAmount) }}/mo</span>
+                                        <span>Max Perpetual: {{ currencySymbol }}{{ formatCompact(monthlyReturnAmount) }}/mo</span>
                                     </button>
                                 </div>
                                 <div class="relative w-40">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
-                                    <input v-model="inputs.monthlyWithdrawal" @input="handleTextInput('monthlyWithdrawal')"
-                                        type="text" id="monthlyWithdrawal" inputmode="decimal"
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">{{ currencySymbol }}</span>
+                                    <input v-model="inputs.monthlyWithdrawal"
+                                        @blur="formatOnBlur('monthlyWithdrawal')"
+                                        type="number" id="monthlyWithdrawal" inputmode="decimal"
                                         class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
                             <input type="range" min="0" :max="withdrawalSliderMax" :step="withdrawalSliderStep"
                                 :value="monthlyWithdrawal"
-                                @input="updateFromSlider('monthlyWithdrawal', $event.target.value, true)"
+                                @input="updateFromSlider('monthlyWithdrawal', $event.target.value)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
                                 <span>Withdrawal Rate: <strong class="text-slate-600 dark:text-slate-300">{{ (monthlyWithdrawalPercentage * 12).toFixed(2) }}%/yr</strong></span>
@@ -219,15 +246,16 @@ Updated: 2026-11-25T10:44:00+01:00
                                     Expected Annual Return
                                 </label>
                                 <div class="relative w-32">
-                                    <input v-model="inputs.annualReturn" @input="handleTextInput('annualReturn')"
-                                        type="text" id="annualReturn" inputmode="decimal"
+                                    <input v-model="inputs.annualReturn"
+                                        @blur="formatOnBlur('annualReturn')"
+                                        type="number" step="any" id="annualReturn" inputmode="decimal"
                                         class="w-full pl-3 pr-7 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">%</span>
                                 </div>
                             </div>
                             <input type="range" min="0" :max="returnSliderMax" step="0.5"
                                 :value="annualReturn"
-                                @input="updateFromSlider('annualReturn', $event.target.value, false)"
+                                @input="updateFromSlider('annualReturn', $event.target.value)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
                                 <span>0%</span>
@@ -249,15 +277,16 @@ Updated: 2026-11-25T10:44:00+01:00
                                     </button>
                                 </div>
                                 <div class="relative w-32">
-                                    <input v-model="inputs.withdrawalDuration" @input="handleTextInput('withdrawalDuration')"
-                                        type="text" id="withdrawalDuration" inputmode="numeric"
+                                    <input v-model="inputs.withdrawalDuration"
+                                        @blur="formatOnBlur('withdrawalDuration')"
+                                        type="number" id="withdrawalDuration" inputmode="numeric"
                                         class="w-full pl-3 pr-10 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-xs">yrs</span>
                                 </div>
                             </div>
                             <input type="range" min="1" :max="durationSliderMax" step="1"
                                 :value="withdrawalDuration"
-                                @input="updateFromSlider('withdrawalDuration', $event.target.value, false)"
+                                @input="updateFromSlider('withdrawalDuration', $event.target.value)"
                                 class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
                             <div class="flex justify-between text-xs text-slate-400 mt-1">
                                 <span>1 yr</span>
@@ -266,44 +295,74 @@ Updated: 2026-11-25T10:44:00+01:00
                             </div>
                         </div>
 
-                        <!-- Optional Annual Inflation Step-Up -->
+                        <!-- Annual Inflation Step-Up with Live Historic Benchmarks -->
                         <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between mb-2">
                                 <div>
-                                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300 block">Annual Inflation Adjustment</span>
-                                    <span class="text-xs text-slate-400">Increase withdrawal yearly to match inflation</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300 block">Annual Inflation Step-Up</span>
+                                        <span v-if="isLoadingInflation" class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping" title="Syncing historic data..."></span>
+                                    </div>
+                                    <span class="text-xs text-slate-400">Increase withdrawal yearly to counter purchasing power loss</span>
                                 </div>
                                 <div class="relative w-24">
-                                    <input v-model="inputs.inflationRate" @input="handleTextInput('inflationRate')"
-                                        type="text" aria-label="Inflation Rate" inputmode="decimal"
+                                    <input v-model="inputs.inflationRate"
+                                        @blur="formatOnBlur('inflationRate')"
+                                        type="number" step="any" aria-label="Inflation Rate" inputmode="decimal"
                                         class="w-full pl-2 pr-6 py-1 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">%</span>
+                                </div>
+                            </div>
+
+                            <!-- Inflation Benchmark Quick Select (SDK Driven) -->
+                            <div class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 border border-slate-200/60 dark:border-slate-700/60 mt-2">
+                                <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1.5">
+                                    <span class="font-medium flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Historic Averages (Last Decade &bull; Open API)
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-mono">{{ inflationDataSource }}</span>
+                                </div>
+                                <div class="grid grid-cols-4 gap-1.5">
+                                    <button v-for="b in inflationBenchmarks" :key="b.code"
+                                        @click="applyInflationBenchmark(b)"
+                                        type="button"
+                                        :class="Math.abs(Number(inputs.inflationRate) - b.rate) < 0.05 
+                                            ? 'bg-emerald-600 text-white font-bold shadow-xs' 
+                                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700'"
+                                        class="px-2 py-1.5 rounded-lg text-center transition-all text-[11px] flex flex-col items-center">
+                                        <span class="font-semibold truncate max-w-full leading-tight">{{ b.label }}</span>
+                                        <span class="text-[10px] opacity-90">{{ b.rate }}%</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Status Pill -->
-                <div class="p-3.5 rounded-2xl border text-sm flex items-start gap-3 transition-colors"
-                    :class="isDepleted 
-                        ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300' 
-                        : 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'">
-                    <svg v-if="isDepleted" class="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <svg v-else class="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                        <p class="font-semibold" v-if="isDepleted">Corpus Depletes Early</p>
-                        <p class="font-semibold" v-else>Sustainable Withdrawal Plan</p>
-                        <p class="text-xs opacity-90 mt-0.5" v-if="isDepleted">
-                            Your balance reaches $0 after <strong>{{ yearsLastingFunds.toFixed(1) }} years</strong> ({{ Math.round(yearsLastingFunds * 12) }} months).
+                <!-- Rat Race Escape Freedom Status Banner -->
+                <div class="p-4 rounded-2xl border text-sm flex items-start gap-3 transition-colors"
+                    :class="freedomStatus.colorClass">
+                    <div class="text-xl shrink-0 mt-0.5 select-none">{{ freedomStatus.badgeIcon }}</div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-bold text-sm tracking-tight">{{ freedomStatus.title }}</p>
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
+                                :class="freedomStatus.pillClass">
+                                {{ freedomStatus.tier }}
+                            </span>
+                        </div>
+                        <p class="text-xs opacity-90 mt-1 leading-relaxed">
+                            {{ freedomStatus.description }}
                         </p>
-                        <p class="text-xs opacity-90 mt-0.5" v-else>
-                            Your corpus survives all {{ withdrawalDuration }} years with <strong>${{ formatCompact(finalBalance) }}</strong> remaining.
-                        </p>
+                        <!-- Freedom Progress Metric -->
+                        <div class="mt-2.5 pt-2 border-t border-current/10 flex items-center justify-between text-[11px]">
+                            <span>Passive Yield Coverage: <strong>{{ Math.round((monthlyReturnAmount / (monthlyWithdrawal || 1)) * 100) }}%</strong> of withdrawal</span>
+                            <span v-if="!isDepleted" class="font-medium">Perpetual Freedom</span>
+                            <span v-else class="font-semibold">Lasts {{ yearsLastingFunds.toFixed(1) }} yrs</span>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -316,17 +375,17 @@ Updated: 2026-11-25T10:44:00+01:00
                     <!-- Card 1: Initial Corpus -->
                     <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
                         <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Invested</span>
-                        <div class="mt-1.5 font-display text-2xl font-bold text-slate-900 dark:text-white truncate" :title="'$' + formatCurrency(initialInvestment)">
-                            ${{ formatCompact(initialInvestment) }}
+                        <div class="mt-1.5 font-display text-2xl font-bold text-slate-900 dark:text-white truncate" :title="currencySymbol + formatCurrency(initialInvestment)">
+                            {{ currencySymbol }}{{ formatCompact(initialInvestment) }}
                         </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">Starting principal</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">Starting nest egg</span>
                     </div>
 
                     <!-- Card 2: Total Withdrawn -->
                     <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
                         <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Withdrawn</span>
-                        <div class="mt-1.5 font-display text-2xl font-bold text-sky-600 dark:text-sky-400 truncate" :title="'$' + formatCurrency(actualTotalWithdrawn)">
-                            ${{ formatCompact(actualTotalWithdrawn) }}
+                        <div class="mt-1.5 font-display text-2xl font-bold text-sky-600 dark:text-sky-400 truncate" :title="currencySymbol + formatCurrency(actualTotalWithdrawn)">
+                            {{ currencySymbol }}{{ formatCompact(actualTotalWithdrawn) }}
                         </div>
                         <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
                             Across {{ simulation.monthsCompleted }} months
@@ -338,8 +397,8 @@ Updated: 2026-11-25T10:44:00+01:00
                         <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Final Balance</span>
                         <div class="mt-1.5 font-display text-2xl font-bold truncate"
                             :class="finalBalance > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
-                            :title="'$' + formatCurrency(finalBalance)">
-                            ${{ formatCompact(finalBalance) }}
+                            :title="currencySymbol + formatCurrency(finalBalance)">
+                            {{ currencySymbol }}{{ formatCompact(finalBalance) }}
                         </div>
                         <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
                             {{ finalBalance >= initialInvestment ? '+' : '' }}{{ initialInvestment > 0 ? ((finalBalance - initialInvestment) / initialInvestment * 100).toFixed(1) : 0 }}% net change
@@ -351,8 +410,13 @@ Updated: 2026-11-25T10:44:00+01:00
                 <div class="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/40 dark:shadow-none flex-1 flex flex-col">
                     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                         <div>
-                            <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white">Corpus Projection</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Balance trajectory vs. cumulative cash withdrawn</p>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white">Corpus Projection</h3>
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                                    {{ withdrawalDuration }} Years Horizon
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Remaining portfolio trajectory vs. cumulative cash drawn to live free</p>
                         </div>
 
                         <!-- View Switcher -->
@@ -389,10 +453,14 @@ Updated: 2026-11-25T10:44:00+01:00
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                 <tr v-for="row in simulation.yearlyData" :key="row.year" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                                     <td class="py-2.5 px-4 font-medium text-slate-700 dark:text-slate-300">Year {{ row.year }}</td>
-                                    <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium" :title="'$' + formatCurrency(row.withdrawn, 0)">${{ formatCompact(row.withdrawn) }}</td>
-                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400" :title="'+$' + formatCurrency(row.interest, 0)">+${{ formatCompact(row.interest) }}</td>
-                                    <td class="py-2.5 px-4 text-right font-semibold" :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'" :title="'$' + formatCurrency(row.endingBalance, 0)">
-                                        ${{ formatCompact(row.endingBalance) }}
+                                    <td class="py-2.5 px-4 text-right text-sky-600 dark:text-sky-400 font-medium" :title="currencySymbol + formatCurrency(row.withdrawn, 0)">
+                                        {{ currencySymbol }}{{ formatCompact(row.withdrawn) }}
+                                    </td>
+                                    <td class="py-2.5 px-4 text-right text-emerald-600 dark:text-emerald-400" :title="'+' + currencySymbol + formatCurrency(row.interest, 0)">
+                                        +{{ currencySymbol }}{{ formatCompact(row.interest) }}
+                                    </td>
+                                    <td class="py-2.5 px-4 text-right font-semibold" :class="row.endingBalance <= 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'" :title="currencySymbol + formatCurrency(row.endingBalance, 0)">
+                                        {{ currencySymbol }}{{ formatCompact(row.endingBalance) }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -401,8 +469,8 @@ Updated: 2026-11-25T10:44:00+01:00
 
                     <!-- Total Wealth Generated Footer -->
                     <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                        <span>Total Interest Generated: <strong class="text-emerald-600 dark:text-emerald-400">${{ formatCompact(simulation.totalInterest) }}</strong></span>
-                        <span>Total Value (Withdrawn + Final): <strong class="text-slate-800 dark:text-slate-200">${{ formatCompact(actualTotalWithdrawn + finalBalance) }}</strong></span>
+                        <span>Total Interest Generated: <strong class="text-emerald-600 dark:text-emerald-400">{{ currencySymbol }}{{ formatCompact(simulation.totalInterest) }}</strong></span>
+                        <span>Total Freedom Harvest (Withdrawn + Final): <strong class="text-slate-800 dark:text-slate-200">{{ currencySymbol }}{{ formatCompact(actualTotalWithdrawn + finalBalance) }}</strong></span>
                     </div>
                 </div>
             </section>
@@ -419,13 +487,34 @@ Updated: 2026-11-25T10:44:00+01:00
                     themePreference: 'system', // 'light' | 'dark' | 'system'
                     systemPrefersDark: false,
                     activeTab: 'chart',
+                    selectedCurrency: 'USD',
+                    currencies: [
+                        { code: 'USD', symbol: '$', name: 'US Dollar' },
+                        { code: 'EUR', symbol: '€', name: 'Euro' },
+                        { code: 'GBP', symbol: '£', name: 'British Pound' },
+                        { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+                        { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar' },
+                        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+                        { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+                        { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+                        { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+                        { code: 'AED', symbol: 'AED', name: 'UAE Dirham' }
+                    ],
                     inputs: {
-                        initialInvestment: '500 000',
-                        annualReturn: '7',
-                        withdrawalDuration: '30',
-                        monthlyWithdrawal: '2 500',
-                        inflationRate: '0'
-                    }
+                        initialInvestment: 500000,
+                        annualReturn: 7,
+                        withdrawalDuration: 30,
+                        monthlyWithdrawal: 2500,
+                        inflationRate: 3.4
+                    },
+                    isLoadingInflation: false,
+                    inflationDataSource: 'World Bank API',
+                    inflationBenchmarks: [
+                        { code: 'WLD', label: 'Global 10Y Avg', rate: 3.4 },
+                        { code: 'USA', label: 'US 10Y Avg', rate: 3.0 },
+                        { code: 'EMU', label: 'Euro 10Y Avg', rate: 2.4 },
+                        { code: 'IND', label: 'India 10Y Avg', rate: 4.9 }
+                    ]
                 };
             },
             computed: {
@@ -436,6 +525,10 @@ Updated: 2026-11-25T10:44:00+01:00
                 },
                 themeLabel() {
                     return this.themePreference.charAt(0).toUpperCase() + this.themePreference.slice(1);
+                },
+                currencySymbol() {
+                    const found = this.currencies.find(c => c.code === this.selectedCurrency);
+                    return found ? found.symbol : '$';
                 },
                 initialInvestment() {
                     return this.parseNumber(this.inputs.initialInvestment);
@@ -451,6 +544,52 @@ Updated: 2026-11-25T10:44:00+01:00
                 },
                 inflationRate() {
                     return this.parseNumber(this.inputs.inflationRate);
+                },
+                // Rat Race Escape Freedom Status
+                freedomStatus() {
+                    const monthlyPassive = this.monthlyReturnAmount;
+                    const monthlyDraw = this.monthlyWithdrawal;
+                    const depleted = this.isDepleted;
+                    const years = this.yearsLastingFunds;
+                    const netGrowth = this.finalBalance >= this.initialInvestment;
+
+                    if (!depleted && monthlyPassive >= monthlyDraw && netGrowth) {
+                        return {
+                            tier: 'Rat Race Crushed 🏆',
+                            title: 'Complete Financial Nirvana (Forever Free)',
+                            description: `Your monthly return of ${this.currencySymbol}${this.formatCompact(monthlyPassive)} exceeds your withdrawal of ${this.currencySymbol}${this.formatCompact(monthlyDraw)}. Your capital never shrinks and you exit the rat race forever.`,
+                            badgeIcon: '🚀',
+                            colorClass: 'bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-500/30 text-emerald-900 dark:text-emerald-200',
+                            pillClass: 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/30'
+                        };
+                    } else if (!depleted) {
+                        return {
+                            tier: 'Rat Race Escaped 🏁',
+                            title: 'Sustainable Independence',
+                            description: `Your corpus survives all ${this.withdrawalDuration} years, ending with ${this.currencySymbol}${this.formatCompact(this.finalBalance)}. You are fully insulated from the corporate treadmill.`,
+                            badgeIcon: '🏝️',
+                            colorClass: 'bg-teal-500/10 dark:bg-teal-950/40 border-teal-500/30 text-teal-900 dark:text-teal-200',
+                            pillClass: 'bg-teal-500/20 text-teal-800 dark:text-teal-300 border-teal-500/30'
+                        };
+                    } else if (years >= 15) {
+                        return {
+                            tier: 'Extended Freedom ⏳',
+                            title: 'Long Runway Exit',
+                            description: `You have ${years.toFixed(1)} years of full freedom before capital runs dry. Lower withdrawal slightly or boost returns to make it eternal.`,
+                            badgeIcon: '⚡',
+                            colorClass: 'bg-amber-500/10 dark:bg-amber-950/40 border-amber-500/30 text-amber-900 dark:text-amber-200',
+                            pillClass: 'bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/30'
+                        };
+                    } else {
+                        return {
+                            tier: 'Rat Race Trapped ⚠️',
+                            title: 'Corpus Depletion Risk',
+                            description: `Your funds expire in ${years.toFixed(1)} years (${Math.round(years * 12)} months). Reduce withdrawal or increase nest egg to ensure a safe exit.`,
+                            badgeIcon: '🛑',
+                            colorClass: 'bg-rose-500/10 dark:bg-rose-950/40 border-rose-500/30 text-rose-900 dark:text-rose-200',
+                            pillClass: 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border-rose-500/30'
+                        };
+                    }
                 },
                 // Dynamic slider bounds that automatically scale up for large inputs
                 investmentSliderMax() {
@@ -573,12 +712,18 @@ Updated: 2026-11-25T10:44:00+01:00
                 },
                 isDarkMode() {
                     this.updateChart();
+                },
+                selectedCurrency(newVal) {
+                    try {
+                        localStorage.setItem('swp_preferred_currency', newVal);
+                    } catch (e) {}
+                    this.updateChart();
                 }
             },
             methods: {
                 parseNumber(val) {
-                    if (!val) return 0;
-                    const cleaned = String(val).replace(/\s+/g, '').replace(/,/g, '.');
+                    if (val === null || val === undefined || val === '') return 0;
+                    const cleaned = String(val).replace(/,/g, '.');
                     const parsed = parseFloat(cleaned);
                     return isNaN(parsed) ? 0 : Math.max(0, parsed);
                 },
@@ -587,7 +732,7 @@ Updated: 2026-11-25T10:44:00+01:00
                     return num.toLocaleString('en-US', {
                         minimumFractionDigits: decimals,
                         maximumFractionDigits: decimals
-                    }).replace(/,/g, ' ');
+                    });
                 },
                 formatCompact(input) {
                     const num = Number(input);
@@ -622,51 +767,59 @@ Updated: 2026-11-25T10:44:00+01:00
                     }
                     return sign + num.toFixed(0);
                 },
-                handleTextInput(key) {
-                    let value = String(this.inputs[key]);
-                    // Allow digits, spaces, and single decimal point
-                    value = value.replace(/[^0-9.\s]/g, '');
-                    const parts = value.split('.');
-                    if (parts.length > 2) {
-                        value = parts[0] + '.' + parts.slice(1).join('');
-                    }
-
-                    if (key === 'initialInvestment' || key === 'monthlyWithdrawal') {
-                        const raw = value.replace(/\s+/g, '');
-                        if (raw === '' || raw.endsWith('.')) {
-                            this.inputs[key] = value;
-                            return;
-                        }
-                        const num = parseFloat(raw);
-                        if (!isNaN(num)) {
-                            const formattedInt = Math.floor(num).toLocaleString('en-US').replace(/,/g, ' ');
-                            this.inputs[key] = parts.length > 1 ? `${formattedInt}.${parts[1]}` : formattedInt;
-                        }
-                    } else {
-                        this.inputs[key] = value;
+                formatOnBlur(key) {
+                    if (this.inputs[key] === '' || this.inputs[key] === null || this.inputs[key] === undefined) {
+                        this.inputs[key] = 0;
                     }
                 },
-                updateFromSlider(key, value, formatSpaces) {
-                    if (formatSpaces) {
-                        this.inputs[key] = Number(value).toLocaleString('en-US').replace(/,/g, ' ');
-                    } else {
-                        this.inputs[key] = String(value);
-                    }
+                updateFromSlider(key, value) {
+                    this.inputs[key] = Number(value);
                 },
                 setSustainableWithdrawal() {
                     const maxMonthly = Math.floor(this.monthlyReturnAmount);
-                    this.inputs.monthlyWithdrawal = maxMonthly.toLocaleString('en-US').replace(/,/g, ' ');
+                    this.inputs.monthlyWithdrawal = maxMonthly;
                 },
                 setMaxDuration() {
-                    this.inputs.withdrawalDuration = Math.max(1, Math.floor(this.yearsLastingFunds)).toString();
+                    this.inputs.withdrawalDuration = Math.max(1, Math.floor(this.yearsLastingFunds));
+                },
+                applyInflationBenchmark(b) {
+                    this.inputs.inflationRate = b.rate;
+                },
+                async fetchLiveInflationData() {
+                    if (typeof root !== 'undefined' && root.InflationSDK) {
+                        // Available via window.InflationSDK
+                    }
+                    if (window.InflationSDK) {
+                        this.isLoadingInflation = true;
+                        try {
+                            const res = await window.InflationSDK.getDecadeAverage('WLD', 10);
+                            if (res && res.average) {
+                                const globalItem = this.inflationBenchmarks.find(b => b.code === 'WLD');
+                                if (globalItem) {
+                                    globalItem.rate = res.average;
+                                }
+                                // Set default inflation rate to global average if user hasn't overridden
+                                const savedInflation = localStorage.getItem('swp_user_inflation');
+                                if (!savedInflation) {
+                                    this.inputs.inflationRate = res.average;
+                                }
+                                this.inflationDataSource = res.source || 'World Bank API';
+                            }
+                        } catch (e) {
+                            console.warn('Could not load dynamic inflation average:', e);
+                        } finally {
+                            this.isLoadingInflation = false;
+                        }
+                    }
                 },
                 resetDefaults() {
+                    const globalAvg = this.inflationBenchmarks.find(b => b.code === 'WLD')?.rate || 3.4;
                     this.inputs = {
-                        initialInvestment: '500 000',
-                        annualReturn: '7',
-                        withdrawalDuration: '30',
-                        monthlyWithdrawal: '2 500',
-                        inflationRate: '0'
+                        initialInvestment: 500000,
+                        annualReturn: 7,
+                        withdrawalDuration: 30,
+                        monthlyWithdrawal: 2500,
+                        inflationRate: globalAvg
                     };
                 },
                 applyTheme() {
@@ -738,7 +891,7 @@ Updated: 2026-11-25T10:44:00+01:00
                                     cornerRadius: 12,
                                     callbacks: {
                                         label: (context) => {
-                                            return ` ${context.dataset.label}: $${Number(context.raw).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                                            return ` ${context.dataset.label}: ${this.currencySymbol}${Number(context.raw).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
                                         }
                                     }
                                 }
@@ -753,7 +906,7 @@ Updated: 2026-11-25T10:44:00+01:00
                                     border: { display: false },
                                     ticks: {
                                         font: { family: 'Inter', size: 11 },
-                                        callback: (val) => '$' + this.formatCompact(val)
+                                        callback: (val) => this.currencySymbol + this.formatCompact(val)
                                     }
                                 }
                             }
@@ -795,6 +948,11 @@ Updated: 2026-11-25T10:44:00+01:00
                     this.themePreference = 'system';
                 }
 
+                const savedCurrency = localStorage.getItem('swp_preferred_currency');
+                if (savedCurrency && this.currencies.some(c => c.code === savedCurrency)) {
+                    this.selectedCurrency = savedCurrency;
+                }
+
                 this.applyTheme();
 
                 mediaQuery.addEventListener('change', (e) => {
@@ -806,6 +964,7 @@ Updated: 2026-11-25T10:44:00+01:00
 
                 this.$nextTick(() => {
                     this.initChart();
+                    this.fetchLiveInflationData();
                 });
             }
         }).mount('#app');
