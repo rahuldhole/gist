@@ -56,39 +56,75 @@ Updated: 2026-11-25T13:00:00+00:00
     <script src="currency-exchange-sdk.js"></script>
 
     <style>
-        /* Custom Range Slider Styling */
-        input[type="range"] {
+        /* Modern Minimalist Range Slider with Active Fill Progress */
+        input[type="range"].swp-slider {
             -webkit-appearance: none;
             appearance: none;
-            background: transparent;
-            cursor: pointer;
-        }
-
-        input[type="range"]::-webkit-slider-runnable-track {
-            height: 6px;
+            width: 100%;
+            height: 4px;
             border-radius: 999px;
+            background: linear-gradient(to right, #10b981 0%, #10b981 var(--fill, 0%), #e2e8f0 var(--fill, 0%), #e2e8f0 100%);
+            cursor: pointer;
+            outline: none;
+            margin: 6px 0 2px;
+            transition: height 0.15s ease;
         }
 
-        input[type="range"]::-webkit-slider-thumb {
+        .dark input[type="range"].swp-slider {
+            background: linear-gradient(to right, #10b981 0%, #10b981 var(--fill, 0%), #1e293b var(--fill, 0%), #1e293b 100%);
+        }
+
+        input[type="range"].swp-slider::-webkit-slider-runnable-track {
+            height: 4px;
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        input[type="range"].swp-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            height: 18px;
-            width: 18px;
+            height: 15px;
+            width: 15px;
             border-radius: 50%;
+            background: #ffffff;
+            border: 2.5px solid #10b981;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22);
+            margin-top: -5.5px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+
+        .dark input[type="range"].swp-slider::-webkit-slider-thumb {
+            background: #0f172a;
+            border-color: #10b981;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type="range"].swp-slider:hover::-webkit-slider-thumb,
+        input[type="range"].swp-slider:focus-visible::-webkit-slider-thumb {
+            transform: scale(1.18);
             background: #10b981;
-            border: 3px solid #ffffff;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-            margin-top: -6px;
-            transition: transform 0.15s ease, background-color 0.15s ease;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
         }
 
-        .dark input[type="range"]::-webkit-slider-thumb {
-            border-color: #0f172a;
+        /* Firefox Support */
+        input[type="range"].swp-slider::-moz-range-track {
+            height: 4px;
+            border-radius: 999px;
+            background: transparent;
         }
 
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.15);
-            background: #059669;
+        input[type="range"].swp-slider::-moz-range-thumb {
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2.5px solid #10b981;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+
+        .dark input[type="range"].swp-slider::-moz-range-thumb {
+            background: #0f172a;
         }
 
         /* Custom Scrollbar for Breakdown Table */
@@ -193,7 +229,7 @@ Updated: 2026-11-25T13:00:00+00:00
                     <div class="space-y-5">
                         <!-- Initial Investment -->
                         <div>
-                            <div class="flex justify-between items-center mb-1.5">
+                            <div class="flex justify-between items-center mb-1">
                                 <label for="initialInvestment" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                     Initial Investment
                                 </label>
@@ -205,10 +241,12 @@ Updated: 2026-11-25T13:00:00+00:00
                                         class="w-full pl-7 pr-3 py-1.5 text-right font-semibold text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
                                 </div>
                             </div>
-                            <input type="range" min="1000" :max="investmentSliderMax" :step="investmentSliderStep"
-                                :value="initialInvestment"
-                                @input="updateFromSlider('initialInvestment', $event.target.value)"
-                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            <input type="range" min="0" max="1000" step="1"
+                                :value="investmentSliderPos"
+                                :style="{ '--fill': (investmentSliderPos / 10) + '%' }"
+                                @input="onInvestmentSlider($event.target.value)"
+                                aria-label="Initial Investment Slider"
+                                class="swp-slider">
                         </div>
 
                         <!-- Monthly Withdrawal (Clean Mode Switch + Progressive Target Goal) -->
@@ -269,15 +307,19 @@ Updated: 2026-11-25T13:00:00+00:00
                                 </div>
                             </div>
 
-                            <!-- Slider (Fixed or %) -->
-                            <input v-if="withdrawalMode === 'fixed'" type="range" min="0" :max="withdrawalSliderMax" :step="withdrawalSliderStep"
-                                :value="monthlyWithdrawal"
-                                @input="updateFromSlider('monthlyWithdrawal', $event.target.value)"
-                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                            <!-- Slider (Fixed non-linear precision or %) -->
+                            <input v-if="withdrawalMode === 'fixed'" type="range" min="0" max="1000" step="1"
+                                :value="withdrawalSliderPos"
+                                :style="{ '--fill': (withdrawalSliderPos / 10) + '%' }"
+                                @input="onWithdrawalSlider($event.target.value)"
+                                aria-label="Monthly Withdrawal Slider"
+                                class="swp-slider">
                             <input v-else type="range" min="0.5" :max="percentWithdrawalSliderMax" step="0.25"
-                                :value="withdrawalPercent"
+                                :value="Math.min(withdrawalPercent, percentWithdrawalSliderMax)"
+                                :style="{ '--fill': sliderFill(withdrawalPercent, 0.5, percentWithdrawalSliderMax) }"
                                 @input="updateFromSlider('withdrawalPercent', $event.target.value)"
-                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                                aria-label="Annual Percentage Withdrawal Slider"
+                                class="swp-slider">
 
                             <!-- Single Concise Sub-line + Progressive Actions -->
                             <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
@@ -336,7 +378,7 @@ Updated: 2026-11-25T13:00:00+00:00
 
                         <!-- Expected Annual Return -->
                         <div>
-                            <div class="flex justify-between items-center mb-1.5">
+                            <div class="flex justify-between items-center mb-1">
                                 <label for="annualReturn" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                     Expected Annual Return
                                 </label>
@@ -349,14 +391,16 @@ Updated: 2026-11-25T13:00:00+00:00
                                 </div>
                             </div>
                             <input type="range" min="0" :max="returnSliderMax" step="0.5"
-                                :value="annualReturn"
+                                :value="Math.min(annualReturn, returnSliderMax)"
+                                :style="{ '--fill': sliderFill(annualReturn, 0, returnSliderMax) }"
                                 @input="updateFromSlider('annualReturn', $event.target.value)"
-                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                                aria-label="Expected Annual Return Slider"
+                                class="swp-slider">
                         </div>
 
                         <!-- Time Horizon -->
                         <div>
-                            <div class="flex justify-between items-center mb-1.5">
+                            <div class="flex justify-between items-center mb-1">
                                 <div class="flex items-center gap-2">
                                     <label for="withdrawalDuration" class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                         Time Horizon
@@ -375,9 +419,11 @@ Updated: 2026-11-25T13:00:00+00:00
                                 </div>
                             </div>
                             <input type="range" min="1" :max="durationSliderMax" step="1"
-                                :value="withdrawalDuration"
+                                :value="Math.min(withdrawalDuration, durationSliderMax)"
+                                :style="{ '--fill': sliderFill(withdrawalDuration, 1, durationSliderMax) }"
                                 @input="updateFromSlider('withdrawalDuration', $event.target.value)"
-                                class="w-full bg-slate-200 dark:bg-slate-800 rounded-lg">
+                                aria-label="Time Horizon Slider"
+                                class="swp-slider">
                         </div>
 
                         <!-- Annual Inflation (Minimal Default Row + Expandable Country Benchmarks) -->
@@ -1066,23 +1112,27 @@ Updated: 2026-11-25T13:00:00+00:00
                         };
                     }
                 },
-                // Dynamic slider bounds that automatically scale up for large inputs
-                investmentSliderMax() {
-                    if (this.initialInvestment <= 5000000) return 5000000;
-                    const magnitude = Math.pow(10, Math.floor(Math.log10(this.initialInvestment)));
-                    return Math.ceil(this.initialInvestment / magnitude) * magnitude;
+                // Non-linear (power-curve) slider mappings for smooth feel across small & HNI amounts
+                investmentSliderCap() {
+                    return Math.max(10000000, this.initialInvestment > 10000000 ? Math.pow(10, Math.ceil(Math.log10(this.initialInvestment))) : 10000000);
                 },
-                investmentSliderStep() {
-                    return Math.max(1000, Math.round(this.investmentSliderMax / 500));
+                investmentSliderPos() {
+                    const min = 1000;
+                    const max = this.investmentSliderCap;
+                    const val = Math.min(Math.max(this.initialInvestment, min), max);
+                    const norm = Math.pow((val - min) / (max - min), 1 / 2.6);
+                    return Math.round(norm * 1000);
                 },
-                withdrawalSliderMax() {
-                    const baseMax = Math.max(50000, Math.round(this.initialInvestment * 0.05), this.monthlyWithdrawal);
-                    if (baseMax <= 50000) return 50000;
-                    const magnitude = Math.pow(10, Math.floor(Math.log10(baseMax)));
-                    return Math.ceil(baseMax / magnitude) * magnitude;
+                withdrawalSliderCap() {
+                    const sensibleMax = Math.max(25000, Math.round(this.initialInvestment * 0.025));
+                    return Math.max(sensibleMax, this.monthlyWithdrawal > sensibleMax ? Math.ceil(this.monthlyWithdrawal * 1.25) : sensibleMax);
                 },
-                withdrawalSliderStep() {
-                    return Math.max(100, Math.round(this.withdrawalSliderMax / 500));
+                withdrawalSliderPos() {
+                    const max = this.withdrawalSliderCap;
+                    if (max <= 0 || this.monthlyWithdrawal <= 0) return 0;
+                    const val = Math.min(Math.max(this.monthlyWithdrawal, 0), max);
+                    const norm = Math.pow(val / max, 1 / 2.0);
+                    return Math.round(norm * 1000);
                 },
                 returnSliderMax() {
                     return this.annualReturn <= 25 ? 25 : Math.ceil(this.annualReturn / 10) * 10;
@@ -1303,6 +1353,36 @@ Updated: 2026-11-25T13:00:00+00:00
                 },
                 updateFromSlider(key, value) {
                     this.inputs[key] = String(value);
+                },
+                sliderFill(val, min, max) {
+                    if (max <= min) return '0%';
+                    const clamped = Math.min(Math.max(Number(val) || 0, min), max);
+                    return (((clamped - min) / (max - min)) * 100).toFixed(1) + '%';
+                },
+                smartRound(val) {
+                    if (val <= 0) return 0;
+                    if (val < 1000) return Math.round(val / 25) * 25;
+                    if (val < 10000) return Math.round(val / 100) * 100;
+                    if (val < 100000) return Math.round(val / 1000) * 1000;
+                    if (val < 1000000) return Math.round(val / 5000) * 5000;
+                    return Math.round(val / 25000) * 25000;
+                },
+                onInvestmentSlider(pos) {
+                    const p = Number(pos) / 1000;
+                    const min = 1000;
+                    const max = this.investmentSliderCap;
+                    const raw = min + (max - min) * Math.pow(p, 2.6);
+                    this.inputs.initialInvestment = String(Math.max(1000, this.smartRound(raw)));
+                },
+                onWithdrawalSlider(pos) {
+                    const p = Number(pos) / 1000;
+                    if (p <= 0) {
+                        this.inputs.monthlyWithdrawal = '0';
+                        return;
+                    }
+                    const max = this.withdrawalSliderCap;
+                    const raw = max * Math.pow(p, 2.0);
+                    this.inputs.monthlyWithdrawal = String(this.smartRound(raw));
                 },
                 setWithdrawalMode(mode) {
                     if (mode === this.withdrawalMode) return;
